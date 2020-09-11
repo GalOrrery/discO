@@ -1,4 +1,4 @@
-.. _disc_expand-credits:
+.. _discO-credits:
 
 *******************
 Authors and Credits
@@ -26,6 +26,6 @@ Credits
 * Astropy: `package template <https://github.com/astropy/package-template>`_
   
 
-.. |Contributors| image:: https://img.shields.io/github/contributors/cwru-pat/disc_expand?style=flat
+.. |Contributors| image:: https://img.shields.io/github/contributors/cwru-pat/discO?style=flat
    :alt: GitHub contributors
 

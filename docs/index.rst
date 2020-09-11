@@ -1,10 +1,10 @@
-###########################
-`disc_expand` Documentation
-###########################
+###################
+disc𝒪 Documentation
+###################
 
-This is the documentation for disc_expand.
+This is the documentation for disc𝒪.
 
-All code and data is available on a `public repository on GitHub <https://github.com/nstarman/disc_expand>`_ so if you have any trouble, `open an issue <https://github.com/nstarman/disc_expand/issues>`_ there.
+All code and data is available on a `public repository on GitHub <https://github.com/nstarman/discO>`_ so if you have any trouble, `open an issue <https://github.com/nstarman/discO/issues>`_ there.
 
 .. container::
 
@@ -21,7 +21,7 @@ Documentation
   :maxdepth: 1
 
   documentation/installation.rst
-  disc_expand/index.rst
+  discO/index.rst
   documentation/testing.rst
 
 .. _index-modules:
@@ -52,9 +52,9 @@ How to contribute
 |Milestones| |Open Issues| |Last Commit|
 
 We welcome contributions from anyone via pull requests on `GitHub
-<https://github.com/nstarman/disc_expand>`_. If you don't feel comfortable modifying or
+<https://github.com/nstarman/discO>`_. If you don't feel comfortable modifying or
 adding functionality, we also welcome feature requests and bug reports as
-`GitHub issues <https://github.com/nstarman/disc_expand/issues>`_.
+`GitHub issues <https://github.com/nstarman/discO/issues>`_.
 
 The development process follows that of the `astropy-package-template <https://docs.astropy.org/en/latest/development/astropy-package-template.html>`_ from Astropy's `release procedure <https://docs.astropy.org/en/latest/development/releasing.html#release-procedure>`_.
 
@@ -69,7 +69,7 @@ Attribution
 
 Copyright 2020 - Nathaniel Starkman, Christopher Carr, Jo Bovy, Katherine Johnson and contributors.
 
-``disc_expand`` is free software made available under the BSD-3 License. For details see the `LICENSE <https://github.com/nstarman/disc_expand/blob/master/LICENSE>`_ file.
+``discO`` is free software made available under the BSD-3 License. For details see the `LICENSE <https://github.com/nstarman/discO/blob/master/LICENSE>`_ file.
 
 If you make use of this code, please consider citing the Zenodo DOI as a software citation
 
@@ -77,7 +77,7 @@ If you make use of this code, please consider citing the Zenodo DOI as a softwar
 
    @software{zenodo,
      author       = Nathaniel Starkman, Christopher Carr, Jo Bovy, Katherine Johnson,
-     title        = disc_expand v1.0,
+     title        = discO v1.0,
      month        = month,
      year         = year,
      publisher    = {Zenodo},

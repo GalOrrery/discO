@@ -1,4 +1,4 @@
-.. _disc_expand-code_quality:
+.. _discO-code_quality:
 
 ============
 Code Quality
@@ -13,9 +13,9 @@ Code Quality
    :target: https://github.com/psf/black
 
 .. |Codacy Quality| image:: https://api.codacy.com/project/badge/Grade/c56175a35d0040e28cf3ff070271b9b3
-	:target: https://www.codacy.com/manual/nstarman/disc_expand
+	:target: https://www.codacy.com/manual/nstarman/discO
 	:alt: Codacy Code Quality
 
 .. |Codacy Maintainability| image:: https://api.codeclimate.com/v1/badges/102775da549e5999e4fc/maintainability
-   :target: https://codeclimate.com/github/nstarman/disc_expand/maintainability
+   :target: https://codeclimate.com/github/nstarman/discO/maintainability
    :alt: Maintainability

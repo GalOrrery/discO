@@ -1,4 +1,4 @@
-.. _disc_expand-whatsnew:
+.. _discO-whatsnew:
 
 *********************
 Major Release History

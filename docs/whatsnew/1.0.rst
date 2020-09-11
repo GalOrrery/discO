@@ -1,8 +1,8 @@
 .. _whatsnew-1.0:
 
-***********************************
-What's New in `disc_expand` v1.0.X?
-***********************************
+*****************************
+What's New in `discO` v1.0.X?
+*****************************
 
 Bug fixes (in X releases) are annotated with `@X`
 

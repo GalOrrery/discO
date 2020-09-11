@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # see LICENSE.rst
 
-"""Tests for `~disc_expand`."""
+"""Tests for `~discO`."""
 
 __all__ = [
     # modules

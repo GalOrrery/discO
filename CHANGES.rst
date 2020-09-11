@@ -7,8 +7,8 @@ New Features
 
 Description
 
-disc_expand
-^^^^^^^^^^^
+discO
+^^^^^
 
 - Change 1
 

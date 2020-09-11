@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Initiation Tests for `~disc_expand`."""
+"""Initiation Tests for `~discO`."""
 
 __all__ = [
     "test_has_version",
@@ -28,9 +28,9 @@ __all__ = [
 
 def test_has_version():
     """The most basic test."""
-    import disc_expand
+    import discO
 
-    assert hasattr(disc_expand, "__version__"), "No version!"
+    assert hasattr(discO, "__version__"), "No version!"
 
 
 # /def
