@@ -4,7 +4,7 @@
 Authors and Credits
 *******************
 
-Main author:
+Main authors:
 
 Nathaniel Starkman, Christopher Carr
 
@@ -16,7 +16,8 @@ Core Package Contributors
 
 All contributors (alphabetical last name):
 
-* Nathaniel Starkman, Christopher Carr
+* Christopher Carr 
+* Nathaniel Starkman
   
 
 Credits
