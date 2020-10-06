@@ -1,0 +1,15 @@
+# git-ignore file
+# split into default python and project-specific sections
+
+###############################################################################
+# Project-Specific
+
+# Large Data Files
+sim_CC_100/
+
+
+###############################################################################
+# Default
+
+# Mac OSX
+.DS_Store
