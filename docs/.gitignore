@@ -16,9 +16,8 @@ scripts/**/output
 # Environments subfolders
 envs/*/**
 
-# comment when done with public projects
-notebooks/**/*.png
-
+# wiki
+wiki/
 
 ###############################################################################
 # Default
