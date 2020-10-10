@@ -28,7 +28,7 @@ from typing_extensions import Literal
 # THIRD PARTY
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
-from astropy.utils.decorators import format_docs
+from astropy.utils.decorators import format_doc
 
 ##############################################################################
 # CODE
@@ -93,7 +93,7 @@ _docstring: str = """Load {component} Data from Milky Way Sim 100.
     """
 
 
-@format_docs(_docstring, component="Bulge")
+@format_doc(_docstring, component="Bulge")
 def load_Milky_Way_Sim_100_bulge() -> QTable:
     """Load Bulge Data from Milky Way Sim 100."""
     return load_Milky_Way_Sim_100("bulge")
@@ -102,7 +102,7 @@ def load_Milky_Way_Sim_100_bulge() -> QTable:
 # /def
 
 
-@format_docs(_docstring, component="Disc")
+@format_doc(_docstring, component="Disc")
 def load_Milky_Way_Sim_100_disc() -> QTable:
     """Load Disc Data from Milky Way Sim 100."""
     return load_Milky_Way_Sim_100("disc")
@@ -111,7 +111,7 @@ def load_Milky_Way_Sim_100_disc() -> QTable:
 # /def
 
 
-@format_docs(_docstring, component="Dark Matter")
+@format_doc(_docstring, component="Dark Matter")
 def load_Milky_Way_Sim_100_DM() -> QTable:
     """Load Dark Matter Data from Milky Way Sim 100."""
     return load_Milky_Way_Sim_100("dm")
