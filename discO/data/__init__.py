@@ -15,7 +15,7 @@ __all__ = [
     "load_Milky_Way_Sim_100",
     "load_Milky_Way_Sim_100_bulge",
     "load_Milky_Way_Sim_100_disc",
-    "load_Milky_Way_Sim_100_DM",
+    "load_Milky_Way_Sim_100_halo",
 ]
 
 
@@ -39,14 +39,14 @@ from astropy.utils.decorators import format_doc
 
 
 def load_Milky_Way_Sim_100(
-    component: Literal["disc", "bulge", "dm"] = "disc"
+    component: Literal["disc", "bulge", "halo"] = "disc"
 ) -> QTable:
     """Load Data from Milky Way Sim 100.
 
     Parameters
     ----------
     component: str
-        One of "disc", "bulge", or "dm"
+        One of "disc", "bulge", or "halo"
 
     Returns
     -------
@@ -112,9 +112,9 @@ def load_Milky_Way_Sim_100_disc() -> QTable:
 
 
 @format_doc(_docstring, component="Dark Matter")
-def load_Milky_Way_Sim_100_DM() -> QTable:
-    """Load Dark Matter Data from Milky Way Sim 100."""
-    return load_Milky_Way_Sim_100("dm")
+def load_Milky_Way_Sim_100_halo() -> QTable:
+    """Load Dark Matter Halo Data from Milky Way Sim 100."""
+    return load_Milky_Way_Sim_100("halo")
 
 
 # /def
