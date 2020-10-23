@@ -5,14 +5,15 @@
 
 __author__ = ("Nathaniel Starkman", "Christopher Carr")
 
-# __all__ = [
-#     # modules
-#     "",
-#     # functions
-#     "",
-#     # other
-#     "",
-# ]
+__credits__ = ["Jo Bovy"]
+__maintainer__ = "Nathaniel Starkman"
+__status__ = "In Progress"
+
+
+__all__ = [
+    # data
+    "data",
+]
 
 
 ##############################################################################
@@ -22,12 +23,8 @@ __author__ = ("Nathaniel Starkman", "Christopher Carr")
 from ._astropy_init import *  # noqa  # isort:skip
 from ._astropy_init import __version__  # noqa  # isort:skip
 
-# BUILT IN
-
-# THIRD PARTY
-
 # PROJECT-SPECIFIC
-
+from . import data
 
 ##############################################################################
 # END
