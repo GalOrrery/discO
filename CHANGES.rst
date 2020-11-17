@@ -2,27 +2,27 @@
 0.1 (2020-11-17)
 ================
 
+Adopt Project-template from @nstarman
+
 New Features
 ------------
 
-Description
+discO.data
+^^^^^^^^^^
 
-discO
-^^^^^
-
-- Change 1
+- Add Milky_Way_Sim_100 data [#10]
 
 
 API Changes
 -----------
 
-Contents here
+N/A
 
 
 Bug Fixes
 ---------
 
-List them
+N/A
 
 
 Other Changes and Additions
