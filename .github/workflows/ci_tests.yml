@@ -62,7 +62,7 @@ jobs:
           #   python: 3.x
           #   toxenv: codestyle
 
-          # - name: Documentation Build  # FIXME
+          # - name: Documentation Build  # Done with RTD
           #   os: ubuntu-latest
           #   python: 3.x
           #   toxenv: build_docs
@@ -175,32 +175,32 @@ jobs:
         file: ./coverage.xml
 
 
-  # # ---------------------------------------------
-  # # Many Versions
+  # ---------------------------------------------
+  # Many Versions
 
-  # versions:
-  #   name: ${{ matrix.os }}, py${{ matrix.python }}
-  #   runs-on: ${{ matrix.os }}
+  versions:
+    needs: further
+    name: ${{ matrix.os }}, py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
 
-  #   strategy:
-  #     fail-fast: false  # run all the tests, even if one fails
+    strategy:
+      fail-fast: false  # run all the tests, even if one fails
 
-  #     matrix:
-  #       os: [ubuntu-latest, macos-latest]  # TODO windows-latest
-  #       python: [3.7, 3.8]
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: [3.7, 3.8]
 
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #     with:
-  #       submodules: true
-  #   - name: Set up Python ${{ matrix.python-version }}
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: ${{ matrix.python }}
-  #   - name: Setup
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       python -m pip install --upgrade tox codecov
-  #   - name: Test
-  #     # Run tox using the version of Python in `PATH`
-  #     run: tox -e py
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Setup
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox codecov
+    - name: Test  # Run tox using the version of Python in `PATH`
+      run: tox -e py
