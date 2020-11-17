@@ -28,4 +28,10 @@ List them
 Other Changes and Additions
 ---------------------------
 
+- Alphabetize name in credits [#8]
+
+- PR Template [#5]
+
+    + Updated [#11]
+
 - Use GitHub for CI [#12]
