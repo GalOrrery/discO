@@ -55,9 +55,9 @@ def load_Milky_Way_Sim_100(
 
         - 'ID'
         - 'mass' : solMass
-        - 'x' : pc
-        - 'y' : pc
-        - 'z' : pc
+        - 'x' : kpc
+        - 'y' : kpc
+        - 'z' : kpc
         - 'vx' : km / s
         - 'vy' : km / s
         - 'vz' : km / s
@@ -83,9 +83,9 @@ _docstring: str = """Load {component} Data from Milky Way Sim 100.
 
         - 'ID'
         - 'mass' : solMass
-        - 'x' : pc
-        - 'y' : pc
-        - 'z' : pc
+        - 'x' : kpc
+        - 'y' : kpc
+        - 'z' : kpc
         - 'vx' : km / s
         - 'vy' : km / s
         - 'vz' : km / s
