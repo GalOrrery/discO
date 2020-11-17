@@ -1,6 +1,6 @@
-==================
-M.m.X (yyyy-mm-dd)
-==================
+================
+0.1 (2020-11-17)
+================
 
 New Features
 ------------
@@ -28,4 +28,4 @@ List them
 Other Changes and Additions
 ---------------------------
 
-List them
+- Use GitHub for CI
