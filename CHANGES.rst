@@ -28,4 +28,4 @@ List them
 Other Changes and Additions
 ---------------------------
 
-- Use GitHub for CI
+- Use GitHub for CI [#12]
