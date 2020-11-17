@@ -158,7 +158,7 @@ def test_load_Milky_Way_Sim_100_disc():
 # -------------------------------------------------------------------
 
 
-def load_Milky_Way_Sim_100_halo():
+def test_load_Milky_Way_Sim_100_halo():
     """Test read method."""
     data = loaddata.load_Milky_Way_Sim_100_halo()
     assert data.colnames == ["ID", "mass", "x", "y", "z", "vx", "vy", "vz"]
