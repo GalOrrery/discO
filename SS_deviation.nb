@@ -1,0 +1,124 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      3746,        114]
+NotebookOptionsPosition[      3098,         94]
+NotebookOutlinePosition[      3447,        109]
+CellTagsIndexPosition[      3404,        106]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Phi", " ", "=", " ", 
+  RowBox[{"\[Epsilon]", "*", 
+   RowBox[{"Cos", "[", 
+    RowBox[{
+     RowBox[{"\[Alpha]", "*", 
+      RowBox[{"Log", "[", 
+       RowBox[{"r", "/", "rs"}], "]"}]}], "-", " ", 
+     RowBox[{"m", "*", "\[Theta]"}]}], "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.812299324365906*^9, 3.812299356510524*^9}, {
+  3.812299402275013*^9, 3.8122995377713437`*^9}, {3.812299818940111*^9, 
+  3.8122998200058928`*^9}, {3.8122999006745744`*^9, 3.8122999093768873`*^9}, {
+  3.8123001559084597`*^9, 3.8123001721667376`*^9}, {3.812300299371953*^9, 
+  3.8123003015950623`*^9}},ExpressionUUID->"1a3cd121-f0d7-4b0b-8a31-\
+cef8810b9fb0"],
+
+Cell[BoxData[
+ RowBox[{"\[Epsilon]", " ", 
+  RowBox[{"Cos", "[", 
+   RowBox[{
+    RowBox[{"m", " ", "\[Theta]"}], "-", 
+    RowBox[{"\[Alpha]", " ", 
+     RowBox[{"Log", "[", 
+      FractionBox["r", "rs"], "]"}]}]}], "]"}]}]], "Output",
+ CellChangeTimes->{3.812299821517456*^9, 3.812299912268588*^9, 
+  3.812300302425089*^9},ExpressionUUID->"4bdcfee5-4a3f-47e2-8f72-\
+0eb84943074a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"Simplify", "[", 
+   RowBox[{
+    RowBox[{"Laplacian", "[", 
+     RowBox[{"Phi", ",", 
+      RowBox[{"{", 
+       RowBox[{"r", ",", "\[Theta]", ",", "z"}], "}"}], ",", 
+      "\"\<Cylindrical\>\""}], "]"}], " ", "/", " ", 
+    RowBox[{"(", 
+     RowBox[{"4", "*", "\[Pi]", "*", "G"}], ")"}]}], "]"}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{3.8122998802940083`*^9, 3.8122998856883087`*^9}, {
+  3.8122999428034587`*^9, 3.8122999445556717`*^9}, {3.8122999842974052`*^9, 
+  3.8123001315872946`*^9}, {3.812300177352112*^9, 3.8123001803575807`*^9}, {
+  3.812300213842621*^9, 
+  3.812300395212168*^9}},ExpressionUUID->"d2abdc2c-8726-44cf-b72d-\
+1bcf85b987d6"],
+
+Cell[BoxData[
+ RowBox[{"-", 
+  FractionBox[
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      SuperscriptBox["m", "2"], "+", 
+      SuperscriptBox["\[Alpha]", "2"]}], ")"}], " ", "\[Epsilon]", " ", 
+    RowBox[{"Cos", "[", 
+     RowBox[{
+      RowBox[{"m", " ", "\[Theta]"}], "-", 
+      RowBox[{"\[Alpha]", " ", 
+       RowBox[{"Log", "[", 
+        FractionBox["r", "rs"], "]"}]}]}], "]"}]}], 
+   RowBox[{"4", " ", "G", " ", "\[Pi]", " ", 
+    SuperscriptBox["r", "2"]}]]}]], "Output",
+ CellChangeTimes->{{3.812300115175284*^9, 3.812300134601759*^9}, {
+   3.81230026401114*^9, 3.8123003186143255`*^9}, 3.8123003504348726`*^9, 
+   3.812300396173873*^9},ExpressionUUID->"838887bb-5b71-45cf-87cd-\
+50eefe8b75b6"]
+}, Open  ]]
+},
+WindowSize->{759, 526},
+WindowMargins->{{Automatic, 108}, {101, Automatic}},
+FrontEndVersion->"11.2 for Microsoft Windows (64-bit) (September 10, 2017)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 662, 14, 28, "Input",ExpressionUUID->"1a3cd121-f0d7-4b0b-8a31-cef8810b9fb0"],
+Cell[1245, 38, 382, 10, 53, "Output",ExpressionUUID->"4bdcfee5-4a3f-47e2-8f72-0eb84943074a"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1664, 53, 705, 17, 48, "Input",ExpressionUUID->"d2abdc2c-8726-44cf-b72d-1bcf85b987d6"],
+Cell[2372, 72, 710, 19, 103, "Output",ExpressionUUID->"838887bb-5b71-45cf-87cd-50eefe8b75b6"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+
