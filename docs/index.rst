@@ -105,26 +105,26 @@ Project details
 .. |astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
    :target: http://www.astropy.org/
 
-.. |Build Status| image:: https://travis-ci.com/nstarman/utilipy.svg?branch=master
-    :target: https://travis-ci.com/nstarman/utilipy
+.. |Build Status| image:: https://travis-ci.com/nstarman/discO.svg?branch=master
+    :target: https://travis-ci.com/nstarman/discO
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/utilipy/badge/?version=latest
-   :target: https://utilipy.readthedocs.io/en/latest/?badge=latest
+.. |Documentation Status| image:: https://readthedocs.org/projects/discO/badge/?version=latest
+   :target: https://discO.readthedocs.io/en/latest/?badge=latest
 
 .. |License| image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
    :target: https://opensource.org/licenses/BSD-3-Clause
 
-.. |PyPI| image:: https://badge.fury.io/py/utilipy.svg
-   :target: https://badge.fury.io/py/utilipy
+.. |PyPI| image:: https://badge.fury.io/py/discO.svg
+   :target: https://badge.fury.io/py/discO
 
-.. |Milestones| image:: https://img.shields.io/github/milestones/open/nstarman/utilipy?style=flat
+.. |Milestones| image:: https://img.shields.io/github/milestones/open/nstarman/discO?style=flat
    :alt: GitHub milestones
 
-.. |Open Issues| image:: https://img.shields.io/github/issues-raw/nstarman/utilipy?style=flat
+.. |Open Issues| image:: https://img.shields.io/github/issues-raw/nstarman/discO?style=flat
    :alt: GitHub issues
 
-.. |Last Commit| image:: https://img.shields.io/github/last-commit/nstarman/utilipy/master?style=flat
+.. |Last Commit| image:: https://img.shields.io/github/last-commit/nstarman/discO/master?style=flat
    :alt: GitHub last commit (branch)
 
-.. |Codecov| image:: https://codecov.io/gh/nstarman/utilipy/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/nstarman/utilipy
+.. |Codecov| image:: https://codecov.io/gh/nstarman/discO/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/nstarman/discO
