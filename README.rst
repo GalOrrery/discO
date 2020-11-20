@@ -28,7 +28,7 @@ The code is included in the ``discO`` folder.
 Documentation
 -------------
 
-|Documentation Status| 
+|Documentation Status|
 
 The documentation for ``discO`` is hosted on `Read the docs <https://readthedocs.org/projects/discO/badge/?version=latest>`_.
 

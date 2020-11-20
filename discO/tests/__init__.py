@@ -14,10 +14,7 @@ __all__ = [
 
 # BUILT IN
 
-# THIRD PARTY
-
 # PROJECT-SPECIFIC
-
 from . import test_init
 
 ##############################################################################

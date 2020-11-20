@@ -11,14 +11,13 @@ other information are set in the setup.cfg file.
 ##############################################################################
 # IMPORTS
 
+# BUILT-IN
 import os
 import sys
 
-from setuptools import setup
-
+# THIRD PARTY
 from extension_helpers import get_extensions
-
-
+from setuptools import setup
 
 ##############################################################################
 # PARAMETERS
@@ -95,9 +94,11 @@ except Exception:
 
 setup(
     use_scm_version={
-        'write_to': os.path.join('discO', 'version.py'),
-        'write_to_template': VERSION_TEMPLATE},
-      ext_modules=get_extensions())
+        "write_to": os.path.join("discO", "version.py"),
+        "write_to_template": VERSION_TEMPLATE,
+    },
+    ext_modules=get_extensions(),
+)
 
 
 ##############################################################################
