@@ -62,6 +62,19 @@ exclude_patterns.append('_templates')
 # This is added to the end of RST files - a good place to put substitutions to
 # be used globally.
 rst_epilog += """
+
+..
+    RST LINKS
+
+.. ASTROPY
+
+.. |CoordinateFrame| replace:: :class:`~astropy.coordinates.BaseCoordinateFrame`
+
+
+.. NUMPY
+
+.. |NDArray| replace:: :class:`~numpy.ndarray`
+
 """
 
 # -- Project information ------------------------------------------------------
