@@ -34,4 +34,4 @@ Other Changes and Additions
 
     + Updated [#11]
 
-- Use GitHub for CI [#12]
+- Issues Templates [#14]
