@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Configure Test Suite.
 
 This file is used to configure the behavior of pytest when using the Astropy
@@ -10,9 +11,11 @@ packagename.test
 ##############################################################################
 # IMPORTS
 
+# BUILT-IN
 import os
-import pytest
 
+# THIRD PARTY
+import pytest
 from astropy.version import version as astropy_version
 
 # For Astropy 3.0 and later, we can use the standalone pytest plugin
@@ -58,6 +61,7 @@ def pytest_configure(config):
         PYTEST_HEADER_MODULES.pop("Pandas", None)
         PYTEST_HEADER_MODULES["scikit-image"] = "skimage"
 
+        # PROJECT-SPECIFIC
         from . import __version__
 
         packagename = os.path.basename(os.path.dirname(__file__))
@@ -66,23 +70,46 @@ def pytest_configure(config):
 
 # /def
 
+
 # ------------------------------------------------------
-# Added by @nstarman
 
 
 @pytest.fixture(autouse=True)
-def add_units(doctest_namespace):
-    """Add Imports to Pytest.
+def add_numpy(doctest_namespace):
+    """Add NumPy to Pytest.
 
     Parameters
     ----------
     doctest_namespace : namespace
 
     """
-    # import
+    # THIRD PARTY
+    import numpy
+
+    # add to namespace
+    doctest_namespace["np"] = numpy
+
+    return
+
+
+# def
+
+
+@pytest.fixture(autouse=True)
+def add_astropy(doctest_namespace):
+    """Add Astropy stuff to Pytest.
+
+    Parameters
+    ----------
+    doctest_namespace : namespace
+
+    """
+    # THIRD PARTY
+    import astropy.coordinates as coord
     import astropy.units
 
     # add to namespace
+    doctest_namespace["coord"] = coord
     doctest_namespace["u"] = astropy.units
 
     return

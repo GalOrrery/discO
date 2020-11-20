@@ -22,13 +22,11 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT IN
-from typing_extensions import Literal
-
 # THIRD PARTY
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.decorators import format_doc
+from typing_extensions import Literal
 
 ##############################################################################
 # CODE
