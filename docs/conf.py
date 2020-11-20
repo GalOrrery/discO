@@ -29,8 +29,6 @@
 import datetime
 import os
 import sys
-
-# Get configuration information from setup.cfg
 from configparser import ConfigParser
 from importlib import import_module
 
