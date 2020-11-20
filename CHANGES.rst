@@ -36,6 +36,8 @@ Other Changes and Additions
 
 - Use GitHub for CI [#12]
 
+- Dependabot yml [#13]
+
 - Issues Templates [#14]
 
 - Update from project template [#18]
