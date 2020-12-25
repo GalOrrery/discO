@@ -36,7 +36,7 @@ from astropy.coordinates import SkyCoord
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
-from discO.common import FrameLikeType
+from discO.common import FrameLikeType, SkyCoordType
 from discO.utils import resolve_frame_like
 
 ##############################################################################
@@ -123,7 +123,7 @@ class PotentialSampler(PotentialBase):
 
     def __call__(
         self, n: int = 1, *, frame: T.Optional[FrameLikeType] = None, **kwargs
-    ):
+    ) -> SkyCoordType:
         """Sample.
 
         Parameters
@@ -150,7 +150,7 @@ class PotentialSampler(PotentialBase):
 
     def sample(
         self, n: int = 1, *, frame: T.Optional[FrameLikeType] = None, **kwargs
-    ):
+    ) -> SkyCoordType:
         """Draw a sample from the potential.
 
         Parameters

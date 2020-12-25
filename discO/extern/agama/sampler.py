@@ -20,7 +20,7 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 
 # PROJECT-SPECIFIC
-from discO.common import FrameLikeType
+from discO.common import FrameLikeType, SkyCoordType
 from discO.core.sampler import PotentialSampler
 
 ##############################################################################
@@ -43,7 +43,7 @@ class AGAMAPotentialSampler(PotentialSampler, package="agama"):
 
     def __call__(
         self, n: int = 1, frame: T.Optional[FrameLikeType] = None, **kwargs
-    ):
+    ) -> SkyCoordType:
         """Sample.
 
         Parameters
