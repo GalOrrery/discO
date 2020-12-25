@@ -22,7 +22,10 @@ import astropy.units as u
 
 EllipsisType = type(Ellipsis)
 
-UnitType = T.TypeVar("Unit", bound=u.UnitBase)
+UnitType = T.Union[
+    T.TypeVar("Unit", bound=u.UnitBase),
+    T.TypeVar("FunctionUnit", bound=u.FunctionUnitBase),
+]
 QuantityType = T.TypeVar("Quantity", bound=u.Quantity)
 
 
@@ -30,7 +33,7 @@ FrameType = T.TypeVar("CoordinateFrame", bound=coord.BaseCoordinateFrame)
 SkyCoordType = T.TypeVar("SkyCoord", bound=coord.SkyCoord)
 CoordinateType = T.Union[FrameType, SkyCoordType]
 
-FrameLikeType = T.Union[FrameType, SkyCoordType, str]
+FrameLikeType = T.Union[CoordinateType, str]
 
 ##############################################################################
 # END
