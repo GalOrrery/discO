@@ -96,7 +96,7 @@ If you make use of this code, consider citing the Zenodo DOI as a software citat
    :target: https://github.com/psf/black
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/discO/badge/?version=latest
-   :target: https://discO.readthedocs.io/en/latest/?badge=latest
+   :target: https://astro-discO.readthedocs.io/en/latest/?badge=latest
 
 .. |DOI| replace:: GET FROM ZENODO
 
