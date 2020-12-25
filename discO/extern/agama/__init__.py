@@ -10,10 +10,10 @@ __all__ = []
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from . import sampler
-from .sampler import *  # noqa: F401, F403
+from . import sample
+from .sample import *  # noqa: F401, F403
 
-__all__ += sampler.__all__
+__all__ += sample.__all__
 
 
 ##############################################################################

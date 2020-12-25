@@ -21,7 +21,7 @@ from astropy.coordinates import SkyCoord
 
 # PROJECT-SPECIFIC
 from discO.common import FrameLikeType, SkyCoordType
-from discO.core.sampler import PotentialSampler
+from discO.core.sample import PotentialSampler
 
 ##############################################################################
 # CODE

@@ -288,7 +288,7 @@ class PotentialSampler(PotentialBase):
 
         For frame is None ``resolve_frame_like`` returns the default
         frame from the config file. Instead, we want the default
-        frame of the footprint.
+        frame of the potential.
 
         Returns
         -------

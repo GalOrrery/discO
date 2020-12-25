@@ -18,7 +18,7 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 from discO.common import FrameLikeType
-from discO.core.sampler import PotentialSampler
+from discO.core.sample import PotentialSampler
 
 ##############################################################################
 # CODE
