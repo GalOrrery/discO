@@ -44,6 +44,20 @@ class PotentialBase(ABC):
     """
 
     def __init_subclass__(cls, package: T.Union[str, ModuleType, None] = None):
+        """Initialize a subclass.
+
+        Parameters
+        ----------
+        package : str or `~types.ModuleType` or None (optional)
+
+            If the package is not None, resolves package module
+            and stores it in attribute ``_package``.
+
+            .. todo::
+
+                Maybe store as a string instead.
+
+        """
         super().__init_subclass__()
 
         if package is not None:
@@ -64,6 +78,16 @@ class PotentialBase(ABC):
     @abstractmethod
     def _registry(self):
         """The class registry. Need to override."""
+        pass
+
+    # /def
+
+    #################################################################
+    # Running
+
+    @abstractmethod
+    def __call__(self):
+        """Call. Must be overwritten."""
         pass
 
     # /def

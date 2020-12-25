@@ -19,7 +19,7 @@ __all__ = [
 
 
 class Conf(_config.ConfigNamespace):
-    """Configuration parameters for `skycover.footprint`."""
+    """Configuration parameters for :mod:`~discO`."""
 
     # Footprint
 

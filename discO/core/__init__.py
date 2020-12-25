@@ -11,11 +11,13 @@ __all__ = []
 # flatten structure
 
 # PROJECT-SPECIFIC
-from . import sampler
-from .sampler import *  # noqa: F401, F403
+from . import sample
+from .sample import *  # noqa: F401, F403
+from .measurement import *  # noqa: F401, F403
 
 # alls
-__all__ += sampler.__all__
+__all__ += sample.__all__
+__all__ += measurement.__all__
 
 
 ##############################################################################
