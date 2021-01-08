@@ -16,7 +16,7 @@ A Worked Example
 ================
 
 First we do the standard set of imports. In this example we will be
-sampling from 
+sampling from
 
     >>> from discO import PotentialSampler
 
