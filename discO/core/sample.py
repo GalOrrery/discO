@@ -8,10 +8,27 @@
 
     - plugin for registering classes
 
+Introduction
+************
+
+What is ``PotentialSampler``?
+
 
 Registering a Sampler
 *********************
-a
+
+Registering a sampler is easy. All you need to do is subclass
+``PotentialSampler`` and provide information about the sampling object's
+package.
+
+For example
+
+Let's do this for galpy
+
+.. code-block::
+
+    class GalpyPotentialSampler(PotentialSampler):
+
 
 
 """
@@ -140,9 +157,6 @@ class PotentialSampler(PotentialBase):
         `SkyCoord`
 
         """
-        # # Get preferred frame
-        # frame = self._preferred_frame_resolve(frame)
-
         # call on instance
         return self._instance(n=n, frame=frame, **kwargs)
 

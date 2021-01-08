@@ -17,7 +17,7 @@ __all__ = [
 # BUILT-IN
 import inspect
 import typing as T
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from types import ModuleType
 
 # THIRD PARTY
@@ -32,7 +32,7 @@ from astropy.utils.introspection import resolve_name
 ##############################################################################
 
 
-class PotentialBase(ABC):
+class PotentialBase(metaclass=ABCMeta):
     """Sample a Potential.
 
     Raises
