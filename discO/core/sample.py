@@ -54,7 +54,7 @@ from astropy.coordinates import SkyCoord
 # PROJECT-SPECIFIC
 from .core import PotentialBase
 from discO.common import FrameLikeType, SkyCoordType
-from discO.utils import resolve_frame_like
+from discO.utils import resolve_framelike
 
 ##############################################################################
 # PARAMETERS
@@ -131,7 +131,7 @@ class PotentialSampler(PotentialBase):
         self, potential, *, frame: T.Optional[FrameLikeType] = None, **kwargs
     ):
         self._sampler = potential
-        self._frame = resolve_frame_like(frame)
+        self._frame = resolve_framelike(frame)
 
     # /def
 
@@ -298,9 +298,9 @@ class PotentialSampler(PotentialBase):
     # utils
 
     def _preferred_frame_resolve(self, frame: T.Optional[FrameLikeType]):
-        """Call `resolve_frame_like`, but default to preferred frame.
+        """Call `resolve_framelike`, but default to preferred frame.
 
-        For frame is None ``resolve_frame_like`` returns the default
+        For frame is None ``resolve_framelike`` returns the default
         frame from the config file. Instead, we want the default
         frame of the potential.
 
@@ -313,7 +313,7 @@ class PotentialSampler(PotentialBase):
         if frame is None:
             frame = self._frame
 
-        return resolve_frame_like(frame)
+        return resolve_framelike(frame)
 
     # /def
 

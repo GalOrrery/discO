@@ -112,7 +112,7 @@ discO.extern.galpy
 discO.utils
 ^^^^^^^^^^^
 
-- resolve_frame_like [#17]
+- resolve_framelike [#17]
 
     Determine the frame and return a blank instance for anything that can be
     used in ``frame=`` in  ``Skycoord(...,frame=)``

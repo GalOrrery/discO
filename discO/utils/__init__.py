@@ -4,7 +4,7 @@
 """Utilities."""
 
 __all__ = [
-    "resolve_frame_like",
+    "resolve_framelike",
 ]
 
 
@@ -30,7 +30,7 @@ from discO.config import conf
 ##############################################################################
 
 
-def resolve_frame_like(
+def resolve_framelike(
     frame: T.Optional[FrameLikeType], error_if_not_type: bool = True
 ):
     """Determine the frame and return a blank instance.
@@ -60,9 +60,9 @@ def resolve_frame_like(
     # If no frame is specified, assume that the input footprint is in a
     # frame specified in the configuration
     if frame is None:
-        name: str = conf.default_frame
-        frame = sky_coordinate_parsers._get_frame_class(name.lower())()
-    elif isinstance(frame, str):
+        frame: str = conf.default_frame
+
+    if isinstance(frame, str):
         frame = sky_coordinate_parsers._get_frame_class(frame.lower())()
     elif isinstance(frame, BaseCoordinateFrame):
         frame = frame.replicate_without_data()
