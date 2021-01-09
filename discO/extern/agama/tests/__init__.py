@@ -43,12 +43,6 @@ __author__ = ""
 
 # BUILT IN
 
-# THIRD PARTY
-
-# FIRST PARTY
-
-# PROJECT-SPECIFIC
-
 
 ##############################################################################
 # END

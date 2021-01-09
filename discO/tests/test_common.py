@@ -40,7 +40,6 @@ class Test_QuantityType(TypeVarTests, obj=common.QuantityType):
 
 
 class Test_FrameType(TypeVarTests, obj=common.FrameType):
-
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""

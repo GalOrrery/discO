@@ -7,8 +7,8 @@
 __all__ = []
 
 
+# PROJECT-SPECIFIC
 from discO.setup_package import HAS_AGAMA, HAS_GALPY
-
 
 if HAS_AGAMA:
     from .agama import AGAMAPotentialSampler

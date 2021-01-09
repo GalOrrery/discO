@@ -12,8 +12,10 @@ __all__ = [
 
 # THIRD PARTY
 import pytest
-from discO.tests.helper import ObjectTest
+
+# PROJECT-SPECIFIC
 from discO.core import core
+from discO.tests.helper import ObjectTest
 
 ##############################################################################
 # TESTS
@@ -51,7 +53,6 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
 
 # -------------------------------------------------------------------
-
 
 
 ##############################################################################

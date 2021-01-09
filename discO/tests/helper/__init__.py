@@ -13,8 +13,8 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from .objecttest import ObjectTest
 from .conf_tests import ConfigNamespacTests
+from .objecttest import ObjectTest
 from .typevar_tests import TypeVarTests
 
 ##############################################################################

@@ -10,6 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
+# PROJECT-SPECIFIC
 from discO import config
 from discO.tests.helper import ConfigNamespacTests
 

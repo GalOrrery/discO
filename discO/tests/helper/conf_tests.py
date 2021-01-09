@@ -21,9 +21,7 @@ from .objecttest import ObjectTest
 ##############################################################################
 
 
-class ConfigNamespacTests(
-    ObjectTest, obj=_config.ConfigNamespace
-):
+class ConfigNamespacTests(ObjectTest, obj=_config.ConfigNamespace):
     """`~astropy.config.ConfigNamespace` Testing Framework."""
 
     def __init_subclass__(cls, conf: object, **kwargs):
