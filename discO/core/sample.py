@@ -46,6 +46,7 @@ __all__ = [
 import itertools
 import typing as T
 from types import MappingProxyType, ModuleType
+import warnings
 
 # THIRD PARTY
 import numpy as np
@@ -99,16 +100,32 @@ class PotentialSampler(PotentialBase):
 
     """
 
+    #################################################################
+    # On the class
+
     _registry = MappingProxyType(SAMPLER_REGISTRY)
 
     def __init_subclass__(cls, package: T.Union[str, ModuleType] = None):
+        """Initialize subclass, adding to registry by `package`.
+
+        This method applies to all subclasses, not matter the
+        inheritance depth, unless the MRO overrides.
+
+        """
         super().__init_subclass__(package=package)
 
-        if package is not None:
-
+        if package is not None:  # same trigger as PotentialBase
+            # cls._package defined in super()
             SAMPLER_REGISTRY[cls._package] = cls
 
+        # TODO? insist that subclasses define a __call__ method
+        # this "abstractifies" the base-class even though it can be used
+        # as a wrapper class.
+
     # /def
+
+    #################################################################
+    # On the instance
 
     def __new__(
         cls,
@@ -121,18 +138,20 @@ class PotentialSampler(PotentialBase):
         self = super().__new__(cls)
 
         # The class PotentialSampler is a wrapper for anything in its registry
-        # If directly instantiating a PotentialSampler (not subclass) we must also
-        # instantiate the appropriate subclass. Error if can't find.
+        # If directly instantiating a PotentialSampler (not subclass) we must
+        # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
+            # infer the package, to add to registry
             package = self._infer_package(potential, package)
 
             if package not in cls._registry:
                 raise ValueError(
-                    f"PotentialSampler has no registered sampler for package: {package}"
+                    "PotentialSampler has no registered sampler for package: "
+                    f"{package}"
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[package](potential)
+            instance = cls[package](potential=potential)
 
             if return_specific_class:  # Whether to return class or subclass
                 return instance
@@ -144,9 +163,14 @@ class PotentialSampler(PotentialBase):
                 "Can't specify 'package' on PotentialSampler subclasses."
             )
 
+        elif return_specific_class is not False:
+            warnings.warn("Ignoring argument `return_specific_class`")
+
         return self
 
     # /def
+
+    # ---------------------------------------------------------------
 
     def __init__(
         self, potential, *, frame: T.Optional[FrameLikeType] = None, **kwargs
@@ -157,7 +181,7 @@ class PotentialSampler(PotentialBase):
 
     # /def
 
-    # ------------------------------------------
+    #################################################################
     # Sampling
 
     def __call__(
@@ -184,6 +208,8 @@ class PotentialSampler(PotentialBase):
 
     # /def
 
+    # ---------------------------------------------------------------
+
     def sample(
         self, n: int = 1, *, frame: T.Optional[FrameLikeType] = None, **kwargs
     ) -> SkyCoordType:
@@ -207,6 +233,8 @@ class PotentialSampler(PotentialBase):
         return self(n=n, frame=frame, **kwargs)
 
     # /def
+
+    # ---------------------------------------------------------------
 
     # TODO better name
     def resampler(

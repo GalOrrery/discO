@@ -105,7 +105,7 @@ class MeasurementErrorSampler(PotentialBase):
         inheritance depth, unless the MRO overrides.
 
         """
-        super().__init_subclass__()
+        super().__init_subclass__(package=None)
 
         key = cls.__name__
         if key in cls._registry:
@@ -113,7 +113,7 @@ class MeasurementErrorSampler(PotentialBase):
 
         MEASURE_REGISTRY[key] = cls
 
-        # TODO? insist that define a __call__ method
+        # TODO? insist that subclasses define a __call__ method
         # this "abstractifies" the base-class even though it can be used
         # as a wrapper class.
 
@@ -140,7 +140,8 @@ class MeasurementErrorSampler(PotentialBase):
             # a cleaner error than KeyError on the actual registry
             if method is None or method not in cls._registry:
                 raise ValueError(
-                    f"{cls} has no registered measurement resampler '{method}'"
+                    "MeasurementErrorSampler has no registered "
+                    f"measurement resampler '{method}'"
                 )
 
             # from registry. Registered in __init_subclass__
@@ -159,7 +160,6 @@ class MeasurementErrorSampler(PotentialBase):
             )
 
         elif return_specific_class is not False:
-
             warnings.warn("Ignoring argument `return_specific_class`")
 
         return self
@@ -173,7 +173,7 @@ class MeasurementErrorSampler(PotentialBase):
     # /def
 
     #################################################################
-    # Calling
+    # Sampling
 
     def __call__(
         self, c: FrameLikeType, c_err: FrameLikeType = None, *args, **kwargs

@@ -47,6 +47,10 @@ class Test_MeasurementErrorSampler(
 
     def test___init_subclass__(self):
         """Test subclassing."""
+        # can't run tests on super b/c doesn't accept "package"
+        # super().test___init_subclass__()
+
+        # -------------------------------
         try:
             # registered by name
             class SubClass1(self.obj):
@@ -89,6 +93,10 @@ class Test_MeasurementErrorSampler(
         should carry though.
 
         """
+        # run tests on super
+        super().test__registry()
+
+        # -------------------------------
         assert isinstance(self.obj._registry, MappingProxyType)
 
         # The GaussianMeasurementErrorSampler is already registered, so can
@@ -105,8 +113,10 @@ class Test_MeasurementErrorSampler(
 
     def test___class_getitem__(self):
         """Test method ``__class_getitem__``."""
+        # run tests on super
         super().test___class_getitem__()
 
+        # -------------------------------
         # test a specific item in the registry
         assert (
             self.obj["GaussianMeasurementErrorSampler"]
@@ -124,6 +134,9 @@ class Test_MeasurementErrorSampler(
         a MeasurementErrorSampler than one of it's subclasses.
 
         """
+        # there are no tests on super
+        # super().test___new__()
+
         # --------------------------
         if self.obj is measurement.MeasurementErrorSampler:
 
@@ -133,9 +146,9 @@ class Test_MeasurementErrorSampler(
                 self.obj()
 
             assert (
-                f"{self.obj} has no registered measurement resampler"
-                in str(e.value)
-            )
+                "MeasurementErrorSampler has no "
+                "registered measurement resampler"
+            ) in str(e.value)
 
             # ---------------
             # with return_specific_class
@@ -205,6 +218,10 @@ class Test_MeasurementErrorSampler(
     @abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
+        # run tests on super
+        super().test___init__()
+
+        # --------------------------
         pass  # for subclasses. The setup_class actually tests this for here.
 
     # /def
@@ -218,7 +235,10 @@ class Test_MeasurementErrorSampler(
         which is GaussianMeasurementErrorSampler.
 
         """
-        # ---------------
+        # run tests on super
+        super().test___call__()
+
+        # --------------------------
         # with c_err
 
         self.inst(self.c, self.c_err)
@@ -258,6 +278,10 @@ class Test_GaussianMeasurementErrorSampler(
     @abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
+        # run tests on super
+        super().test___init__()
+
+        # --------------------------
         #  The setup_class actually tests this for here.
         assert hasattr(self.inst, "c_err")
 
@@ -265,7 +289,6 @@ class Test_GaussianMeasurementErrorSampler(
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``."""
         # --------------------------
@@ -310,7 +333,7 @@ class Test_GaussianMeasurementErrorSampler(
 
         with pytest.raises(NotImplementedError):
 
-            self.inst(self.c, Exception)
+            self.inst(self.c, c_err=Exception())
 
     # /def
 

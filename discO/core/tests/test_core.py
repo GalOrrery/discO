@@ -74,7 +74,6 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
     @abstractmethod
     def test___class_getitem__(self):
         """Test method ``__class_getitem__``."""
-
         # _registry can either be a property (for abstract base-classes)
         # or a Mapping, for normal classes.
         assert isinstance(self.obj._registry, (property, Mapping))
@@ -92,11 +91,15 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
     @abstractmethod
     def test___init__(self):
+        """Test method ``__init__``."""
+        if self.obj is core.PotentialBase:
 
-        with pytest.raises(TypeError) as e:
-            self.obj()
+            with pytest.raises(TypeError) as e:
+                self.obj()
 
-        assert "Can't instantiate abstract class" in str(e.value)
+            assert "Can't instantiate abstract class" in str(e.value)
+
+        # else: subclasses have to do their own.
 
     # /def
 

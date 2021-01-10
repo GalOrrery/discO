@@ -30,17 +30,25 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         """Setup fixtures for testing."""
         cls.potential = object()
 
+        # cls.inst = cls.obj(potential, package="GaussianMeasurementErrorSampler")
+
     # /def
 
-    # -------------------------------
+    #################################################################
+    # Method Tests
 
     def test___init_subclass__(self):
         """Test subclassing."""
-        # When package is None
+        # When package is None, it is not registered
         class SubClasss1(self.obj):
             pass
 
         assert None not in sample.SAMPLER_REGISTRY
+        assert SubClasss1 not in sample.SAMPLER_REGISTRY.values()
+
+
+        # ------------------------
+        # register a new 
 
         try:
 
