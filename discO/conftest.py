@@ -50,16 +50,17 @@ else:
 # Test collection: ignore patterns
 
 collect_ignore = ["setup.py"]
+collect_ignore_glob = []
 
 # AGAMA
 SKIP_NO_AGAMA = pytest.mark.skipif(not HAS_AGAMA, reason="needs agama")
 if not HAS_AGAMA:
-    collect_ignore.append("extern/agama/")
+    collect_ignore_glob.append("extern/agama/*")
 
 # Galpy
 SKIP_NO_GALPY = pytest.mark.skipif(not HAS_GALPY, reason="needs galpy")
 if not HAS_GALPY:
-    collect_ignore.append("extern/galpy/")
+    collect_ignore_glob.append("extern/galpy/*")
 
 
 # ------------------------------------------------------
