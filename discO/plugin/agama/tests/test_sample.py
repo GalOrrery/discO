@@ -17,7 +17,6 @@ import pytest
 from discO.core.tests.test_sample import Test_PotentialSampler
 from discO.plugin.agama import sample
 
-
 ##############################################################################
 # TESTS
 ##############################################################################

@@ -45,8 +45,8 @@ __all__ = [
 # BUILT-IN
 import itertools
 import typing as T
-from types import MappingProxyType, ModuleType
 import warnings
+from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import numpy as np
