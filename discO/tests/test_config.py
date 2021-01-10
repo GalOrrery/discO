@@ -3,7 +3,7 @@
 """Testing :mod:`~discO.common`."""
 
 __all__ = [
-    "Test_QuantityType",
+    "Test_conf",
 ]
 
 
@@ -19,7 +19,7 @@ from discO.tests.helper import ConfigNamespacTests
 ##############################################################################
 
 
-class Test_Config(ConfigNamespacTests, conf=config.conf):
+class Test_conf(ConfigNamespacTests, conf=config.conf):
     pass
 
 

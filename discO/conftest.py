@@ -18,6 +18,9 @@ import os
 import pytest
 from astropy.version import version as astropy_version
 
+# PROJECT-SPECIFIC
+from .setup_package import HAS_AGAMA, HAS_GALPY
+
 # For Astropy 3.0 and later, we can use the standalone pytest plugin
 if astropy_version < "3.0":
     from astropy.tests.pytest_plugins import *  # noqa
@@ -41,6 +44,25 @@ else:
 ##############################################################################
 # CODE
 ##############################################################################
+
+
+# ------------------------------------------------------
+# Test collection: ignore patterns
+
+collect_ignore = ["setup.py"]
+
+# AGAMA
+SKIP_NO_AGAMA = pytest.mark.skipif(not HAS_AGAMA, reason="needs agama")
+if not HAS_AGAMA:
+    collect_ignore.append("extern/agama/")
+
+# Galpy
+SKIP_NO_GALPY = pytest.mark.skipif(not HAS_GALPY, reason="needs galpy")
+if not HAS_GALPY:
+    collect_ignore.append("extern/galpy/")
+
+
+# ------------------------------------------------------
 
 
 def pytest_configure(config):

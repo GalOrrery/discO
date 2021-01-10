@@ -28,7 +28,7 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
-from abc import abstractmethod
+import warnings
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -54,14 +54,13 @@ MEASURE_REGISTRY = dict()  # package : measurer
 
 
 class MeasurementErrorSampler(PotentialBase):
-    """Resample given observational errors.
+    """Draw a realization given measurement errors.
 
     Parameters
     ----------
-    potential
-        The potential object.
-    frame : frame-like or None (optional, keyword only)
-        The preferred frame in which to sample.
+    c_err : callable or None (optional)
+        Callable with single mandatory positional argument -- coordinates
+        ("c") -- that returns the absolute error.
 
     Returns
     -------
@@ -70,35 +69,137 @@ class MeasurementErrorSampler(PotentialBase):
 
     Other Parameters
     ----------------
-    package : `~types.ModuleType` or str or None (optional, keyword only)
-        The package to which the `potential` belongs.
-        If not provided (None, default) tries to infer from `potential`.
+    method : str or None (optional, keyword only)
+        The method to use for resampling given measurement error.
+        Only used if directly instantiating a MeasurementErrorSampler, not a
+        subclass.
     return_specific_class : bool (optional, keyword only)
-        Whether to return a `PotentialSampler` or package-specific subclass.
-        This only applies if instantiating a `PotentialSampler`.
-        Default False.
+        Whether to return a `PotentialSampler` (if False, default) or
+        package-specific subclass (if True).
+        Only used if directly instantiating a MeasurementErrorSampler, not a
+        subclass.
+
+    Raises
+    ------
+    KeyError
+        On class declaration if class registry information already exists,
+        eg. if registering two classes with the same name.s
+
+    ValueError
+        - If directly instantiating a MeasurementErrorSampler (not a subclass)
+          and `method` is not in the registry
+        - If instantiating a MeasurementErrorSampler subclass and `method` is
+          not None.
 
     """
+
+    #################################################################
+    # On the class
 
     _registry = MappingProxyType(MEASURE_REGISTRY)
 
     def __init_subclass__(cls):
+        """Initialize subclass, adding to registry by class name.
+
+        This method applies to all subclasses, not matter the
+        inheritance depth, unless the MRO overrides.
+
+        """
         super().__init_subclass__()
 
-        MEASURE_REGISTRY[cls.__name__] = cls
+        key = cls.__name__
+        if key in cls._registry:
+            raise KeyError(f"`{key}` sampler already in registry.")
 
-    # /defs
+        MEASURE_REGISTRY[key] = cls
 
-    def __init__(self, c_err=None):
+        # TODO? insist that define a __call__ method
+        # this "abstractifies" the base-class even though it can be used
+        # as a wrapper class.
 
+    # /def
+
+    #################################################################
+    # On the instance
+
+    def __new__(
+        cls,
+        c_err=None,
+        *,
+        method: T.Optional[str] = None,
+        return_specific_class: bool = False,
+    ):
+        self = super().__new__(cls)
+
+        # The class MeasurementErrorSampler is a wrapper for anything in its
+        # registry If directly instantiating a MeasurementErrorSampler (not
+        # subclass) we must also instantiate the appropriate subclass. Error
+        # if can't find.
+        if cls is MeasurementErrorSampler:
+
+            # a cleaner error than KeyError on the actual registry
+            if method is None or method not in cls._registry:
+                raise ValueError(
+                    f"{cls} has no registered measurement resampler '{method}'"
+                )
+
+            # from registry. Registered in __init_subclass__
+            instance = cls[method](c_err=c_err)
+
+            # Whether to return class or subclass
+            # else continue, storing instance
+            if return_specific_class:
+                return instance
+
+            self._instance = instance
+
+        elif method is not None:
+            raise ValueError(
+                "Can't specify 'method' on MeasurementErrorSampler subclasses."
+            )
+
+        elif return_specific_class is not False:
+
+            warnings.warn("Ignoring argument `return_specific_class`")
+
+        return self
+
+    # /def
+
+    def __init__(self, c_err: T.Optional[callable] = None, **kwargs):
         self.c_err = c_err
 
     # /def
 
-    @abstractmethod
-    def __call__(self, c: FrameLikeType, c_err: FrameLikeType):
+    #################################################################
+    # Calling
 
-        pass
+    def __call__(
+        self, c: FrameLikeType, c_err: FrameLikeType, *args, **kwargs
+    ):
+        """Draw a realization given Measurement error.
+
+        Parameters
+        ----------
+        c : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : :class:`~astropy.coordinates.SkyCoord` instance
+        *args
+            passed to underlying instance
+        **kwargs
+            passed to underlying instance
+
+        Returns
+        -------
+        `SkyCoord`
+
+        Notes
+        -----
+        If this is `MeasurementErrorSampler` then arguments are passed to the
+        wrapped instance (see 'method' argument on initialization).
+
+        """
+        # call on instance
+        return self._instance(c, c_err, *args, **kwargs)
 
     # /def
 
@@ -127,8 +228,8 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
 
         Parameters
         ----------
-        c : SkyCoord
-        c_err : SkyCoord
+        c : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : :class:`~astropy.coordinates.SkyCoord` instance
 
         random : `~numpy.random.Generator` or int or None
             The random number generator
@@ -142,12 +243,17 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
         units = c.data._units
         pos = c.data._values.view(dtype=np.float64).reshape(-1, nd)
 
+        if c_err is None:
+            c_err = self.c_err
+
         if isinstance(c_err, (BaseCoordinateFrame, SkyCoord)):
             d_pos = c_err.data._values.view(dtype=np.float64).reshape(-1, nd)
         elif isinstance(c_err, BaseRepresentation):
             raise NotImplementedError("Not yet")
         elif np.isscalar(c_err):
             d_pos = c_err
+        elif callable(c_err):
+            d_pos = c_err(c)
         else:
             raise NotImplementedError("Not yet")
 
@@ -160,9 +266,10 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
         )
 
         new_c = c.realize_frame(new_rep)
+
         # need to transfer metadata.  TODO! more generally
-        new_c.potential = c.potential
-        new_c.mass = c.mass
+        new_c.potential = getattr(c, "potential", None)
+        new_c.mass = getattr(c, "mass", None)
 
         return new_c
 

@@ -91,14 +91,22 @@ class PotentialSampler(PotentialBase):
         This only applies if instantiating a `PotentialSampler`.
         Default False.
 
+    Raises
+    ------
+    ValueError
+        If directly instantiating a PotentialSampler (not subclass) and cannot
+        find the appropriate subclass, identified using ``package``.
+
     """
 
     _registry = MappingProxyType(SAMPLER_REGISTRY)
 
-    def __init_subclass__(cls, package: T.Union[str, ModuleType]):
+    def __init_subclass__(cls, package: T.Union[str, ModuleType] = None):
         super().__init_subclass__(package=package)
 
-        SAMPLER_REGISTRY[cls._package] = cls
+        if package is not None:
+
+            SAMPLER_REGISTRY[cls._package] = cls
 
     # /def
 
@@ -112,16 +120,29 @@ class PotentialSampler(PotentialBase):
     ):
         self = super().__new__(cls)
 
+        # The class PotentialSampler is a wrapper for anything in its registry
+        # If directly instantiating a PotentialSampler (not subclass) we must also
+        # instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
             package = self._infer_package(potential, package)
 
+            if package not in cls._registry:
+                raise ValueError(
+                    f"PotentialSampler has no registered sampler for package: {package}"
+                )
+
             # from registry. Registered in __init_subclass__
-            instance = SAMPLER_REGISTRY[package](potential)
+            instance = cls[package](potential)
 
             if return_specific_class:  # Whether to return class or subclass
                 return instance
             else:  # return class, store instance
                 self._instance = instance
+
+        elif package is not None:
+            raise ValueError(
+                "Can't specify 'package' on PotentialSampler subclasses."
+            )
 
         return self
 

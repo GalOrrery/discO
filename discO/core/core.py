@@ -41,10 +41,20 @@ class PotentialBase(metaclass=ABCMeta):
         On class declaration if metaclass argument 'package' is not a string
         or module.
 
+    KeyError
+        On class declaration if class registry information already exists,
+        eg. if registering two things under the same name
+
     """
+
+    #################################################################
+    # On the class
 
     def __init_subclass__(cls, package: T.Union[str, ModuleType, None] = None):
         """Initialize a subclass.
+
+        This method applies to all subclasses, not matter the
+        inheritance depth, unless the MRO overrides.
 
         Parameters
         ----------
@@ -68,7 +78,7 @@ class PotentialBase(metaclass=ABCMeta):
                 raise TypeError
 
             if package in cls._registry:
-                raise Exception(f"`{package}` sampler already in registry.")
+                raise KeyError(f"`{package}` sampler already in registry.")
 
             cls._package = package
 
@@ -79,6 +89,20 @@ class PotentialBase(metaclass=ABCMeta):
     def _registry(self):
         """The class registry. Need to override."""
         pass
+
+    # /def
+
+    def __class_getitem__(cls, key):
+        return cls._registry[key]
+
+    # /def
+
+    #################################################################
+    # On the instance
+
+    # just write it here to show it's nothing.
+    def __init__(self, *args, **kwarg):
+        super().__init__()
 
     # /def
 

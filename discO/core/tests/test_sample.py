@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~PACKAGE`."""
+"""Testing :mod:`~discO.core.sample`."""
 
 __all__ = [
-    "Test_ClassName",
-    "test_function",
+    "Test_PotentialSampler",
 ]
 
 
@@ -14,58 +13,59 @@ __all__ = [
 # THIRD PARTY
 import pytest
 
-##############################################################################
-# PARAMETERS
-
-
-##############################################################################
-# PYTEST
-
-
-def setup_module(module):
-    """Setup module for testing."""
-    pass
-
-
-# /def
-
-
-def teardown_module(module):
-    """Tear-down module for testing."""
-    pass
-
-
-# /def
-
+# PROJECT-SPECIFIC
+from discO.core import sample
+from discO.core.tests.test_core import Test_PotentialBase
 
 ##############################################################################
 # TESTS
 ##############################################################################
 
 
-class Test_ClassName(object):
+class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
     """Docstring for ClassName."""
 
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        pass
-
-    # /def
-
-    @classmethod
-    def teardown_class(cls):
-        """Tear-down fixtures for testing."""
-        pass
+        cls.potential = object()
 
     # /def
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
-    def test_method(self):
-        """Test :class:`PACKAGE.CLASS.METHOD`."""
-        assert False
+    def test___init_subclass__(self):
+        """Test subclassing."""
+        # When package is None
+        class SubClasss1(self.obj):
+            pass
+
+        assert None not in sample.SAMPLER_REGISTRY
+
+        try:
+
+            class SubClasss2(self.obj, package="pytest"):
+                pass
+
+        except Exception:
+            pass
+        finally:
+            sample.SAMPLER_REGISTRY.pop(pytest, None)
+
+    # /def
+
+    # -------------------------------
+
+    def test___init__(self):
+
+        # for object not in registry
+        with pytest.raises(ValueError) as e:
+            self.obj(self.potential)
+
+        assert (
+            "PotentialSampler has no registered sampler for package: "
+            "<module 'builtins' (built-in)>"
+        ) in str(e.value)
 
     # /def
 
@@ -74,15 +74,6 @@ class Test_ClassName(object):
 
 
 # -------------------------------------------------------------------
-
-
-def test_function():
-    """Test :func:`PACKAGE.METHOD`."""
-    pass
-
-
-# /def
-
 
 ##############################################################################
 # END
