@@ -10,10 +10,15 @@ __all__ = []
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from . import sample
-from .sample import *  # noqa: F401, F403
+from discO.setup_package import HAS_AGAMA
 
-__all__ += sample.__all__
+if HAS_AGAMA:
+
+    # PROJECT-SPECIFIC
+    from . import sample
+    from .sample import *  # noqa: F401, F403
+
+    __all__ += sample.__all__
 
 
 ##############################################################################
