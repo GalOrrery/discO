@@ -151,7 +151,7 @@ class PotentialSampler(PotentialBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[package](potential=potential)
+            instance = cls[package](potential)
 
             # Whether to return class or subclass
             # else continue, storing instance
