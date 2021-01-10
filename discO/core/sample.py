@@ -153,10 +153,12 @@ class PotentialSampler(PotentialBase):
             # from registry. Registered in __init_subclass__
             instance = cls[package](potential=potential)
 
-            if return_specific_class:  # Whether to return class or subclass
+            # Whether to return class or subclass
+            # else continue, storing instance
+            if return_specific_class:
                 return instance
-            else:  # return class, store instance
-                self._instance = instance
+
+            self._instance = instance
 
         elif package is not None:
             raise ValueError(
@@ -353,6 +355,10 @@ class PotentialSampler(PotentialBase):
         For frame is None ``resolve_framelike`` returns the default
         frame from the config file. Instead, we want the default
         frame of the potential.
+
+        Parameters
+        ----------
+        frame : frame-like or None
 
         Returns
         -------

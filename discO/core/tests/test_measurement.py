@@ -228,6 +228,7 @@ class Test_MeasurementErrorSampler(
 
     # -------------------------------
 
+    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``.
 
@@ -289,8 +290,10 @@ class Test_GaussianMeasurementErrorSampler(
 
     # -------------------------------
 
+    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``."""
+        super().test___call__()
         # --------------------------
         # just "c"
 

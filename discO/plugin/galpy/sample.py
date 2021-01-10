@@ -31,6 +31,7 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
     Parameters
     ----------
     df : `~galpy.df.df.df.df`
+        Distribution Function.
 
     frame : frame-like or None (optional, keyword only)
         The preferred frame in which to sample.

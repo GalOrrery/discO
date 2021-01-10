@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~PACKAGE`."""
+"""Testing :mod:`~discO.plugin.agama.sample`."""
 
 __all__ = [
-    "Test_ClassName",
-    "test_function",
+    "Test_AGAMAPotentialSampler",
 ]
 
 
@@ -14,28 +13,9 @@ __all__ = [
 # THIRD PARTY
 import pytest
 
-##############################################################################
-# PARAMETERS
-
-
-##############################################################################
-# PYTEST
-
-
-def setup_module(module):
-    """Setup module for testing."""
-    pass
-
-
-# /def
-
-
-def teardown_module(module):
-    """Tear-down module for testing."""
-    pass
-
-
-# /def
+# PROJECT-SPECIFIC
+from discO.core.tests.test_sample import Test_PotentialSampler
+from discO.plugin.agama import sample
 
 
 ##############################################################################
@@ -43,22 +23,9 @@ def teardown_module(module):
 ##############################################################################
 
 
-class Test_ClassName(object):
-    """Docstring for ClassName."""
-
-    @classmethod
-    def setup_class(cls):
-        """Setup fixtures for testing."""
-        pass
-
-    # /def
-
-    @classmethod
-    def teardown_class(cls):
-        """Tear-down fixtures for testing."""
-        pass
-
-    # /def
+class Test_AGAMAPotentialSampler(
+    Test_PotentialSampler, obj=sample.AGAMAPotentialSampler
+):
 
     # -------------------------------
 
@@ -74,14 +41,6 @@ class Test_ClassName(object):
 
 
 # -------------------------------------------------------------------
-
-
-def test_function():
-    """Test :func:`PACKAGE.METHOD`."""
-    pass
-
-
-# /def
 
 
 ##############################################################################
