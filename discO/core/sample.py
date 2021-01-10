@@ -56,11 +56,16 @@ from astropy.coordinates import SkyCoord
 from .core import PotentialBase
 from discO.common import FrameLikeType, SkyCoordType
 from discO.utils import resolve_framelike
+from astropy.utils.misc import NumpyRNGContext
+from contextlib import nullcontext
 
 ##############################################################################
 # PARAMETERS
 
 SAMPLER_REGISTRY = dict()  # package : sampler
+
+Random_Like = T.Union[int, np.random.Generator, np.random.RandomState, None]
+
 
 ##############################################################################
 # CODE
@@ -187,7 +192,12 @@ class PotentialSampler(PotentialBase):
     # Sampling
 
     def __call__(
-        self, n: int = 1, *, frame: T.Optional[FrameLikeType] = None, **kwargs
+        self,
+        n: int = 1,
+        *,
+        frame: T.Optional[FrameLikeType] = None,
+        random: Random_Like = None,
+        **kwargs,
     ) -> SkyCoordType:
         """Sample.
 
@@ -206,14 +216,26 @@ class PotentialSampler(PotentialBase):
 
         """
         # call on instance
-        return self._instance(n=n, frame=frame, **kwargs)
+        # with NumpyRNGContext(random):
+        if isinstance(random, int):
+            ctx = NumpyRNGContext(random)
+        else:  # None or Generator
+            ctx = nullcontext()
+
+        with ctx:
+            return self._instance(n=n, frame=frame, random=random, **kwargs)
 
     # /def
 
     # ---------------------------------------------------------------
 
     def sample(
-        self, n: int = 1, *, frame: T.Optional[FrameLikeType] = None, **kwargs
+        self,
+        n: int = 1,
+        *,
+        frame: T.Optional[FrameLikeType] = None,
+        random: Random_Like = None,
+        **kwargs,
     ) -> SkyCoordType:
         """Draw a sample from the potential.
 
@@ -232,20 +254,20 @@ class PotentialSampler(PotentialBase):
 
         """
         # pass to __call__
-        return self(n=n, frame=frame, **kwargs)
+        return self(n=n, frame=frame, random=random, **kwargs)
 
     # /def
 
     # ---------------------------------------------------------------
 
-    # TODO better name
     def resampler(
         self,
         niter: int,
-        n: int = 1,
+        n: T.Union[int, T.Sequence] = 1,
         *,
         frame: T.Optional[FrameLikeType] = None,
         sample_axis: int = -1,
+        random: Random_Like = None,
         **kwargs,
     ):
         """Draw many samples from the potential.
@@ -269,19 +291,18 @@ class PotentialSampler(PotentialBase):
             sample
 
         """
-        # # Get preferred frame
-        # frame = self._preferred_frame_resolve(frame)
-
         iterniter = range(0, niter)
         if np.isscalar(n):
             itersamp = (n,)
+        else:
+            itersamp = n
 
         values = (iterniter, itersamp)
         values = (values, values[::-1])[sample_axis]
 
         for i, j in itertools.product(*values):
             N = (j, i)[sample_axis]  # todo more efficiently
-            yield self(n=N, frame=frame, **kwargs)
+            yield self(n=N, frame=frame, random=random, **kwargs)
 
     # /def
 
@@ -292,6 +313,7 @@ class PotentialSampler(PotentialBase):
         *,
         frame: T.Optional[FrameLikeType] = None,
         sample_axis: int = -1,
+        random: Random_Like = None,
         **kwargs,
     ):
         """Resample.
@@ -318,7 +340,12 @@ class PotentialSampler(PotentialBase):
 
         """
         sampler = self.resampler(
-            niter=niter, n=n, frame=frame, sample_axis=sample_axis, **kwargs
+            niter=niter,
+            n=n,
+            frame=frame,
+            sample_axis=sample_axis,
+            random=random,
+            **kwargs,
         )
 
         # indices and values for niter

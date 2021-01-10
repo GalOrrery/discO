@@ -77,6 +77,7 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
         )
 
         # TODO make sure transformation is correct
+        # and better storage of these properties, so stay when transform.
         samples = orbits.SkyCoord().transform_to(frame)
         samples.potential = self._sampler
         samples.mass = (  # AGAMA compatibility

@@ -268,7 +268,7 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
             **{n: p * unit for p, (n, unit) in zip(new_pos.T, units.items())}
         )
 
-        new_c = c.realize_frame(new_rep)
+        new_c = SkyCoord(c.realize_frame(new_rep))
 
         # need to transfer metadata.  TODO! more generally
         new_c.potential = getattr(c, "potential", None)

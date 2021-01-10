@@ -13,6 +13,9 @@ __all__ = [
 # THIRD PARTY
 import pytest
 
+# FIRST PARTY
+import agama
+
 # PROJECT-SPECIFIC
 from discO.core.tests.test_sample import Test_PotentialSampler
 from discO.plugin.agama import sample
@@ -25,13 +28,46 @@ from discO.plugin.agama import sample
 class Test_AGAMAPotentialSampler(
     Test_PotentialSampler, obj=sample.AGAMAPotentialSampler
 ):
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        super().setup_class()
 
-    # -------------------------------
+        # make potential
+        cls.potential = agama.Potential(
+            type="Spheroid",
+            mass=1e12,
+            scaleRadius=10,
+            gamma=1,
+            alpha=1,
+            beta=4,
+            cutoffStrength=0,
+        )
+
+        cls.inst = cls.obj(cls.potential)
+
+    # /def
 
     @pytest.mark.skip("TODO")
-    def test_method(self):
-        """Test :class:`PACKAGE.CLASS.METHOD`."""
-        assert False
+    def test___call__(self):
+        """Test method ``__call__``.
+
+        When Test_MeasurementErrorSampler this calls on the wrapped instance,
+        which is GaussianMeasurementErrorSampler.
+
+        """
+        # run tests on super
+        super().test___call__()
+
+        # --------------------------
+        # with c_err
+
+        self.inst(self.c, self.c_err)
+
+        # ---------------
+        # without c_err, using from instantiation
+
+        self.inst(self.c)
 
     # /def
 

@@ -17,6 +17,9 @@ from types import MappingProxyType
 
 # THIRD PARTY
 import pytest
+import astropy.coordinates as coord
+import astropy.units as u
+import numpy as np
 
 # PROJECT-SPECIFIC
 from discO.core import sample
@@ -35,15 +38,28 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
         # register a unittest examples
         class SubClassUnitTest(cls.obj, package="unittest"):
-            pass
+            def __call__(self, n, *, frame=None, random=None, **kwargs):
+                # Get preferred frames
+                frame = self._preferred_frame_resolve(frame)
+
+                if random is None:
+                    random = np.random
+                elif isinstance(random, int):
+                    random = np.random.default_rng(random)
+
+                # return
+                return coord.SkyCoord(
+                    coord.ICRS(
+                        ra=random.uniform(size=n) * u.deg,
+                        dec=2 * random.uniform(size=n) * u.deg,
+                    )
+                ).transform_to(frame)
 
         cls.SubClassUnitTest = SubClassUnitTest
 
         # make instance. It depends
         if cls.obj is sample.PotentialSampler:
             cls.inst = cls.obj(cls.potential, package="unittest")
-        else:
-            cls.inst = cls.obj(cls.potential)
 
     # /def
 
@@ -240,44 +256,100 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``.
 
         When Test_MeasurementErrorSampler this calls on the wrapped instance,
         which is GaussianMeasurementErrorSampler.
 
+        We can't test the output, but can test that it "works".
+
         """
         # run tests on super
         super().test___call__()
 
-        # --------------------------
-        # with c_err
+    # /def
 
-        self.inst(self.c, self.c_err)
-
-        # ---------------
-        # without c_err, using from instantiation
-
-        self.inst(self.c)
+    @pytest.mark.parametrize(
+        "n,frame,kwargs",
+        [
+            (10, None, {}),  # just "n"
+            (10, "FK5", {}),  # specifying frame
+            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
+        ],
+    )
+    def test_call_parametrize(self, n, frame, kwargs):
+        """Parametrized call tests."""
+        res = self.inst(n, frame=frame, **kwargs)
+        assert res.__class__ == coord.SkyCoord
 
     # /def
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
-    def test_sample(self):
+    @pytest.mark.parametrize(
+        "n,frame,kwargs",
+        [
+            (10, None, {}),  # just "n"
+            (10, "FK5", {}),  # specifying frame
+            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
+        ],
+    )
+    def test_sample(self, n, frame, kwargs):
         """Test method ``sample``."""
+        res = self.inst.sample(n, frame=frame, **kwargs)
+        assert res.__class__ == coord.SkyCoord
 
     # /def
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
-    def test_resampler(self):
+    @pytest.mark.parametrize(
+        "niter, n, frame, sample_axis, random, kwargs",
+        [
+            (1, 2, None, -1, None, {}),  # basic
+            (1, 2, "FK5", -1, None, {}),  # specifying frame
+            (1, 2, None, 0, None, {}),  # sample axis
+            (1, 2, None, 1, None, {}),  # sample axis
+            (1, 2, None, -1, 0, {}),  # random
+            (1, 2, None, -1, np.random.default_rng(0), {}),  # random
+            (1, 2, None, -1, 0, dict(a=1, b=2)),  # adding kwargs
+            (10, 2, None, -1, None, {}),  # larger niters
+            (1, (1, 2), None, -1, None, {}),  # array of n
+            (2, (1, 2), None, -1, None, {}),  # niters and array of n
+        ],
+    )
+    def test_resampler(self, niter, n, frame, sample_axis, random, kwargs):
         """Test method ``resampler``."""
+        resampler = self.inst.resampler(
+            niter,
+            n,
+            frame=frame,
+            sample_axis=sample_axis,
+            random=random,
+            **kwargs
+        )
+
+        # ------------
+
+        resolve_frame = self.inst._preferred_frame_resolve
+        if np.isscalar(n):
+            itersamp = (n,)
+        else:
+            itersamp = n
+
+        for i, samp in enumerate(resampler):
+            for n in itersamp:
+                assert len(samp) == n
+                assert samp.frame.__class__() == resolve_frame(frame)
+                # TODO? more testsss
+
+        # only test the last one b/c want overall len.
+        assert niter == i + 1
 
     # /def
+
+    # TODO! need to test the iteration order, and stuff in resampler
 
     # -------------------------------
 

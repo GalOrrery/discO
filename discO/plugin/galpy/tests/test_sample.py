@@ -11,7 +11,14 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
+import astropy.coordinates as coord
+import astropy.units as u
 import pytest
+import numpy as np
+
+# FIRST PARTY
+from galpy.df import isotropicHernquistdf
+from galpy.potential import HernquistPotential
 
 # PROJECT-SPECIFIC
 from discO.core.tests.test_sample import Test_PotentialSampler
@@ -25,7 +32,20 @@ from discO.plugin.galpy import sample
 class Test_GalpyPotentialSampler(
     Test_PotentialSampler, obj=sample.GalpyPotentialSampler
 ):
-    @pytest.mark.skip("TODO")
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        super().setup_class()
+
+        # make potential
+        cls.mass = 1e12 * u.solMass
+        hernquist_pot = HernquistPotential(amp=cls.mass)
+        cls.potential = isotropicHernquistdf(hernquist_pot)
+
+        cls.inst = cls.obj(cls.potential)
+
+    # /def
+
     def test___call__(self):
         """Test method ``__call__``.
 
@@ -36,18 +56,57 @@ class Test_GalpyPotentialSampler(
         # run tests on super
         super().test___call__()
 
-        # --------------------------
-        # with c_err
+    # /def
 
-        self.inst(self.c, self.c_err)
+    @pytest.mark.parametrize(
+        "n,frame,kwargs",
+        [
+            (10, None, {}),  # just "n"
+            (10, "FK5", {}),  # specifying frame
+            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
+        ],
+    )
+    def test_call_parametrize(self, n, frame, kwargs):
+        """Parametrized call tests."""
+        res = self.inst(n, frame=frame, **kwargs)
+        assert res.__class__ == coord.SkyCoord
 
-        # ---------------
-        # without c_err, using from instantiation
+        assert res.potential == self.potential
+        assert len(res.mass) == n
+        assert np.isclose(res.mass.sum(), self.mass)
 
-        self.inst(self.c)
+        # TODO! value tests when https://github.com/jobovy/galpy/pull/443
+        # assert np.allclose(res.ra.deg, [126.10132346, 214.92637031])
 
     # /def
 
+    @pytest.mark.skip("TODO https://github.com/jobovy/galpy/pull/443")
+    def test_specific_call(self):
+        assert NotImplementedError("See above.")
+
+    # -------------------------------
+
+    @pytest.mark.parametrize(
+        "n,frame,kwargs",
+        [
+            (10, None, {}),  # just "n"
+            (10, "FK5", {}),  # specifying frame
+            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
+        ],
+    )
+    def test_sample(self, n, frame, kwargs):
+        """Test method ``sample``."""
+        res = self.inst.sample(n, frame=frame, **kwargs)
+        assert res.__class__ == coord.SkyCoord
+
+        assert res.potential == self.potential
+        assert len(res.mass) == n
+        assert np.isclose(res.mass.sum(), self.mass)
+
+        # TODO! value tests when https://github.com/jobovy/galpy/pull/443
+        # assert np.allclose(res.ra.deg, [126.10132346, 214.92637031])
+
+    # /def
 
 # /class
 

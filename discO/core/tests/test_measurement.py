@@ -18,6 +18,7 @@ from types import MappingProxyType
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 import pytest
 
 # PROJECT-SPECIFIC
@@ -35,8 +36,12 @@ class Test_MeasurementErrorSampler(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.c = coord.ICRS(ra=[1, 2] * u.deg, dec=[2, 3] * u.deg)
-        cls.c_err = coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg)
+        cls.c = coord.SkyCoord(
+            coord.ICRS(ra=[1, 2] * u.deg, dec=[2, 3] * u.deg)
+        )
+        cls.c_err = coord.SkyCoord(
+            coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg)
+        )
 
         cls.inst = cls.obj(cls.c_err, method="GaussianMeasurementErrorSampler")
 
@@ -228,12 +233,15 @@ class Test_MeasurementErrorSampler(
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
+    @abstractmethod
     def test___call__(self):
         """Test method ``__call__``.
 
         When Test_MeasurementErrorSampler this calls on the wrapped instance,
         which is GaussianMeasurementErrorSampler.
+
+        Subclasses should do real tests on the output. This only tests
+        that we can even call the method.
 
         """
         # run tests on super
@@ -290,53 +298,72 @@ class Test_GaussianMeasurementErrorSampler(
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``."""
         super().test___call__()
         # --------------------------
-        # just "c"
+        # just "c", cannot predict "random"
 
-        self.inst(self.c)
+        res = self.inst(self.c)
+        assert res.frame.__class__ == self.c.frame.__class__  # same class
 
         # --------------------------
-        # test "random"
+        # test "random" by setting the seed
         # doing this here b/c want to control random for all the rest.
 
-        # --------------------------
-        # just "c" | random
+        res = self.inst(self.c, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
+        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
+
+        res = self.inst(self.c, random=np.random.default_rng(0))
+        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
+        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
 
         # --------------------------
-        # "c" and c_err | random
+        # "c" and "c_err" | random
+
+        res = self.inst(self.c, self.c_err, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
+        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
 
         # --------------------------
-        # "c" and c_err, c_err is BaseCoordinateFrame, not SkyCoord | random
+        # "c" and "c_err", c_err is BaseCoordinateFrame, not SkyCoord | random
+
+        res = self.inst(self.c, self.c_err.frame, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
+        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
 
         # --------------------------
-        # "c" and c_err, c_err is BaseRepresentation | random
+        # "c" and "c_err", c_err is BaseRepresentation | random
 
         with pytest.raises(NotImplementedError):
 
             self.inst(
-                self.c, self.c_err.represent_as(coord.SphericalRepresentation)
+                self.c,
+                self.c_err.represent_as(coord.SphericalRepresentation),
+                random=0,
             )
 
         # --------------------------
         # "c" and c_err, c_err is scalar | random
 
-        self.inst(self.c, 0.1)
+        res = self.inst(self.c, 0.1, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.06404227])
+        assert np.allclose(res.dec.deg, [1.98678951, 3.01049001])
 
         # --------------------------
         # "c" and c_err, c_err is callable | random
 
-        self.inst(self.c, lambda c: 0.1)
+        res = self.inst(self.c, lambda c: 0.1, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.06404227])
+        assert np.allclose(res.dec.deg, [1.98678951, 3.01049001])
 
         # --------------------------
         # "c" and c_err, c_err is none of the above | random
 
         with pytest.raises(NotImplementedError):
 
-            self.inst(self.c, c_err=Exception())
+            self.inst(self.c, c_err=Exception(), random=0)
 
     # /def
 
