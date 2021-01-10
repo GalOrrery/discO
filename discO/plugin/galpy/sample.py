@@ -36,9 +36,12 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
     frame : frame-like or None (optional, keyword only)
         The preferred frame in which to sample.
 
+    **kwargs
+        Not used. Needed to absorb option from ``__new__``
+
     """
 
-    def __init__(self, df, *, frame: T.Optional[FrameLikeType] = None):
+    def __init__(self, df, *, frame: T.Optional[FrameLikeType] = None, **kwargs):
         # TODO support potential -> df
         super().__init__(df, frame=frame)
 
