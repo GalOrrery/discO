@@ -66,7 +66,7 @@ Attribution
 
 |DOI| |License|
 
-Copyright 2020 - Nathaniel Starkman, Christopher Carr, Jo Bovy, Katherine Johnson and contributors.
+Copyright 2020 - Nathaniel Starkman, Christopher Carr, and contributors.
 
 ``discO`` is free software made available under the BSD-3 License. For details see the `LICENSE <https://github.com/nstarman/discO/blob/master/LICENSE>`_ file.
 
