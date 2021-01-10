@@ -167,6 +167,7 @@ class MeasurementErrorSampler(PotentialBase):
     # /def
 
     def __init__(self, c_err: T.Optional[callable] = None, **kwargs):
+        super().__init__()
         self.c_err = c_err
 
     # /def
@@ -175,7 +176,7 @@ class MeasurementErrorSampler(PotentialBase):
     # Calling
 
     def __call__(
-        self, c: FrameLikeType, c_err: FrameLikeType, *args, **kwargs
+        self, c: FrameLikeType, c_err: FrameLikeType = None, *args, **kwargs
     ):
         """Draw a realization given Measurement error.
 
@@ -198,6 +199,8 @@ class MeasurementErrorSampler(PotentialBase):
         wrapped instance (see 'method' argument on initialization).
 
         """
+        if c_err is None:
+            c_err = self.c_err
         # call on instance
         return self._instance(c, c_err, *args, **kwargs)
 

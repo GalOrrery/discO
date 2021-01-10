@@ -151,6 +151,7 @@ class PotentialSampler(PotentialBase):
     def __init__(
         self, potential, *, frame: T.Optional[FrameLikeType] = None, **kwargs
     ):
+        super().__init__()
         self._sampler = potential
         self._frame = resolve_framelike(frame)
 

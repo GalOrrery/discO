@@ -38,7 +38,7 @@ class Test_MeasurementErrorSampler(
         cls.c = coord.ICRS(ra=[1, 2] * u.deg, dec=[2, 3] * u.deg)
         cls.c_err = coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg)
 
-        cls.inst = cls.obj["GaussianMeasurementErrorSampler"](cls.c_err)
+        cls.inst = cls.obj(cls.c_err, method="GaussianMeasurementErrorSampler")
 
     # /def
 
@@ -289,11 +289,28 @@ class Test_GaussianMeasurementErrorSampler(
         # --------------------------
         # "c" and c_err, c_err is BaseRepresentation | random
 
+        with pytest.raises(NotImplementedError):
+
+            self.inst(
+                self.c, self.c_err.represent_as(coord.SphericalRepresentation)
+            )
+
         # --------------------------
         # "c" and c_err, c_err is scalar | random
 
+        self.inst(self.c, 0.1)
+
+        # --------------------------
+        # "c" and c_err, c_err is callable | random
+
+        self.inst(self.c, lambda c: 0.1)
+
         # --------------------------
         # "c" and c_err, c_err is none of the above | random
+
+        with pytest.raises(NotImplementedError):
+
+            self.inst(self.c, Exception)
 
     # /def
 

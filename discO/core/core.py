@@ -88,7 +88,6 @@ class PotentialBase(metaclass=ABCMeta):
     @abstractmethod
     def _registry(self):
         """The class registry. Need to override."""
-        pass
 
     # /def
 
@@ -112,7 +111,6 @@ class PotentialBase(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self):
         """Call. Must be overwritten."""
-        pass
 
     # /def
 

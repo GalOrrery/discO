@@ -129,6 +129,10 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
             "builtins"
         )
 
+        # when fails
+        with pytest.raises(TypeError):
+            self.obj._infer_package(object(), package=TypeError)
+
     # /def
 
     #################################################################
