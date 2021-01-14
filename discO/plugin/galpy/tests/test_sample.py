@@ -38,6 +38,7 @@ class Test_GalpyPotentialSampler(
         # make potential
         cls.mass = 1e12 * u.solMass
         hernquist_pot = HernquistPotential(amp=cls.mass)
+        hernquist_pot.turn_physical_on()  # force units
         cls.potential = isotropicHernquistdf(hernquist_pot)
 
         cls.inst = cls.obj(cls.potential)
