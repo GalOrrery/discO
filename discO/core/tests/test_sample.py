@@ -11,6 +11,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import itertools
 import unittest
 from abc import abstractmethod
 from types import MappingProxyType
@@ -333,19 +334,22 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         # ------------
 
         resolve_frame = self.inst._preferred_frame_resolve
+
+        iterniter = range(0, niter)
         if np.isscalar(n):
             itersamp = (n,)
         else:
             itersamp = n
+        values = (iterniter, itersamp)
+        values = (values, values[::-1])[sample_axis]
+        Ns = [(j, i)[sample_axis] for i, j in itertools.product(*values)]
 
         for i, samp in enumerate(resampler):
-            for n in itersamp:
-                assert len(samp) == n
-                assert samp.frame.__class__() == resolve_frame(frame)
-                # TODO? more testsss
+            assert len(samp) == Ns[i]
+            assert samp.frame.__class__() == resolve_frame(frame)
 
         # only test the last one b/c want overall len.
-        assert niter == i + 1
+        assert (i + 1) == niter * len(itersamp)
 
     # /def
 

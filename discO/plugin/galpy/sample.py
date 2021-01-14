@@ -45,7 +45,7 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
         self, df, *, frame: T.Optional[FrameLikeType] = None, **kwargs
     ):
         # TODO support potential -> df
-        super().__init__(df, frame=frame)
+        super().__init__(df, frame=frame, **kwargs)
 
     # /def
 
