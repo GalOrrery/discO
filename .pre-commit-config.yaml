@@ -15,7 +15,7 @@ repos:
     - id: fix-encoding-pragma
     - id: requirements-txt-fixer
     - id: trailing-whitespace
-    - id: flake8
+    - id: https://gitlab.com/pycqa/flake8
       args: # arguments to configure flake8
         # making isort line length compatible with black
         - "--max-line-length=88"
