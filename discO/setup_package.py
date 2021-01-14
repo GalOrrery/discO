@@ -15,6 +15,7 @@ __all__ = ["HAS_AGAMA", "HAS_GALPY"]
 # PARAMETERS
 
 try:
+    # THIRD PARTY
     import agama  # noqa: F401
 except ImportError:
     HAS_AGAMA = False
@@ -24,6 +25,7 @@ else:
 # -------------------------------------
 
 try:
+    # THIRD PARTY
     import galpy  # noqa: F401
 except ImportError:
     HAS_GALPY = False

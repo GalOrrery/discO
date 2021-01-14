@@ -13,10 +13,8 @@ __all__ = [
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
-import pytest
 import numpy as np
-
-# FIRST PARTY
+import pytest
 from galpy.df import isotropicHernquistdf
 from galpy.potential import HernquistPotential
 
@@ -107,6 +105,7 @@ class Test_GalpyPotentialSampler(
         # assert np.allclose(res.ra.deg, [126.10132346, 214.92637031])
 
     # /def
+
 
 # /class
 

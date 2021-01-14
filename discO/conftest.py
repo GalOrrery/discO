@@ -21,6 +21,7 @@ import pytest
 from .setup_package import HAS_AGAMA, HAS_GALPY
 
 try:
+    # THIRD PARTY
     from pytest_astropy_header.display import (
         PYTEST_HEADER_MODULES,
         TESTED_VERSIONS,

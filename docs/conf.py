@@ -33,6 +33,7 @@ from configparser import ConfigParser
 from importlib import import_module
 
 try:
+    # THIRD PARTY
     from sphinx_astropy.conf.v1 import *  # noqa
 except ImportError:
     print(

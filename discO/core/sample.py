@@ -46,18 +46,18 @@ __all__ = [
 import itertools
 import typing as T
 import warnings
+from contextlib import nullcontext
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import numpy as np
-from astropy.coordinates import concatenate, SkyCoord
+from astropy.coordinates import SkyCoord, concatenate
+from astropy.utils.misc import NumpyRNGContext
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
 from discO.common import FrameLikeType, SkyCoordType
 from discO.utils import resolve_framelike
-from astropy.utils.misc import NumpyRNGContext
-from contextlib import nullcontext
 
 ##############################################################################
 # PARAMETERS

@@ -11,10 +11,8 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
-import pytest
-
-# FIRST PARTY
 import agama
+import pytest
 
 # PROJECT-SPECIFIC
 from discO.core.tests.test_sample import Test_PotentialSampler

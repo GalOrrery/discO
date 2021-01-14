@@ -14,23 +14,28 @@ __all__ = ["__version__"]
 try:
     _ASTROPY_SETUP_  # type: ignore
 except NameError:
+    # BUILT-IN
     import builtins
 
     builtins._ASTROPY_SETUP_ = False
 
 try:
+    # PROJECT-SPECIFIC
     from .version import version as __version__
 except ImportError:
     __version__ = ""
 
 
 if not _ASTROPY_SETUP_:  # noqa
+    # BUILT-IN
     import os
     from warnings import warn
+
+    # THIRD PARTY
     from astropy.config.configuration import (
-        update_default_config,
         ConfigurationDefaultMissingError,
         ConfigurationDefaultMissingWarning,
+        update_default_config,
     )
 
     # Create the test function for self test

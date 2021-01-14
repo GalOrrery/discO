@@ -17,7 +17,7 @@ use_parentheses = "True"
 ensure_newline_before_comments = "True"
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
-known_third_party = ["astropy", "extension_helpers", "numpy", "pytest", "setuptools", "typing_extensions"]
+known_third_party = ["agama", "astropy", "extension_helpers", "galpy", "numpy", "pytest", "setuptools", "typing_extensions"]
 known_firstparty = ["astronat", "utilipy"]
 known_localfolder = "discO"
 

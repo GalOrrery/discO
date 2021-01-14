@@ -17,10 +17,10 @@ from abc import abstractmethod
 from types import MappingProxyType
 
 # THIRD PARTY
-import pytest
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
+import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import sample
@@ -385,7 +385,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
                     assert s.shape == (niter, n_)  # correct shape
 
         elif niter == 1:
-            assert samples.shape == (n, )  # correct shape
+            assert samples.shape == (n,)  # correct shape
         else:
             assert samples.shape == (niter, n)  # correct shape
 
