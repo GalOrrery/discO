@@ -50,7 +50,7 @@ from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import numpy as np
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import concatenate, SkyCoord
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
@@ -312,64 +312,69 @@ class PotentialSampler(PotentialBase):
         n: int = 1,
         *,
         frame: T.Optional[FrameLikeType] = None,
-        sample_axis: int = -1,
         random: Random_Like = None,
         **kwargs,
     ):
         """Resample.
 
-        .. todo::
-
-            As a different return option,
-            organize instead by N, return a list of SkyCoord, each of length
-            ni in [n1, n2, n3, ...], with the 3rd axis being iteration.
-
         Parameters
         ----------
         niter : int
-            Number of iterations
-        n : int
-            number of sample points.
+            Number of iterations. Must be > 0.
+        n : int or sequence
+            Number of sample points.
+            Can be a sequence of number of sample points
         frame : frame-like or None
             output frame of samples
-        sample_axis : int
-            allowed values : 0, 1, -1
         **kwargs
             passed to underlying instance
 
+        Returns
+        -------
+        |SkyCoord| or array of |SkyCoord|
+            singular if `n` is scalar, array if sequence.
+            The shape of the SkyCoord is ``(niter, len(n))``
+            where a scalar `n` has length 1.
+
+        Raises
+        ------
+        ValueError
+            if number if iterations not greater than 0.
 
         """
-        sampler = self.resampler(
-            niter=niter,
-            n=n,
-            frame=frame,
-            sample_axis=sample_axis,
-            random=random,
-            **kwargs,
-        )
+        # -----------
+        # setup
 
-        # indices and values for niter
-        idxniter = range(0, niter)
-        # indices and values for nsamp
+        if not niter >= 1:
+            raise ValueError("# of iterations not > 0.")
+
         if np.isscalar(n):
-            idxsamp = (0,)
-            lenn = 1
+            itersamp = (n,)
         else:
-            lenn = len(n)
-            idxsamp = range(lenn)
+            itersamp = n
 
-        indices = (idxniter, idxsamp)
-        indices = (indices, indices[::-1])[sample_axis]
+        # -----------
+        # resampling
 
-        nums = (niter, lenn)
-        nums = (nums, nums[::-1])[sample_axis]
-        array = np.empty(nums, dtype=SkyCoord)
+        samples = np.empty(len(itersamp), dtype=SkyCoord)
 
-        # TODO vectorized
-        for (i, j), sample in zip(itertools.product(*indices), sampler):
-            array[i, j] = sample
+        for i, N in enumerate(itersamp):
+            samps = [None] * niter  # premake array
 
-        return array
+            for j in range(0, niter):
+                samp = self(n=N, frame=frame, random=random, **kwargs)
+                samps[j] = samp
+
+            if j == 0:  # 0-dimensional doesn't need concat
+                sample = samps[0]
+            else:
+                sample = concatenate(samps).reshape((niter, N))
+            samples[i] = sample
+
+        if np.isscalar(n):
+            return samples[0]
+        else:
+            return samples
 
     # /def
 

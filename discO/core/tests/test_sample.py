@@ -357,9 +357,37 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
     # -------------------------------
 
-    @pytest.mark.skip("TODO")
-    def test_resample(self):
+    @pytest.mark.parametrize(
+        "niter, n, frame, random, kwargs",
+        [
+            (1, 2, None, None, {}),  # basic
+            (1, 2, "FK5", None, {}),  # specifying frame
+            (1, 2, None, None, {}),  # sample axis
+            (1, 2, None, None, {}),  # sample axis
+            (1, 2, None, None, {}),  # random
+            (1, 2, None, np.random.default_rng(0), {}),  # random
+            (1, 2, None, None, dict(a=1, b=2)),  # adding kwargs
+            (10, 2, None, None, {}),  # larger niters
+            (1, (1, 2), None, None, {}),  # array of n
+            (2, (1, 2), None, None, {}),  # niters and array of n
+        ],
+    )
+    def test_resample(self, niter, n, frame, random, kwargs):
         """Test method ``resample``."""
+        samples = self.inst.resample(
+            niter, n, frame=frame, random=random, **kwargs
+        )
+        if isinstance(samples, np.ndarray):
+            for s, n_ in zip(samples, n):
+                if niter == 1:
+                    assert s.shape == (n_,)  # correct shape
+                elif n_ == 1:  # niter != 1
+                    assert s.shape == (niter, n_)  # correct shape
+
+        elif niter == 1:
+            assert samples.shape == (n, )  # correct shape
+        else:
+            assert samples.shape == (niter, n)  # correct shape
 
     # /def
 
