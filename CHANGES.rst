@@ -176,4 +176,3 @@ Actions
     - `black <https://pypi.org/project/black/>`_
     - `flake8 <https://pypi.org/project/flake8/>`_
     - many others from `precommit <https://pre-commit.com/hooks.html>`__ [#17]
-

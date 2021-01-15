@@ -12,7 +12,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT IN
+# PROJECT-SPECIFIC
 from . import test_resolve_framelike as resolve_framelike_tests
 
 ##############################################################################

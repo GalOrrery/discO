@@ -223,38 +223,7 @@ class PotentialSampler(PotentialBase):
 
     # ---------------------------------------------------------------
 
-    def sample(
-        self,
-        n: int = 1,
-        *,
-        frame: T.Optional[FrameLikeType] = None,
-        random: Random_Like = None,
-        **kwargs,
-    ) -> SkyCoordType:
-        """Draw a sample from the potential.
-
-        Parameters
-        ----------
-        n : int
-            number of sample points.
-        frame : frame-like or None
-            output frame of samples
-        **kwargs
-            passed to underlying instance
-
-        Returns
-        -------
-        SkyCoord
-
-        """
-        # pass to __call__
-        return self(n=n, frame=frame, random=random, **kwargs)
-
-    # /def
-
-    # ---------------------------------------------------------------
-
-    def resampler(
+    def sample_iter(
         self,
         niter: int,
         n: T.Union[int, T.Sequence] = 1,
@@ -300,24 +269,24 @@ class PotentialSampler(PotentialBase):
 
     # /def
 
-    def resample(
+    def sample(
         self,
-        niter: int,
         n: int = 1,
+        niter: int = 1,
         *,
         frame: T.Optional[FrameLikeType] = None,
         random: Random_Like = None,
         **kwargs,
     ):
-        """Resample.
+        """Sample the potential.
 
         Parameters
         ----------
-        niter : int
-            Number of iterations. Must be > 0.
         n : int or sequence
             Number of sample points.
             Can be a sequence of number of sample points
+        niter : int
+            Number of iterations. Must be > 0.
         frame : frame-like or None
             output frame of samples
         **kwargs

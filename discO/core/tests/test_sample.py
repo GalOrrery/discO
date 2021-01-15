@@ -305,23 +305,6 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
     # -------------------------------
 
     @pytest.mark.parametrize(
-        "n,frame,kwargs",
-        [
-            (10, None, {}),  # just "n"
-            (10, "FK5", {}),  # specifying frame
-            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
-        ],
-    )
-    def test_sample(self, n, frame, kwargs):
-        """Test method ``sample``."""
-        res = self.inst.sample(n, frame=frame, **kwargs)
-        assert res.__class__ == coord.SkyCoord
-
-    # /def
-
-    # -------------------------------
-
-    @pytest.mark.parametrize(
         "niter, n, frame, sample_axis, random, kwargs",
         [
             (1, 2, None, -1, None, {}),  # basic
@@ -336,9 +319,9 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             (2, (1, 2), None, -1, None, {}),  # niters and array of n
         ],
     )
-    def test_resampler(self, niter, n, frame, sample_axis, random, kwargs):
-        """Test method ``resampler``."""
-        resampler = self.inst.resampler(
+    def test_sample_iter(self, niter, n, frame, sample_axis, random, kwargs):
+        """Test method ``sample_iter``."""
+        sample_iter = self.inst.sample_iter(
             niter,
             n,
             frame=frame,
@@ -360,7 +343,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         values = (values, values[::-1])[sample_axis]
         Ns = [(j, i)[sample_axis] for i, j in itertools.product(*values)]
 
-        for i, samp in enumerate(resampler):
+        for i, samp in enumerate(sample_iter):
             assert len(samp) == Ns[i]
             assert samp.frame.__class__() == resolve_frame(frame)
 
@@ -369,29 +352,29 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
     # /def
 
-    # TODO! need to test the iteration order, and stuff in resampler
+    # TODO! need to test the iteration order, and stuff in sample_iter
 
     # -------------------------------
 
     @pytest.mark.parametrize(
-        "niter, n, frame, random, kwargs",
+        "n, niter, frame, random, kwargs",
         [
-            (1, 2, None, None, {}),  # basic
-            (1, 2, "FK5", None, {}),  # specifying frame
-            (1, 2, None, None, {}),  # sample axis
-            (1, 2, None, None, {}),  # sample axis
-            (1, 2, None, None, {}),  # random
-            (1, 2, None, np.random.default_rng(0), {}),  # random
-            (1, 2, None, None, dict(a=1, b=2)),  # adding kwargs
-            (10, 2, None, None, {}),  # larger niters
-            (1, (1, 2), None, None, {}),  # array of n
-            (2, (1, 2), None, None, {}),  # niters and array of n
+            (2, 1, None, None, {}),  # basic
+            (2, 1, "FK5", None, {}),  # specifying frame
+            (2, 1, None, None, {}),  # sample axis
+            (2, 1, None, None, {}),  # sample axis
+            (2, 1, None, None, {}),  # random
+            (2, 1, None, np.random.default_rng(0), {}),  # random
+            (2, 1, None, None, dict(a=1, b=2)),  # adding kwargs
+            (2, 10, None, None, {}),  # larger niters
+            ((1, 2), 1, None, None, {}),  # array of n
+            ((1, 2), 2, None, None, {}),  # niters and array of n
         ],
     )
-    def test_resample(self, niter, n, frame, random, kwargs):
+    def test_sample(self, n, niter, frame, random, kwargs):
         """Test method ``resample``."""
-        samples = self.inst.resample(
-            niter, n, frame=frame, random=random, **kwargs
+        samples = self.inst.sample(
+            n=n, niter=niter, frame=frame, random=random, **kwargs
         )
         if isinstance(samples, np.ndarray):
             for s, n_ in zip(samples, n):
@@ -407,10 +390,10 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
     # /def
 
-    def test_resample_error(self):
+    def test_sample_error(self):
         """Test method ``resample`` raises error."""
         with pytest.raises(ValueError):
-            self.inst.resample(0, 10)
+            self.inst.sample(10, 0)
 
     # /def
 

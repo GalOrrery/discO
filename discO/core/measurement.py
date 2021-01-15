@@ -206,7 +206,15 @@ class MeasurementErrorSampler(PotentialBase):
 
 
 class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
-    """Gaussian."""
+    """Draw a realization given Gaussian measurement errors.
+
+    Parameters
+    ----------
+    c_err : float or callable or None (optional)
+        Callable with single mandatory positional argument -- coordinates
+        ("c") -- that returns the absolute error.
+
+    """
 
     def __call__(
         self,
@@ -221,14 +229,25 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
             - the velocities
             - confirm that units work nicely
             - figure out phase wrapping when draws over a wrap
+            - make calling the function easier when inputting coordinates
+            - make work on a shaped SkyCoord
 
         Parameters
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
-        c_err : :class:`~astropy.coordinates.SkyCoord` instance
+            The coordinates at which to resample.
+        c_err : SkyCoord or None (optional)
+            The scale of the Gaussian errors.
 
+        Returns
+        -------
+        new_c : :class:`~astropy.coordinates.SkyCoord`
+            The resampled points. Has the same shape as `c`.
+
+        Other Parameters
+        ----------------
         random : `~numpy.random.Generator` or int or None
-            The random number generator
+            The random number generator or generator seed.
 
         """
         # see 'default_rng' docs for details
@@ -261,15 +280,15 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
             **{n: p * unit for p, (n, unit) in zip(new_pos.T, units.items())}
         )
 
-        new_c = SkyCoord(c.realize_frame(new_rep))
+        # make SkyCoord from new realization, preserving shape
+        new_c = SkyCoord(c.realize_frame(new_rep).reshape(c.shape))
 
-        # need to transfer metadata.  TODO! more generally
+        # need to transfer metadata.
+        # TODO! more generally, probably need different method for new_c
         new_c.potential = getattr(c, "potential", None)
         new_c.mass = getattr(c, "mass", None)
 
         return new_c
-
-        # return new_pos, units
 
     # /def
 
