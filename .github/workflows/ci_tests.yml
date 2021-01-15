@@ -145,7 +145,7 @@ jobs:
             python: 3.8
             toxenv: py38-test-alldeps
 
-          - name: py3.8 - all deps (Windows)
+          - name: py3.8 - min deps (Windows)
             os: windows-latest
             python: 3.8
             toxenv: py38-test
