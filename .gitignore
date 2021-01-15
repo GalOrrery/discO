@@ -80,6 +80,7 @@ sdist
 develop-eggs
 .installed.cfg
 distribute-*.tar.gz
+*.dev*
 
 # Other
 .cache
