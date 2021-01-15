@@ -233,6 +233,18 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             with pytest.raises(ValueError) as e:
                 self.obj(self.potential, package="not None")
 
+            assert "Can't specify 'package'" in str(e.value)
+
+            # ---------------
+            # warning
+
+            with pytest.warns(UserWarning):
+                self.obj(
+                    self.potential,
+                    package=None,
+                    return_specific_class=True,
+                )
+
             # ---------------
             # AOK
 
@@ -392,6 +404,13 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             assert samples.shape == (n,)  # correct shape
         else:
             assert samples.shape == (niter, n)  # correct shape
+
+    # /def
+
+    def test_resample_error(self):
+        """Test method ``resample`` raises error."""
+        with pytest.raises(ValueError):
+            self.inst.resample(0, 10)
 
     # /def
 

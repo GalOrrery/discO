@@ -27,7 +27,8 @@ from discO.utils import resolve_framelike
 class Test_resolve_framelike:
     """Test function :func:`~discO.utils.resolve_framelike`."""
 
-    def test_frame_is_none(self):
+    @staticmethod
+    def test_frame_is_none():
         """Test when frame is None."""
         # basic usage
         assert resolve_framelike(frame=None) == resolve_framelike(
@@ -43,14 +44,16 @@ class Test_resolve_framelike:
 
     # /def
 
-    def test_frame_is_str(self):
+    @staticmethod
+    def test_frame_is_str():
         """Test when frame is a string."""
         # basic usage
         assert resolve_framelike(frame="icrs") == coord.ICRS()
 
     # /def
 
-    def test_frame_is_BaseCoordinateFrame(self):
+    @staticmethod
+    def test_frame_is_BaseCoordinateFrame():
         """Test when frame is a BaseCoordinateFrame."""
         # basic usage
         assert resolve_framelike(frame=coord.ICRS()) == coord.ICRS()
@@ -61,7 +64,8 @@ class Test_resolve_framelike:
 
     # /def
 
-    def test_frame_is_SkyCoord(self):
+    @staticmethod
+    def test_frame_is_SkyCoord():
         """Test when frame is a SkyCoord."""
         c = coord.ICRS(ra=1 * u.deg, dec=2 * u.deg)
         sc = coord.SkyCoord(c)
@@ -71,9 +75,9 @@ class Test_resolve_framelike:
 
     # /def
 
-    def test_error_if_not_type(self):
+    @staticmethod
+    def test_error_if_not_type():
         """Test when frame is a SkyCoord."""
-
         # raise error if pass bad argument type
         with pytest.raises(TypeError):
             resolve_framelike(Exception, error_if_not_type=True)

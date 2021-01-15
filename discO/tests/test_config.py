@@ -11,7 +11,7 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from discO import config
+from discO.config import conf
 from discO.tests.helper import ConfigNamespacTests
 
 ##############################################################################
@@ -19,7 +19,7 @@ from discO.tests.helper import ConfigNamespacTests
 ##############################################################################
 
 
-class Test_conf(ConfigNamespacTests, conf=config.conf):
+class Test_conf(ConfigNamespacTests, conf=conf):
     pass
 
 
