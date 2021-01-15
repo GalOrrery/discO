@@ -148,7 +148,7 @@ jobs:
           - name: py3.8 - all deps (Windows)
             os: windows-latest
             python: 3.8
-            toxenv: py38-test-alldeps
+            toxenv: py38-test
 
     steps:
     - name: Checkout code
