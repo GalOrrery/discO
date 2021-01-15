@@ -37,7 +37,7 @@ from typing_extensions import Literal
 
 
 def load_Milky_Way_Sim_100(
-    component: Literal["disc", "bulge", "halo"] = "disc"
+    component: Literal["disc", "bulge", "halo"] = "disc",
 ) -> QTable:
     """Load Data from Milky Way Sim 100.
 
@@ -62,7 +62,8 @@ def load_Milky_Way_Sim_100(
 
     """
     fname = get_pkg_data_filename(
-        f"data/sim_CC_100/{component}_100.ecsv", package="discO"
+        f"data/sim_CC_100/{component}_100.ecsv",
+        package="discO",
     )
 
     return QTable.read(fname, format="ascii.ecsv")

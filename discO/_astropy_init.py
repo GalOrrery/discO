@@ -26,7 +26,7 @@ except ImportError:
     __version__ = ""
 
 
-if not _ASTROPY_SETUP_:  # noqa
+if not _ASTROPY_SETUP_:  # noqa: F403
     # BUILT-IN
     import os
     from warnings import warn
@@ -54,7 +54,9 @@ if not _ASTROPY_SETUP_:  # noqa
         if os.path.isfile(config_template):
             try:
                 update_default_config(
-                    __package__, config_dir, version=__version__
+                    __package__,
+                    config_dir,
+                    version=__version__,
                 )
             except TypeError as orig_error:
                 try:

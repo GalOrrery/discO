@@ -1,8 +1,8 @@
 .. discO-module-index
 
-************
-`discO` code
-************
+*****************
+:mod:`discO` code
+*****************
 
 This is the documentation for the import-level namespace of :math:`O`.
 

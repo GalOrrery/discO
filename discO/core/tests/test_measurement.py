@@ -31,16 +31,17 @@ from discO.core.tests.test_core import Test_PotentialBase
 
 
 class Test_MeasurementErrorSampler(
-    Test_PotentialBase, obj=measurement.MeasurementErrorSampler
+    Test_PotentialBase,
+    obj=measurement.MeasurementErrorSampler,
 ):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
         cls.c = coord.SkyCoord(
-            coord.ICRS(ra=[1, 2] * u.deg, dec=[2, 3] * u.deg)
+            coord.ICRS(ra=[1, 2] * u.deg, dec=[2, 3] * u.deg),
         )
         cls.c_err = coord.SkyCoord(
-            coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg)
+            coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg),
         )
 
         cls.inst = cls.obj(cls.c_err, method="GaussianMeasurementErrorSampler")
@@ -161,7 +162,9 @@ class Test_MeasurementErrorSampler(
             method, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                c_err=self.c_err, method=method, return_specific_class=True
+                c_err=self.c_err,
+                method=method,
+                return_specific_class=True,
             )
 
             # test class type
@@ -177,7 +180,9 @@ class Test_MeasurementErrorSampler(
             method, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                c_err=self.c_err, method=method, return_specific_class=False
+                c_err=self.c_err,
+                method=method,
+                return_specific_class=False,
             )
 
             # test class type
@@ -207,7 +212,9 @@ class Test_MeasurementErrorSampler(
             # AOK
 
             msamp = self.obj(
-                c_err=self.c_err, method=None, return_specific_class=False
+                c_err=self.c_err,
+                method=None,
+                return_specific_class=False,
             )
 
             assert self.obj is not measurement.MeasurementErrorSampler

@@ -152,7 +152,7 @@ class PotentialSampler(PotentialBase):
             if package not in cls._registry:
                 raise ValueError(
                     "PotentialSampler has no registered sampler for package: "
-                    f"{package}"
+                    f"{package}",
                 )
 
             # from registry. Registered in __init_subclass__
@@ -167,7 +167,7 @@ class PotentialSampler(PotentialBase):
 
         elif package is not None:
             raise ValueError(
-                "Can't specify 'package' on PotentialSampler subclasses."
+                "Can't specify 'package' on PotentialSampler subclasses.",
             )
 
         elif return_specific_class is not False:

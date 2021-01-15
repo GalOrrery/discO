@@ -1,12 +1,6 @@
 [build-system]
-
-requires = ["setuptools",
-            "setuptools_scm",
-            "extension_helpers",
-            "wheel"]
-
-build-backend = 'setuptools.build_meta'
-
+requires = [ "setuptools", "setuptools_scm", "extension_helpers", "wheel",]
+build-backend = "setuptools.build_meta"
 
 [tool.isort]
 line_length = 79
@@ -15,31 +9,16 @@ include_trailing_comma = "True"
 force_grid_wrap = 0
 use_parentheses = "True"
 ensure_newline_before_comments = "True"
-sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
-
+sections = [ "FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER",]
 known_third_party = ["agama", "astropy", "extension_helpers", "galpy", "numpy", "pytest", "setuptools", "typing_extensions"]
-known_firstparty = ["astronat", "utilipy"]
+known_firstparty = [ "astronat", "utilipy",]
 known_localfolder = "discO"
-
 import_heading_stdlib = "BUILT-IN"
 import_heading_thirdparty = "THIRD PARTY"
 import_heading_firstparty = "FIRST PARTY"
 import_heading_localfolder = "PROJECT-SPECIFIC"
 
-
 [tool.black]
 line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+include = "\\.pyi?$"
+exclude = "/(\n    \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.tox\n  | \\.venv\n  | _build\n  | buck-out\n  | build\n  | dist\n)/\n"

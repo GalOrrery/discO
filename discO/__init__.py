@@ -22,8 +22,8 @@ __all__ = [
 # IMPORTS
 
 # keep this content at the top. (sets the __version__)
-from ._astropy_init import *  # noqa  # isort:skip
-from ._astropy_init import __version__  # noqa  # isort:skip
+from ._astropy_init import *  # noqa: F401, F403  # isort:skip
+from ._astropy_init import __version__  # noqa: F401  # isort:skip
 
 # PROJECT-SPECIFIC
 from . import core, data, plugin

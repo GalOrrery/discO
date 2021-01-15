@@ -141,7 +141,7 @@ class MeasurementErrorSampler(PotentialBase):
             if method is None or method not in cls._registry:
                 raise ValueError(
                     "MeasurementErrorSampler has no registered "
-                    f"measurement resampler '{method}'"
+                    f"measurement resampler '{method}'",
                 )
 
             # from registry. Registered in __init_subclass__
@@ -156,7 +156,7 @@ class MeasurementErrorSampler(PotentialBase):
 
         elif method is not None:
             raise ValueError(
-                "Can't specify 'method' on MeasurementErrorSampler subclasses."
+                "Can't specify 'method' on MeasurementErrorSampler subclasses.",
             )
 
         elif return_specific_class is not False:

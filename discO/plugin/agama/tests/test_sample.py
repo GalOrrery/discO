@@ -24,7 +24,8 @@ from discO.plugin.agama import sample
 
 
 class Test_AGAMAPotentialSampler(
-    Test_PotentialSampler, obj=sample.AGAMAPotentialSampler
+    Test_PotentialSampler,
+    obj=sample.AGAMAPotentialSampler,
 ):
     @classmethod
     def setup_class(cls):

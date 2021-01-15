@@ -73,7 +73,11 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
 
         # can't pass a random seed. TODO set in with statement.s
         orbits = self._sampler.sample(
-            R=None, z=None, phi=None, n=n, return_orbit=True
+            R=None,
+            z=None,
+            phi=None,
+            n=n,
+            return_orbit=True,
         )
 
         # TODO make sure transformation is correct

@@ -53,7 +53,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
                     coord.ICRS(
                         ra=random.uniform(size=n) * u.deg,
                         dec=2 * random.uniform(size=n) * u.deg,
-                    )
+                    ),
                 ).transform_to(frame)
 
         cls.SubClassUnitTest = SubClassUnitTest
@@ -193,7 +193,9 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             package, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                self.potential, package=package, return_specific_class=True
+                self.potential,
+                package=package,
+                return_specific_class=True,
             )
 
             # test class type
@@ -209,7 +211,9 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             package, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                self.potential, package=package, return_specific_class=False
+                self.potential,
+                package=package,
+                return_specific_class=False,
             )
 
             # test class type

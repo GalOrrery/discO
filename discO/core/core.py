@@ -119,7 +119,8 @@ class PotentialBase(metaclass=ABCMeta):
 
     @staticmethod
     def _infer_package(
-        obj: T.Any, package: T.Union[ModuleType, str, None] = None
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
     ):
 
         if inspect.ismodule(package):

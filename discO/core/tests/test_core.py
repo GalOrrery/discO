@@ -129,7 +129,7 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
         # when package is None and object is c-compiled
         assert self.obj._infer_package(object(), package=None) == resolve_name(
-            "builtins"
+            "builtins",
         )
 
         # when fails

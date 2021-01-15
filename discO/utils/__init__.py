@@ -31,7 +31,8 @@ from discO.config import conf
 
 
 def resolve_framelike(
-    frame: T.Optional[FrameLikeType], error_if_not_type: bool = True
+    frame: T.Optional[FrameLikeType],
+    error_if_not_type: bool = True,
 ):
     """Determine the frame and return a blank instance.
 
@@ -73,7 +74,7 @@ def resolve_framelike(
         raise TypeError(
             "Input coordinate frame must be an astropy "
             "coordinates frame subclass *instance*, not a "
-            "'{}'".format(frame.__class__.__name__)
+            "'{}'".format(frame.__class__.__name__),
         )
 
     return frame
