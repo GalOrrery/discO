@@ -2,13 +2,6 @@
 
 """Sample a Potential.
 
-.. todo::
-
-    Stretch Goals:
-
-    - plugin for registering classes
-
-
 Registering a Measurement Sampler
 *********************************
 a

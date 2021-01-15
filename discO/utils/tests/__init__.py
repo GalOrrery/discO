@@ -1,48 +1,19 @@
 # -*- coding: utf-8 -*-
 # see LICENSE.rst
 
-# ----------------------------------------------------------------------------
-#
-# TITLE   :
-# AUTHOR  :
-# PROJECT :
-#
-# ----------------------------------------------------------------------------
+"""Tests for :mod:`~discO.utils`."""
 
-"""**DOCSTRING**.
-
-Description.
-
-Routine Listings
-----------------
-
-"""
-
-__author__ = ""
-# __copyright__ = "Copyright 2018, "
-# __credits__ = [""]
-# __license__ = ""
-# __version__ = "0.0.0"
-# __maintainer__ = ""
-# __email__ = ""
-# __status__ = "Production"
-
-
-# __all__ = [
-#     # modules
-#     "",
-#     # functions
-#     "",
-#     # other
-#     "",
-# ]
+__all__ = [
+    # modules
+    "resolve_framelike_tests",
+]
 
 
 ##############################################################################
 # IMPORTS
 
 # BUILT IN
-
+from . import test_resolve_framelike as resolve_framelike_tests
 
 ##############################################################################
 # END

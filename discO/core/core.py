@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""**DOCSTRING**.
-
-Description.
-
-"""
+"""Baseclass for classes that interact with a Potential."""
 
 __all__ = [
     "PotentialBase",

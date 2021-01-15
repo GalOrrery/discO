@@ -1,4 +1,4 @@
-.. currentmodule:: skycover
+.. currentmodule:: discO
 
 ********
 Glossary

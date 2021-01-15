@@ -2,12 +2,6 @@
 
 """Sample a Potential.
 
-.. todo::
-
-    Stretch Goals:
-
-    - plugin for registering classes
-
 Introduction
 ************
 
@@ -368,7 +362,7 @@ class PotentialSampler(PotentialBase):
             if j == 0:  # 0-dimensional doesn't need concat
                 sample = samps[0]
             else:
-                sample = concatenate(samps).reshape((niter, N))
+                sample = concatenate(samps).reshape((N, niter))
             samples[i] = sample
 
         if np.isscalar(n):

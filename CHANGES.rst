@@ -16,6 +16,7 @@ Code that can be used all over the package. It's not core, it's common.
 
     + EllipsisType : ``type(Ellipsis)`` b/c ellipsis fails.
     + UnitType : the type of astropy's ``UnitBase`` and ``FunctionUnitBasse``
+    + QuantityType : the type of astropy's ``Quantity``
     + FrameType : the type of astropy's ``BaseCoordinateFrame``
     + SkyCoordType : the type of astropy's ``SkyCoord``
     + CoordinateType : the union of FrameType & SkyCoordType
@@ -38,7 +39,8 @@ Where the unified architecture is defined.
 Modules:
 
 - ``core`` : the base class. [#17]
-- ``sampler`` : for sampling from a Potential. [#17]
+- ``sample`` : for sampling from a Potential. [#17]
+- ``measurement`` : for resampling, given observational errors. [#17]
 
 
 **discO.core.core**
@@ -152,11 +154,15 @@ Other Changes and Additions
 
 - Use GitHub for CI [#12]
 
+    + On tag [#17]
+
 - Dependabot yml [#13]
 
 - Issues Templates [#14]
 
 - Update from project template [#18]
+
+- Add ``.mailmap`` [#17]
 
 
 Actions
@@ -166,6 +172,8 @@ Actions
 
 - Pre-commit [#18]
 
-    (`isort <https://pypi.org/project/isort/>`_
-    -> `black <https://pypi.org/project/black/>`_
-    -> `flake8 <https://pypi.org/project/flake8/>`_)
+    - `isort <https://pypi.org/project/isort/>`_
+    - `black <https://pypi.org/project/black/>`_
+    - `flake8 <https://pypi.org/project/flake8/>`_
+    - many others from `precommit <https://pre-commit.com/hooks.html>`__ [#17]
+

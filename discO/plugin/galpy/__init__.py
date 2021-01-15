@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # see LICENSE.rst
 
-"""**DOCSTRING**."""
+"""galpy interface."""
 
 __all__ = []
 

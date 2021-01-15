@@ -398,12 +398,12 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
                 if niter == 1:
                     assert s.shape == (n_,)  # correct shape
                 elif n_ == 1:  # niter != 1
-                    assert s.shape == (niter, n_)  # correct shape
+                    assert s.shape == (n_, niter)  # correct shape
 
         elif niter == 1:
             assert samples.shape == (n,)  # correct shape
         else:
-            assert samples.shape == (niter, n)  # correct shape
+            assert samples.shape == (n, niter)  # correct shape
 
     # /def
 

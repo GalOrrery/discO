@@ -12,7 +12,6 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-# BUILT IN
 from . import test_sample as sample_tests
 
 ##############################################################################
