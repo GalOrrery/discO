@@ -13,6 +13,8 @@ __status__ = "In Progress"
 __all__ = [
     # data
     "data",
+    # configuration
+    "conf",
 ]
 
 
@@ -20,11 +22,18 @@ __all__ = [
 # IMPORTS
 
 # keep this content at the top. (sets the __version__)
-from ._astropy_init import *  # noqa  # isort:skip
-from ._astropy_init import __version__  # noqa  # isort:skip
+from ._astropy_init import *  # noqa: F401, F403  # isort:skip
+from ._astropy_init import __version__  # noqa: F401  # isort:skip
 
 # PROJECT-SPECIFIC
-from . import data
+from . import core, data, plugin
+from .config import conf
+from .core import *  # noqa: F401, F403
+from .plugin import *  # noqa: F401, F403
+
+# All
+__all__ += core.__all__
+__all__ += plugin.__all__
 
 ##############################################################################
 # END

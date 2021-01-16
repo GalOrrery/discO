@@ -4,12 +4,15 @@
 ###############################################################################
 # Project-Specific
 
+# Big Data Files
+/discO/data/sim_CC_100
+
 # scratch folder
 scratch/
+notes/
 
 # _old
 **/_old
-
 
 # scripts
 scripts/**/output
@@ -77,6 +80,7 @@ sdist
 develop-eggs
 .installed.cfg
 distribute-*.tar.gz
+*.dev*
 
 # Other
 .cache
@@ -109,9 +113,3 @@ pip-wheel-metadata/
 *.sublime-project
 /sftp-config-alt.json
 /sftp-config.json
-
-# R stuff
-.Rproj.use
-/.Rproj.user
-/.Rhistory
-/.RData

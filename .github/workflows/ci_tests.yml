@@ -5,15 +5,14 @@ name: CI
 
 on:
   push:
-    # only build on select branches
-    branches:
+    tags:
+    branches:  # only build on select branches
       - main
       - master  # TODO delete when transition
       - release/*
 
   pull_request:
-    # only build on PRs against main
-    branches:
+    branches:  # only build on PRs against main
       - main
       - master  # TODO delete when transition
 
@@ -56,13 +55,12 @@ jobs:
             python: 3.8
             toxenv: py38-test-cov
 
-          # Done with pre-commit
-          # - name: code style
+          # - name: code style.  # Done with pre-commit
           #   os: ubuntu-latest
           #   python: 3.x
           #   toxenv: codestyle
 
-          # - name: Documentation Build  # Done with RTD
+          # - name: Documentation Build  # Done with RTD on public repos.
           #   os: ubuntu-latest
           #   python: 3.x
           #   toxenv: build_docs
@@ -147,10 +145,10 @@ jobs:
             python: 3.8
             toxenv: py38-test-alldeps
 
-          - name: py3.8 - all deps (Windows)
+          - name: py3.8 - min deps (Windows)
             os: windows-latest
             python: 3.8
-            toxenv: py38-test-alldeps
+            toxenv: py38-test
 
     steps:
     - name: Checkout code
@@ -177,6 +175,7 @@ jobs:
 
   # ---------------------------------------------
   # Many Versions
+  # Comment out for private repos
 
   versions:
     needs: further
