@@ -6,8 +6,9 @@
 __all__ = [
     # modules
     "core_tests",
-    "measurement_tests",
     "sample_tests",
+    "measurement_tests",
+    "fitter_tests",
     # instance
     "test",
 ]
@@ -24,6 +25,7 @@ from astropy.tests.runner import TestRunner
 
 # PROJECT-SPECIFIC
 from . import test_core as core_tests
+from . import test_fitter as fitter_tests
 from . import test_measurement as measurement_tests
 from . import test_sample as sample_tests
 

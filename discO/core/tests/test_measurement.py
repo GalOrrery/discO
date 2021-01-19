@@ -62,7 +62,7 @@ class Test_MeasurementErrorSampler(
             class SubClass1(self.obj):
                 pass
 
-            assert not hasattr(SubClass1, "_package")
+            assert not hasattr(SubClass1, "_key")
             assert "SubClass1" in measurement.MEASURE_REGISTRY
         except Exception:
             pass

@@ -25,7 +25,7 @@ from discO.core.sample import PotentialSampler
 ##############################################################################
 
 
-class GalpyPotentialSampler(PotentialSampler, package="galpy"):
+class GalpyPotentialSampler(PotentialSampler, key="galpy"):
     """Sample a :mod:`~galpy` Potential.
 
     Parameters
@@ -91,23 +91,6 @@ class GalpyPotentialSampler(PotentialSampler, package="galpy"):
         return samples
 
     # /def
-
-    # def sample_at_c(self, c=None, n=1, frame=None, **kargs):
-    #     if c is None:
-    #         R, z, phi = None, None, None
-
-    #     else:
-    #         rep = c.represent_as(coord.CylindricalRepresentation)
-    #         R, z, phi = rep.rho, rep.z, rep.phi
-
-    #     orbits = self._sampler.sample(
-    #         R=R, z=z, phi=phi, n=n, return_orbit=True,
-    #     )
-    #     samples = orbits.SkyCoord().transform_to(frame)
-
-    #     return samples
-
-    # # /def
 
 
 # /class

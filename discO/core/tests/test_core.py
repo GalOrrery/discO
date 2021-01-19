@@ -13,6 +13,7 @@ __all__ = [
 # BUILT-IN
 from abc import abstractmethod
 from collections.abc import Mapping
+from types import MappingProxyType
 
 # THIRD PARTY
 import pytest
@@ -36,26 +37,26 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
     def test___init_subclass__(self):
         """Test subclassing."""
         # --------------------
-        # When package is None
+        # When key is None
         class SubClasss1(self.obj):
             _registry = {}
 
-        assert not hasattr(SubClasss1, "_package")
+        assert not hasattr(SubClasss1, "_key")
 
         # --------------------
-        # When package is str
+        # When key is str
 
-        class SubClasss2(self.obj, package="pytest"):
+        class SubClasss2(self.obj, key="pytest"):
             _registry = {}
 
-        assert SubClasss2._package == pytest
+        assert SubClasss2._key == "pytest"
 
         # --------------------
         # test error
 
         with pytest.raises(TypeError):
 
-            class SubClasss3(self.obj, package=Exception):
+            class SubClasss3(self.obj, key=Exception):
                 _registry = {}
 
     # /def
@@ -69,6 +70,12 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
     # /def
 
+    def test_registry(self):
+        # This doesn't run on `Test_PotentialBase`, but should
+        # run on all registry subclasses.
+        if isinstance(self.obj._registry, Mapping):
+            assert isinstance(self.obj.registry, MappingProxyType)
+
     # -------------------------------
 
     @abstractmethod
@@ -78,12 +85,22 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
         # or a Mapping, for normal classes.
         assert isinstance(self.obj._registry, (property, Mapping))
 
+        # ---------
+
         # This doesn't run on `Test_PotentialBase`, but should
         # run on all registry subclasses.
         if isinstance(self.obj._registry, Mapping):
             # a very basic equality test
             for k in self.obj._registry:
+                # str
                 assert self.obj[k] is self.obj._registry[k]
+
+                # iterable of len = 1
+                assert self.obj[[k]] is self.obj._registry[k]
+
+                # multi-length iterable that fails
+                with pytest.raises(KeyError):
+                    self.obj[[k, KeyError]]
 
     # /def
 
@@ -116,7 +133,7 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
     def test__infer_package(self):
         """Test method ``_infer_package``."""
-        # when package is None
+        # when key is None
         assert self.obj._infer_package(self.obj) == discO
 
         # when pass package
@@ -138,8 +155,32 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
     # /def
 
+    # -------------------------------
+
+    def test__parse_registry_path(self):
+        """Test method ``_parse_registry_path``."""
+        # str -> str
+        assert self.obj._parse_registry_path("pytest") == "pytest"
+
+        # module -> str
+        assert self.obj._parse_registry_path(pytest) == "pytest"
+
+        # Sequence
+        assert self.obj._parse_registry_path(("pytest", discO)) == [
+            "pytest",
+            "discO",
+        ]
+
+        # failure in Sequence
+        with pytest.raises(TypeError):
+            self.obj._parse_registry_path((None,))
+
+        # failure in normal call
+        with pytest.raises(TypeError):
+            self.obj._parse_registry_path(None)
+
     #################################################################
-    # Pipeline Tests
+    # Usage Tests
 
     # N/A b/c abstract base-class
 

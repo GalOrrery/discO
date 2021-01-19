@@ -14,14 +14,12 @@ __all__ = [
 import inspect
 import typing as T
 from abc import ABCMeta, abstractmethod
-from types import ModuleType
+from collections import Sequence
+from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
+from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
-
-##############################################################################
-# PARAMETERS
-
 
 ##############################################################################
 # CODE
@@ -43,10 +41,18 @@ class PotentialBase(metaclass=ABCMeta):
 
     """
 
-    #################################################################
+    #######################################################
     # On the class
 
-    def __init_subclass__(cls, package: T.Union[str, ModuleType, None] = None):
+    def __init_subclass__(
+        cls,
+        key: T.Union[
+            str,
+            ModuleType,
+            None,
+            T.Sequence[T.Union[ModuleType, str]],
+        ] = None,
+    ):
         """Initialize a subclass.
 
         This method applies to all subclasses, not matter the
@@ -54,10 +60,10 @@ class PotentialBase(metaclass=ABCMeta):
 
         Parameters
         ----------
-        package : str or `~types.ModuleType` or None (optional)
+        key : str or `~types.ModuleType` or None (optional)
 
-            If the package is not None, resolves package module
-            and stores it in attribute ``_package``.
+            If the key is not None, resolves key module
+            and stores it in attribute ``_key``.
 
             .. todo::
 
@@ -66,17 +72,32 @@ class PotentialBase(metaclass=ABCMeta):
         """
         super().__init_subclass__()
 
-        if package is not None:
+        if key is not None:
+            key = cls._parse_registry_path(key)
 
-            if isinstance(package, str):
-                package = resolve_name(package)
-            elif not isinstance(package, ModuleType):
-                raise TypeError
+            if key in cls._registry:
+                raise KeyError(f"`{key}` sampler already in registry.")
 
-            if package in cls._registry:
-                raise KeyError(f"`{package}` sampler already in registry.")
+            cls._key = key
 
-            cls._package = package
+    # /def
+
+    def __class_getitem__(cls, key):
+        if isinstance(key, str):
+            item = cls._registry[key]
+        elif len(key) == 1:
+            item = cls._registry[key[0]]
+        else:
+            item = cls._registry[key[0]][key[1:]]
+
+        return item
+
+    # /def
+
+    @classproperty
+    def registry(self):
+        """The class registry."""
+        return MappingProxyType(self._registry)
 
     # /def
 
@@ -84,11 +105,6 @@ class PotentialBase(metaclass=ABCMeta):
     @abstractmethod
     def _registry(self):
         """The class registry. Need to override."""
-
-    # /def
-
-    def __class_getitem__(cls, key):
-        return cls._registry[key]
 
     # /def
 
@@ -137,6 +153,31 @@ class PotentialBase(metaclass=ABCMeta):
             raise TypeError("package must be <module> or <str> or None.")
 
         return package
+
+    # /def
+
+    @staticmethod
+    def _parse_registry_path(path):
+
+        if isinstance(path, str):
+            parsed = path
+        elif isinstance(path, ModuleType):
+            parsed = path.__name__
+        elif isinstance(path, Sequence):
+            parsed = []
+            for p in path:
+                if isinstance(p, str):
+                    parsed.append(p)
+                elif isinstance(p, ModuleType):
+                    parsed.append(p.__name__)
+                else:
+                    raise TypeError(
+                        f"{path} is not <str, ModuleType, Sequence>",
+                    )
+        else:
+            raise TypeError(f"{path} is not <str, ModuleType, Sequence>")
+
+        return parsed
 
     # /def
 
