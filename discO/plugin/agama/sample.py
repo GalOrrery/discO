@@ -28,7 +28,7 @@ from discO.core.sample import PotentialSampler
 ##############################################################################
 
 
-class AGAMAPotentialSampler(PotentialSampler, package="agama"):
+class AGAMAPotentialSampler(PotentialSampler, key="agama"):
     """Sample a :mod:`~agama` Potential.
 
     Parameters
@@ -70,7 +70,7 @@ class AGAMAPotentialSampler(PotentialSampler, package="agama"):
         if np.shape(pos)[1] == 6:
             pos, _ = pos[:, :3], pos[:, 3:]  # TODO: vel
         else:
-            # vel = None  # TODO
+            # vel = None  # TODO!
             pass
 
         # TODO get agama units !

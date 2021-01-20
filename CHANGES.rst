@@ -41,7 +41,7 @@ Modules:
 - ``core`` : the base class. [#17]
 - ``sample`` : for sampling from a Potential. [#17]
 - ``measurement`` : for resampling, given observational errors. [#17]
-
+- ``fitter`` : for fitting a Potential given a sample [#20]
 
 **discO.core.core**
 
@@ -55,30 +55,48 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
 **discO.core.sample**
 
-PotentialSampler : base class for sampling potentials [#17]
+``PotentialSampler`` : base class for sampling potentials [#17]
 
     + registers subclasses. Each subclass is for sampling from potentials from
-      a different package. Eg. ``GalpyPotentialSampler`` for sampling ``galpy``
-      potentials.
+      a different package. Eg. ``GalpyPotentialSampler`` for sampling
+      ``galpy`` potentials.
     + PotentialSampler can be used to initialize & wrap any of its subclasses.
       This is controlled by the argument ``return_specific_class``. If False,
       it returns the subclass itself.
     + Takes a ``potential`` and a ``frame`` (astropy CoordinateFrame). The
-      potential is used for sampling, but the resultant points are not located
+      potential is used for sampling, but the resulting points are not located
       in any reference frame, which we assign with ``frame``.
     + ``__call__`` and ``sample`` are used to sample the potential
-    + ``resample`` (and ``resampler``) sample the potential many times. This can
-      be done for many iterations and different sample number points.
+    + ``sample`` samples the potential many times. This
+      can be done for many iterations and different sample number points.
+    + ``sample_iter`` samples the potential many times as a generator.
 
 
 **discO.core.measurement**
 
-- MeasurementErrorSampler : abstract base class for resampling a potential given measurement errors [#17]
+- ``MeasurementErrorSampler`` : base class for resampling a potential given
+  measurement errors [#17]
 
-    + registers subclasses. Each subclass is for resampling in a different way.
-    + MeasurementErrorSampler can be used to wrap any of its subclasses.
+    + registers subclasses. Each subclass is for resampling in a different
+      way.
+    + ``MeasurementErrorSampler`` is a registry wrapper class and can be used
+      in-place of any of its subclasses.
 
-- GaussianMeasurementErrorSampler : apply uncorrelated Gaussian errors [#17]
+- ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]
+
+
+**discO.core.fitter**
+
+- ``PotentialFitter`` : base class for fitting potentials [#20]
+
+    + registers subclasses.
+    + PotentialFitter can be used to initialize & wrap any of its subclasses.
+      This is controlled by the argument ``return_specific_class``. If False,
+      it returns the subclass itself.
+    + Takes a ``potential_cls`` and ``key`` argument which are used to figure
+      out the desired subclass, and how to fit the potential.
+    + ``__call__`` and ``fit`` are used to fit the potential, with the latter
+      working on N-D samples (multiple iterations).
 
 
 discO.data
@@ -87,22 +105,38 @@ discO.data
 - Add Milky_Way_Sim_100 data [#10]
 
 
-discO.extern
+discO.plugin
 ^^^^^^^^^^^^
 
 Where classes for external packages are held.
 
 
-discO.extern.agama
+discO.plugin.agama
 ^^^^^^^^^^^^^^^^^^
 
 - AGAMAPotentialSampler [#17]
 
     + Sample from ``agama`` potentials.
+    + Subclass of ``PotentialSampler``
     + stores the mass and potential as attributes on the returned ``SkyCoord``
 
+- AGAMAPotentialFitter [#20]
 
-discO.extern.galpy
+    + Fit ``agama`` potentials.
+    + Subclass of ``PotentialFitter``
+    + registers subclasses for different fit methods.
+    + AGAMAPotentialFitter can be used to initialize & wrap any of its
+      subclasses. This is controlled by the argument ``return_specific_class``. If False, it returns the subclass itself.
+    + Takes a ``pot_type`` argument which is used to figure
+      out the desired subclass, and how to fit the potential.
+
+- AGAMAMultipolePotentialFitter [#20]
+
+    + Fit ``agama`` potentials with a multipole
+    + Subclass of ``AGAMAPotentialFitter``
+
+
+discO.plugin.galpy
 ^^^^^^^^^^^^^^^^^^
 
 - GalpyPotentialSampler [#17]

@@ -41,6 +41,7 @@ class Test_GalpyPotentialSampler(
         hernquist_pot = HernquistPotential(amp=cls.mass)
         hernquist_pot.turn_physical_on()  # force units
         cls.potential = isotropicHernquistdf(hernquist_pot)
+        cls.potential.turn_physical_on()
 
         cls.inst = cls.obj(cls.potential)
 
@@ -73,7 +74,16 @@ class Test_GalpyPotentialSampler(
 
         assert res.potential == self.potential
         assert len(res.mass) == n
-        assert np.isclose(res.mass.sum(), self.mass.to_value(u.solMass))
+
+        got = res.mass.sum()
+        if hasattr(got, "unit"):
+            got = got.to_value(u.solMass)
+
+        expected = self.mass
+        if hasattr(expected, "unit"):
+            expected = expected.to_value(u.solMass)
+
+        assert np.isclose(got, expected)
 
         # TODO! value tests when https://github.com/jobovy/galpy/pull/443
         # assert np.allclose(res.ra.deg, [126.10132346, 214.92637031])

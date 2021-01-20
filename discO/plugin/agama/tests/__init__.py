@@ -5,6 +5,7 @@
 
 __all__ = [
     "sample_tests",
+    "fitter_tests",
 ]
 
 
@@ -12,6 +13,7 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
+from . import test_fitter as fitter_tests
 from . import test_sample as sample_tests
 
 ##############################################################################

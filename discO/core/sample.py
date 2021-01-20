@@ -41,7 +41,7 @@ import itertools
 import typing as T
 import warnings
 from contextlib import nullcontext
-from types import MappingProxyType, ModuleType
+from types import ModuleType
 
 # THIRD PARTY
 import numpy as np
@@ -56,7 +56,7 @@ from discO.utils import resolve_framelike
 ##############################################################################
 # PARAMETERS
 
-SAMPLER_REGISTRY = dict()  # package : sampler
+SAMPLER_REGISTRY = dict()  # key : sampler
 
 Random_Like = T.Union[int, np.random.Generator, np.random.RandomState, None]
 
@@ -83,8 +83,8 @@ class PotentialSampler(PotentialBase):
 
     Other Parameters
     ----------------
-    package : `~types.ModuleType` or str or None (optional, keyword only)
-        The package to which the `potential` belongs.
+    key : `~types.ModuleType` or str or None (optional, keyword only)
+        The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
     return_specific_class : bool (optional, keyword only)
         Whether to return a `PotentialSampler` or package-specific subclass.
@@ -95,27 +95,27 @@ class PotentialSampler(PotentialBase):
     ------
     ValueError
         If directly instantiating a PotentialSampler (not subclass) and cannot
-        find the appropriate subclass, identified using ``package``.
+        find the appropriate subclass, identified using ``key``.
 
     """
 
     #################################################################
     # On the class
 
-    _registry = MappingProxyType(SAMPLER_REGISTRY)
+    _registry = SAMPLER_REGISTRY
 
-    def __init_subclass__(cls, package: T.Union[str, ModuleType] = None):
-        """Initialize subclass, adding to registry by `package`.
+    def __init_subclass__(cls, key: T.Union[str, ModuleType] = None):
+        """Initialize subclass, adding to registry by `key`.
 
         This method applies to all subclasses, not matter the
         inheritance depth, unless the MRO overrides.
 
         """
-        super().__init_subclass__(package=package)
+        super().__init_subclass__(key=key)
 
-        if package is not None:  # same trigger as PotentialBase
-            # cls._package defined in super()
-            SAMPLER_REGISTRY[cls._package] = cls
+        if key is not None:  # same trigger as PotentialBase
+            # cls._key defined in super()
+            cls.__bases__[0]._registry[cls._key] = cls
 
         # TODO? insist that subclasses define a __call__ method
         # this "abstractifies" the base-class even though it can be used
@@ -131,7 +131,7 @@ class PotentialSampler(PotentialBase):
         potential: T.Any,
         *,
         frame: T.Optional[FrameLikeType] = None,
-        package: T.Union[ModuleType, str, None] = None,
+        key: T.Union[ModuleType, str, None] = None,
         return_specific_class: bool = False,
     ):
         self = super().__new__(cls)
@@ -140,17 +140,17 @@ class PotentialSampler(PotentialBase):
         # If directly instantiating a PotentialSampler (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
-            # infer the package, to add to registry
-            package = self._infer_package(potential, package)
+            # infer the key, to add to registry
+            key = self._infer_package(potential, key).__name__
 
-            if package not in cls._registry:
+            if key not in cls._registry:
                 raise ValueError(
-                    "PotentialSampler has no registered sampler for package: "
-                    f"{package}",
+                    "PotentialSampler has no registered sampler for key: "
+                    f"{key}",
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[package](potential)
+            instance = cls[key](potential)
 
             # Whether to return class or subclass
             # else continue, storing instance
@@ -159,9 +159,9 @@ class PotentialSampler(PotentialBase):
 
             self._instance = instance
 
-        elif package is not None:
+        elif key is not None:
             raise ValueError(
-                "Can't specify 'package' on PotentialSampler subclasses.",
+                "Can't specify 'key' on PotentialSampler subclasses.",
             )
 
         elif return_specific_class is not False:
@@ -280,6 +280,13 @@ class PotentialSampler(PotentialBase):
     ):
         """Sample the potential.
 
+        .. todo::
+
+            Subclass SkyCoord and have metadata mass and potential that
+            carry-over. Or embed a SkyCoord in a table with the other
+            attributes. or something so that doesn't need continual
+            reassignment
+
         Parameters
         ----------
         n : int or sequence
@@ -323,15 +330,20 @@ class PotentialSampler(PotentialBase):
 
         for i, N in enumerate(itersamp):
             samps = [None] * niter  # premake array
+            mass = [None] * niter  # premake array
 
             for j in range(0, niter):
                 samp = self(n=N, frame=frame, random=random, **kwargs)
                 samps[j] = samp
+                mass[j] = samp.mass
 
             if j == 0:  # 0-dimensional doesn't need concat
                 sample = samps[0]
             else:
                 sample = concatenate(samps).reshape((N, niter))
+                sample.mass = np.vstack(mass).T
+                sample.potential = samp.potential  # all the same
+
             samples[i] = sample
 
         if np.isscalar(n):

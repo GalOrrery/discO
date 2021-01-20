@@ -39,7 +39,7 @@ from discO.common import FrameLikeType
 ##############################################################################
 # PARAMETERS
 
-MEASURE_REGISTRY = dict()  # package : measurer
+MEASURE_REGISTRY = dict()  # key : measurer
 
 ##############################################################################
 # CODE
@@ -98,7 +98,7 @@ class MeasurementErrorSampler(PotentialBase):
         inheritance depth, unless the MRO overrides.
 
         """
-        super().__init_subclass__(package=None)
+        super().__init_subclass__(key=None)
 
         key = cls.__name__
         if key in cls._registry:

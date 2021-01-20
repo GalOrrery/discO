@@ -12,9 +12,7 @@ __all__ = [
 
 # BUILT-IN
 import itertools
-import unittest
 from abc import abstractmethod
-from types import MappingProxyType
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -24,21 +22,21 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import sample
-from discO.core.tests.test_core import Test_PotentialBase
+from discO.core.tests.test_core import Test_PotentialBase as PotentialBase_Test
 
 ##############################################################################
 # TESTS
 ##############################################################################
 
 
-class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
+class Test_PotentialSampler(PotentialBase_Test, obj=sample.PotentialSampler):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
         cls.potential = object()
 
         # register a unittest examples
-        class SubClassUnitTest(cls.obj, package="unittest"):
+        class SubClassUnitTest(cls.obj, key="unittest"):
             def __call__(self, n, *, frame=None, random=None, **kwargs):
                 # Get preferred frames
                 frame = self._preferred_frame_resolve(frame)
@@ -49,25 +47,29 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
                     random = np.random.default_rng(random)
 
                 # return
-                return coord.SkyCoord(
+                sample = coord.SkyCoord(
                     coord.ICRS(
                         ra=random.uniform(size=n) * u.deg,
                         dec=2 * random.uniform(size=n) * u.deg,
                     ),
                 ).transform_to(frame)
+                sample.mass = np.ones(n)
+                sample.potential = cls.potential
+
+                return sample
 
         cls.SubClassUnitTest = SubClassUnitTest
 
-        # make instance. It depends
+        # make instance. It depends.
         if cls.obj is sample.PotentialSampler:
-            cls.inst = cls.obj(cls.potential, package="unittest")
+            cls.inst = cls.obj(cls.potential, key="unittest")
 
     # /def
 
     @classmethod
     def teardown_class(cls):
         """Teardown fixtures for testing."""
-        sample.SAMPLER_REGISTRY.pop(unittest, None)
+        cls.SubClassUnitTest._registry.pop("unittest", None)
 
     # /def
 
@@ -87,32 +89,32 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         # register a new
         try:
 
-            class SubClass1(self.obj, package="pytest"):
+            class SubClass1(self.obj, key="pytest"):
                 pass
 
         except Exception:
             pass
         finally:
-            sample.SAMPLER_REGISTRY.pop(pytest, None)
+            sample.SAMPLER_REGISTRY.pop("pytest", None)
 
         # -------------------------------
         # error when already in registry
 
         try:
             # registered
-            class SubClass1(self.obj, package="pytest"):
+            class SubClass1(self.obj, key="pytest"):
                 pass
 
             # doing it again raises error
             with pytest.raises(KeyError):
 
-                class SubClass1(self.obj, package="pytest"):
+                class SubClass1(self.obj, key="pytest"):
                     pass
 
         except Exception:
             pass
         finally:  # cleanup
-            sample.SAMPLER_REGISTRY.pop(pytest, None)
+            sample.SAMPLER_REGISTRY.pop("pytest", None)
 
     # /def
 
@@ -129,13 +131,13 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         super().test__registry()
 
         # -------------------------------
-        assert isinstance(self.obj._registry, MappingProxyType)
+        assert isinstance(self.obj._registry, dict)
 
         # The unittest is already registered, so can
         # test for that.
-        assert unittest in self.obj._registry.keys()
+        assert "unittest" in self.obj._registry.keys()
         assert self.SubClassUnitTest in self.obj._registry.values()
-        assert self.obj._registry[unittest] is self.SubClassUnitTest
+        assert self.obj._registry["unittest"] is self.SubClassUnitTest
 
     # /def
 
@@ -148,7 +150,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
         # -------------------------------
         # test a specific item in the registry
-        assert self.obj[unittest] is self.SubClassUnitTest
+        assert self.obj["unittest"] is self.SubClassUnitTest
 
     # /def
 
@@ -183,18 +185,17 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
                 self.obj(self.potential)
 
             assert (
-                "PotentialSampler has no registered sampler for package: "
-                "<module 'builtins' (built-in)>"
+                "PotentialSampler has no registered sampler for key: builtins"
             ) in str(e.value)
 
             # ---------------
             # with return_specific_class
 
-            package, klass = tuple(self.obj._registry.items())[0]
+            key, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
                 self.potential,
-                package=package,
+                key=key,
                 return_specific_class=True,
             )
 
@@ -208,11 +209,11 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             # ---------------
             # as wrapper class
 
-            package, klass = tuple(self.obj._registry.items())[0]
+            key, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
                 self.potential,
-                package=package,
+                key=key,
                 return_specific_class=False,
             )
 
@@ -228,12 +229,12 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
         else:  # never hit in Test_PotentialSampler, only in subs
 
             # ---------------
-            # Can't have the "package" argument
+            # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                self.obj(self.potential, package="not None")
+                self.obj(self.potential, key="not None")
 
-            assert "Can't specify 'package'" in str(e.value)
+            assert "Can't specify 'key'" in str(e.value)
 
             # ---------------
             # warning
@@ -241,7 +242,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
             with pytest.warns(UserWarning):
                 self.obj(
                     self.potential,
-                    package=None,
+                    key=None,
                     return_specific_class=True,
                 )
 
@@ -298,7 +299,7 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
     def test_call_parametrize(self, n, frame, kwargs):
         """Parametrized call tests."""
         res = self.inst(n, frame=frame, **kwargs)
-        assert res.__class__ == coord.SkyCoord
+        assert isinstance(res, coord.SkyCoord)
 
     # /def
 
@@ -415,34 +416,15 @@ class Test_PotentialSampler(Test_PotentialBase, obj=sample.PotentialSampler):
 
     # /def
 
+    #################################################################
+    # Usage Tests
+
 
 # /class
 
 
 # -------------------------------------------------------------------
 
-# class PotentialSamplerSubClassTests(Test_PotentialSampler):
-
-#     @classmethod
-#     def setup_class(cls):
-#         """Setup fixtures for testing."""
-#         cls.potential = object()
-
-#         # cls.inst = cls.obj(potential, package="GaussianMeasurementErrorSampler")
-
-#     # /def
-
-#     @classmethod
-#     def teardown_class(cls):
-#         """Teardown fixtures for testing."""
-#         pass
-
-#     # /def
-
-#     #################################################################
-#     # Method Tests
-
-# # /def
 
 ##############################################################################
 # END

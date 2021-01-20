@@ -8,7 +8,7 @@ include .mailmap
 include *.yaml
 include *.yml
 
-recursive-include discO *.pyx *.c *.pxd *.cfg
+recursive-include discO *.py *.pyx *.c *.pxd *.cfg *.galpyrc
 recursive-include docs *
 recursive-include licenses *
 recursive-include scripts *
