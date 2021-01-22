@@ -12,6 +12,7 @@ a
 
 __all__ = [
     "MeasurementErrorSampler",
+    # specific classes
     "GaussianMeasurementErrorSampler",
 ]
 
@@ -169,8 +170,13 @@ class MeasurementErrorSampler(PotentialBase):
     # Sampling
 
     def __call__(
-        self, c: FrameLikeType, c_err: FrameLikeType = None, *args, **kwargs
-    ):
+        self,
+        c: FrameLikeType,
+        c_err: T.Optional[FrameLikeType] = None,
+        *args,
+        random: T.Union[int, np.random.Generator, None] = None,
+        **kwargs,
+    ) -> SkyCoordType:
         """Draw a realization given Measurement error.
 
         Parameters
@@ -195,7 +201,7 @@ class MeasurementErrorSampler(PotentialBase):
         if c_err is None:
             c_err = self.c_err
         # call on instance
-        return self._instance(c, c_err, *args, **kwargs)
+        return self._instance(c, c_err, *args, random=random, **kwargs)
 
     # /def
 

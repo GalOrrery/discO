@@ -20,6 +20,7 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
+from astropy.utils.decorators import classproperty
 
 ##############################################################################
 # CODE

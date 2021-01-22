@@ -107,7 +107,7 @@ class PotentialSampler(PotentialBase):
     def __init_subclass__(cls, key: T.Union[str, ModuleType] = None):
         """Initialize subclass, adding to registry by `key`.
 
-        This method applies to all subclasses, not matter the
+        This method applies to all subclasses, no matter the
         inheritance depth, unless the MRO overrides.
 
         """
@@ -182,6 +182,26 @@ class PotentialSampler(PotentialBase):
 
     # /def
 
+    # ---------------------------------------------------------------
+
+    @property
+    def frame(self):
+        return self._frame
+
+    # /def
+
+    @frame.setter
+    def _(self, value: FrameLikeType):  # TODO type hint and validate
+        # parse str, etc -> empty frame instance
+        newframe = resolve_framelike(value)
+        # set here
+        self._frame = newframe
+        # and might need to set on wrapped stuff
+        if hasattr(self, "_instance"):
+            self._instance.frame = newframe
+
+    # /def
+
     #################################################################
     # Sampling
 
@@ -215,6 +235,9 @@ class PotentialSampler(PotentialBase):
             ctx = NumpyRNGContext(random)
         else:  # None or Generator
             ctx = nullcontext()
+
+        # Get preferred frame
+        frame = self._preferred_frame_resolve(frame)
 
         with ctx:
             return self._instance(n=n, frame=frame, random=random, **kwargs)

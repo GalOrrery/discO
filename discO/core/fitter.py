@@ -177,9 +177,7 @@ class PotentialFitter(PotentialBase):
     # /def
 
     def fit(
-        self,
-        sample: CoordinateType,
-        **kwargs,
+        self, sample: CoordinateType, **kwargs,
     ):
         """Fit.
 
