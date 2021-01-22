@@ -42,6 +42,7 @@ Modules:
 - ``sample`` : for sampling from a Potential. [#17]
 - ``measurement`` : for resampling, given observational errors. [#17]
 - ``fitter`` : for fitting a Potential given a sample [#20]
+- ``pipeline`` : for comboing the analysis [#19]
 
 **discO.core.core**
 
@@ -97,6 +98,15 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       out the desired subclass, and how to fit the potential.
     + ``__call__`` and ``fit`` are used to fit the potential, with the latter
       working on N-D samples (multiple iterations).
+
+
+**discO.core.pipeline**
+
+- ``Pipeline`` : run a full analysis pipeline [#19]
+
+    + ``PotentialSampler`` to ``MeasurementErrorSampler`` to
+      ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``.
+    + Pipeines can also be created by concatenation.
 
 
 discO.data
