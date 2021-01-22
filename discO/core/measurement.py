@@ -35,7 +35,7 @@ from astropy.coordinates import (
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
-from discO.common import FrameLikeType
+from discO.common import FrameLikeType, SkyCoordType
 
 ##############################################################################
 # PARAMETERS

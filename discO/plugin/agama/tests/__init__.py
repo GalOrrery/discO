@@ -15,7 +15,6 @@ __all__ = [
 # PROJECT-SPECIFIC
 from . import test_fitter as fitter_tests
 from . import test_sample as sample_tests
-from . import test_fitter as fitter_tests
 
 ##############################################################################
 # END
