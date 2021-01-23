@@ -76,7 +76,7 @@ If you make use of this code, please consider citing the Zenodo DOI as a softwar
 ::
 
    @software{zenodo,
-     author       = Nathaniel Starkman, Christopher Carr, Jo Bovy, Katherine Johnson,
+     author       = Nathaniel Starkman, Christopher Carr, Jo Bovy, Kathryn Johnston,
      title        = discO v1.0,
      month        = month,
      year         = year,
