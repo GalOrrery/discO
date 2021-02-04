@@ -11,6 +11,9 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
+# BUILT-IN
+import operator
+
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
@@ -61,32 +64,35 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
+        cls.rep_cls = coord.UnitSphericalRepresentation
+
         # create a test vector field
         class TestVectorField(vectorfield.BaseVectorField):
-            base_representation = coord.UnitSphericalRepresentation
+            base_representation = cls.rep_cls
 
         cls.klass = TestVectorField
+        cls.klass_name = cls.klass.__name__.lower()
 
-        cls.points = coord.UnitSphericalRepresentation(1 * u.deg, 2 * u.deg)
+        cls.points = cls.rep_cls(1 * u.deg, 2 * u.deg)
         cls.kwargs = dict(vf_lon=2 * u.km / u.s, vf_lat=4 * u.km / u.s)
         cls.inst = TestVectorField(cls.points, **cls.kwargs)
 
     # /def
 
-    # @classmethod
-    # def teardown_class(cls):
-    #     """Teardown fixtures for testing."""
-    #     del cls.klass
-    #     del cls.points
-    #     del cls.kwargs
-    #     del cls.inst
+    @classmethod
+    def teardown_class(cls):
+        """Teardown fixtures for testing."""
+        # vectorfield._VECTORFIELD_CLASSES.pop(cls.klass_name, None)
+        # vectorfield.VECTORFIELD_REPRESENTATIONS.pop(cls.rep_cls, None)
 
-    #     vectorfield._VECTORFIELD_CLASSES.pop("testvectorfield")
-    #     vectorfield.VECTORFIELD_REPRESENTATIONS.pop(
-    #         coord.UnitSphericalRepresentation
-    #     )
+        del cls.klass
+        del cls.points
+        del cls.kwargs
+        del cls.inst
+        del cls.rep_cls
+        del cls.klass_name
 
-    # # /def
+    # /def
 
     #######################################################
     # Methods Tests
@@ -108,16 +114,19 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
         # -------------------
         # name
-        assert self.klass.get_name() == "testvectorfield"
+        assert self.klass.get_name() == self.klass_name
 
         # -------------------
         # an error is raised if the vectorfield name already exists
         with pytest.raises(ValueError) as e:
 
-            class TestVectorField(vectorfield.BaseVectorField):
-                base_representation = coord.UnitSphericalRepresentation
+            type(
+                self.klass_name,
+                (self.obj,),
+                dict(base_representation=self.rep_cls),
+            )
 
-        assert "VectorField class 'testvectorfield' already exists." in str(
+        assert f"VectorField class '{self.klass_name}' already exists." in str(
             e.value,
         )
 
@@ -125,24 +134,16 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # another error is raised if the vectorfield re-uses a Representation
         with pytest.raises(ValueError) as e:
 
-            class FailedVectorField(vectorfield.BaseVectorField):
-                base_representation = coord.UnitSphericalRepresentation
+            class FailedVectorField(self.obj):
+                base_representation = self.rep_cls
 
         # -------------------
         # check caches
-        assert "testvectorfield" in vectorfield._VECTORFIELD_CLASSES
+        assert self.klass_name in vectorfield._VECTORFIELD_CLASSES
+        assert vectorfield._VECTORFIELD_CLASSES[self.klass_name] is self.klass
+        assert self.rep_cls in vectorfield.VECTORFIELD_REPRESENTATIONS
         assert (
-            vectorfield._VECTORFIELD_CLASSES["testvectorfield"] is self.klass
-        )
-        assert (
-            coord.UnitSphericalRepresentation
-            in vectorfield.VECTORFIELD_REPRESENTATIONS
-        )
-        assert (
-            vectorfield.VECTORFIELD_REPRESENTATIONS[
-                coord.UnitSphericalRepresentation
-            ]
-            is self.klass
+            vectorfield.VECTORFIELD_REPRESENTATIONS[self.rep_cls] is self.klass
         )
 
         # -------------------
@@ -163,10 +164,10 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         inst = self.klass(
             self.points.represent_as(coord.CartesianRepresentation),
             frame="icrs",
-            **self.kwargs
+            **self.kwargs,
         )
 
-        assert isinstance(inst.points, coord.UnitSphericalRepresentation)
+        assert isinstance(inst.points, self.rep_cls)
 
         # resolve_frame
         with pytest.raises(TypeError):  # not instance
@@ -182,7 +183,10 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # errors
         # if different units
         with pytest.raises(u.UnitsError) as e:
-            self.klass(self.points, vf_lon=2 * u.km / u.s, vf_lat=4 * u.one)
+            inp = [list(itm) for itm in self.kwargs.items()]
+            inp[0][1] = 1 * u.one  # assign wrong unit
+
+            self.klass(self.points, **dict(inp))
 
         assert "components should have equivalent units." in str(e.value)
 
@@ -227,6 +231,7 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
             assert u.allclose(
                 getattr(newinst, component),
                 getattr(self.inst, component),
+                atol=1e-15 * u.km / u.s,
             )
 
     # /def
@@ -245,7 +250,10 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         inst = self.inst.represent_as(vectorfield.CartesianVectorField)
 
         assert isinstance(inst, vectorfield.CartesianVectorField)
-        # TODO? more tests
+        assert inst.points == self.inst.points.represent_as(
+            coord.CartesianRepresentation,
+        )
+        # TODO! more tests, of the specific vectorfield values.
 
         # -------------------
         # convert thru Representation
@@ -253,28 +261,54 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         inst = self.inst.represent_as(coord.CartesianRepresentation)
 
         assert isinstance(inst, vectorfield.CartesianVectorField)
-        # TODO? more tests
+        assert inst.points == self.inst.points.represent_as(
+            coord.CartesianRepresentation,
+        )
+        # TODO! more tests, of the specific vectorfield values.
 
         # -------------------
         # failed
 
         with pytest.raises(TypeError):
             self.inst.represent_as(object)
-        # TODO? more tests
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_from_field(self):
-        """Test method ``from_field``."""
-        assert False
+        """Test method ``from_field``.
+
+        We will do this by round-trip.
+
+        """
+        intermediate = self.inst.represent_as(vectorfield.CartesianVectorField)
+        inst = self.inst.from_field(intermediate)
+
+        # test inst is same as self.inst
+        for comp in self.inst.components:
+            assert u.allclose(
+                getattr(inst, comp),
+                getattr(self.inst, comp),
+                atol=1e-15 * u.km / u.s,
+            )
+
+        # -------------------
+        # failed
+
+        with pytest.raises(TypeError):
+            self.inst.from_field(object())
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test__scale_operation(self):
-        """Test method ``_scale_operation``."""
-        assert False
+        """Test method ``_scale_operation``.
+
+        only the vectorfield values are scaled.
+
+        """
+        newinst = self.inst._scale_operation(operator.mul, 2)
+
+        for comp in self.inst.components:
+            assert getattr(newinst, comp) == 2 * getattr(self.inst, comp)
 
     # /def
 
@@ -285,38 +319,44 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_norm(self):
         """Test method ``norm``."""
-        assert False
+        # sqrt(4^2 + 2^2)
+        assert u.allclose(self.inst.norm() ** 2, 20 * u.km ** 2 / u.s ** 2)
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_unit_vectors(self):
         """Test method ``unit_vectors``."""
-        assert False
+        assert self.inst.unit_vectors() == self.inst.points.unit_vectors()
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_scale_factors(self):
         """Test method ``scale_factors``."""
-        assert False
+        assert self.inst.scale_factors() == self.inst.points.scale_factors()
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test___repr__(self):
         """Test method ``__repr__``."""
-        assert False
+        s = self.inst.__repr__()
+
+        assert isinstance(s, str)
+        # TODO! more tests
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test__apply(self):
-        """Test method ``_apply``."""
-        assert False
+        """Test method ``_apply``.
+
+        As the documentation implies, ``reshape`` uses ``_apply``.
+
+        """
+        newinst = self.inst.reshape(1, -1)
+        assert newinst.shape == (1, 1)
+
+        # TODO more tests
 
     # /def
 
@@ -337,45 +377,69 @@ class Test_CartesianVectorField(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        pass
+        cls.rep_cls = coord.CartesianRepresentation
+        cls.klass = cls.obj
+        cls.klass_name = "cartesianvectorfield"
+
+        cls.points = cls.rep_cls(1 * u.kpc, 2 * u.kpc, 20 * u.pc)
+        cls.kwargs = dict(
+            vf_x=2 * u.km / u.s,
+            vf_y=4 * u.km / u.s,
+            vf_z=0 * u.km / u.s,
+        )
+        cls.inst = cls.klass(cls.points, **cls.kwargs)
 
     # /def
 
     #######################################################
     # Methods Tests
 
-    @pytest.mark.skip("TODO")
     def test_attributes(self):
         """Test class attributes."""
-        assert False
+        assert self.klass.base_representation is coord.CartesianRepresentation
+
+        assert self.inst.x == self.points.x
+        assert self.inst.y == self.points.y
+        assert self.inst.z == self.points.z
+
+        assert u.allclose(self.inst.xyz, self.inst.points.xyz)
+        assert u.allclose(self.inst.vf_xyz, self.inst.get_vf_xyz())
 
     # /def
 
-    @pytest.mark.skip("TODO")
-    def test___init__(self):
-        """Test method ``__init__``."""
-        assert False
-
-    # /def
-
-    @pytest.mark.skip("TODO")
     def test_get_xyz(self):
         """Test method ``get_xyz``."""
-        assert False
+        assert u.allclose(self.inst.get_xyz(), self.inst.points.get_xyz())
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_get_vf_xyz(self):
         """Test method ``get_vf_xyz``."""
-        assert False
+        vf_xyz = self.inst.get_vf_xyz()
+        assert u.allclose(vf_xyz, [2.0, 4.0, 0.0] * u.km / u.s)
+
+        # specifying the axis
+        vf_xyz = self.inst.get_vf_xyz(vf_xyz_axis=-1)
+        assert u.allclose(vf_xyz, [2.0, 4.0, 0.0] * u.km / u.s)
+
+        # TODO! tests for self._vf_xyz is not None
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_dot(self):
         """Test method ``dot``."""
-        assert False
+        # First, a failure
+        with pytest.raises(TypeError):
+            self.inst.dot(object())
+
+        # now, a success
+        val = self.inst.dot(self.inst)
+        assert val == 20 * u.km ** 2 / u.s ** 2
+
+        # and dot with a CartesianRepresentation
+        for key, base_e in self.inst.points.unit_vectors().items():
+            val = self.inst.dot(base_e)
+            assert val == getattr(self.inst, "vf_" + key)
 
     # /def
 
@@ -395,24 +459,32 @@ class Test_CylindricalVectorField(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        pass
+        cls.rep_cls = coord.CylindricalRepresentation
+        cls.klass = cls.obj
+        cls.klass_name = "cylindricalvectorfield"
+
+        cls.points = cls.rep_cls(1 * u.kpc, 2 * u.deg, 20 * u.pc)
+        cls.kwargs = dict(
+            vf_rho=2 * u.km / u.s,
+            vf_phi=4 * u.km / u.s,
+            vf_z=0 * u.km / u.s,
+        )
+        cls.inst = cls.klass(cls.points, **cls.kwargs)
 
     # /def
 
     #######################################################
     # Methods Tests
 
-    @pytest.mark.skip("TODO")
     def test_attributes(self):
         """Test class attributes."""
-        assert False
+        assert (
+            self.klass.base_representation is coord.CylindricalRepresentation
+        )
 
-    # /def
-
-    @pytest.mark.skip("TODO")
-    def test___init__(self):
-        """Test method ``__init__``."""
-        assert False
+        assert self.inst.rho == self.points.rho
+        assert self.inst.phi == self.points.phi
+        assert self.inst.z == self.points.z
 
     # /def
 
@@ -432,24 +504,30 @@ class Test_SphericalVectorField(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        pass
+        cls.rep_cls = coord.SphericalRepresentation
+        cls.klass = cls.obj
+        cls.klass_name = "sphericalvectorfield"
+
+        cls.points = cls.rep_cls(1 * u.deg, 2 * u.deg, 20 * u.pc)
+        cls.kwargs = dict(
+            vf_lon=2 * u.km / u.s,
+            vf_lat=0 * u.km / u.s,
+            vf_distance=4 * u.km / u.s,
+        )
+        cls.inst = cls.klass(cls.points, **cls.kwargs)
 
     # /def
 
     #######################################################
     # Methods Tests
 
-    @pytest.mark.skip("TODO")
     def test_attributes(self):
         """Test class attributes."""
-        assert False
+        assert self.klass.base_representation is coord.SphericalRepresentation
 
-    # /def
-
-    @pytest.mark.skip("TODO")
-    def test___init__(self):
-        """Test method ``__init__``."""
-        assert False
+        assert self.inst.lon == self.points.lon
+        assert self.inst.lat == self.points.lat
+        assert self.inst.distance == self.points.distance
 
     # /def
 
@@ -469,24 +547,33 @@ class Test_PhysicsSphericalVectorField(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        pass
+        cls.rep_cls = coord.PhysicsSphericalRepresentation
+        cls.klass = cls.obj
+        cls.klass_name = "physicssphericalvectorfield"
+
+        cls.points = cls.rep_cls(1 * u.deg, 2 * u.deg, 20 * u.pc)
+        cls.kwargs = dict(
+            vf_phi=2 * u.km / u.s,
+            vf_theta=0 * u.km / u.s,
+            vf_r=4 * u.km / u.s,
+        )
+        cls.inst = cls.klass(cls.points, **cls.kwargs)
 
     # /def
 
     #######################################################
     # Methods Tests
 
-    @pytest.mark.skip("TODO")
     def test_attributes(self):
         """Test class attributes."""
-        assert False
+        assert (
+            self.klass.base_representation
+            is coord.PhysicsSphericalRepresentation
+        )
 
-    # /def
-
-    @pytest.mark.skip("TODO")
-    def test___init__(self):
-        """Test method ``__init__``."""
-        assert False
+        assert self.inst.phi == self.points.phi
+        assert self.inst.theta == self.points.theta
+        assert self.inst.r == self.points.r
 
     # /def
 

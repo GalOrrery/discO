@@ -578,9 +578,13 @@ class CartesianVectorField(BaseVectorField):
         """
         if self._vf_xyz is not None:
             if self._vf_xyz_axis == vf_xyz_axis:
-                return self._xyz
+                return self._vf_xyz
             else:
-                return np.moveaxis(self._xyz, self._vf_xyz_axis, vf_xyz_axis)
+                return np.moveaxis(
+                    self._vf_xyz,
+                    self._vf_xyz_axis,
+                    vf_xyz_axis,
+                )
 
         # Create combined array.  TO DO: keep it in _xyz for repeated use?
         # But then in-place changes have to cancel it. Likely best to
@@ -598,7 +602,7 @@ class CartesianVectorField(BaseVectorField):
 
         Parameters
         ----------
-        other : representation
+        other : `BaseVectorField` or |Representation|
             If not already cartesian, it is converted.
 
         Returns
