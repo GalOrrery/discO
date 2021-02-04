@@ -171,6 +171,11 @@ discO.utils
     Determine the frame and return a blank instance for anything that can be
     used in ``frame=`` in  ``Skycoord(...,frame=)``
 
+- vector fields [#35]
+
+    For transforming vector fields between coordinate systems (eg Cartesian to spherical).
+    Built on top of Astropy's Representation machinery.
+
 
 API Changes
 -----------

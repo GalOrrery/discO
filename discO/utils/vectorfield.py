@@ -24,11 +24,9 @@ import astropy.units as u
 import numpy as np
 from astropy.coordinates.representation import (
     BaseRepresentationOrDifferential,
-    _make_getter,
     _array2string,
+    _make_getter,
 )
-
-# FIRST PARTY
 from erfa import ufunc as erfa_ufunc
 
 ##############################################################################
@@ -65,7 +63,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         if not hasattr(cls, "base_representation"):
             raise NotImplementedError(
                 "VectorField representations must have a"
-                '"base_representation" class attribute.'
+                '"base_representation" class attribute.',
             )
 
         # If not defined explicitly, create attr_classes.
@@ -249,7 +247,10 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         scaled_attrs = [op(getattr(self, c), *args) for c in self.components]
         scaled_points = self.points._scale_operation(op, *args)
         return self.__class__(
-            scaled_points, *scaled_attrs, copy=False, frame=self.frame,
+            scaled_points,
+            *scaled_attrs,
+            copy=False,
+            frame=self.frame,
         )
 
     # /def
@@ -276,9 +277,12 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # ----------
         # make sure points are the same
 
-        diff = self.points.represent_as(
-            coord.CartesianRepresentation
-        ) - other.points.represent_as(coord.CartesianRepresentation)
+        diff = (
+            self.points.represent_as(
+                coord.CartesianRepresentation,
+            )
+            - other.points.represent_as(coord.CartesianRepresentation)
+        )
 
         if not np.allclose(diff.norm().value, 0):
             raise Exception("can't combine mismatching points.")
@@ -328,7 +332,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
                     getattr(self, component) ** 2
                     for component, cls in self.attr_classes.items()
                 ),
-            )
+            ),
         )
 
     # /def
@@ -375,7 +379,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # TODO combine with points
         arrstr = _array2string(
             np.lib.recfunctions.merge_arrays(
-                (self.points._values, self._values)
+                (self.points._values, self._values),
             ),
             prefix=prefixstr,
         )
@@ -427,7 +431,10 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
         """
         if callable(method):
-            apply_method = lambda array: method(array, *args, **kwargs)
+
+            def apply_method(array):
+                return method(array, *args, **kwargs)
+
         else:
             apply_method = operator.methodcaller(method, *args, **kwargs)
 
@@ -435,7 +442,9 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         new.points = self.points._apply(method, *args, **kwargs)
         for component in self.components:
             setattr(
-                new, "_" + component, apply_method(getattr(self, component))
+                new,
+                "_" + component,
+                apply_method(getattr(self, component)),
             )
 
         # Copy other 'info' attr only if it has actually been defined.
@@ -464,7 +473,13 @@ class CartesianVectorField(BaseVectorField):
     base_representation = coord.CartesianRepresentation
 
     def __init__(
-        self, points, vf_x, vf_y=None, vf_z=None, frame=None, copy=False
+        self,
+        points,
+        vf_x,
+        vf_y=None,
+        vf_z=None,
+        frame=None,
+        copy=False,
     ):
         super().__init__(points, vf_x, vf_y, vf_z, frame=frame, copy=copy)
 
@@ -556,7 +571,7 @@ class CartesianVectorField(BaseVectorField):
         except Exception:
             raise TypeError(
                 "cannot only take dot product with another "
-                "representation, not a {} instance.".format(type(other))
+                "representation, not a {} instance.".format(type(other)),
             )
 
         if isinstance(other_c, BaseVectorField):
@@ -581,7 +596,13 @@ class CylindricalVectorField(BaseVectorField):
     base_representation = coord.CylindricalRepresentation
 
     def __init__(
-        self, points, vf_rho, vf_phi=None, vf_z=None, frame=None, copy=False
+        self,
+        points,
+        vf_rho,
+        vf_phi=None,
+        vf_z=None,
+        frame=None,
+        copy=False,
     ):
         super().__init__(points, vf_rho, vf_phi, vf_z, frame=frame, copy=copy)
 
@@ -620,7 +641,12 @@ class SphericalVectorField(BaseVectorField):
         copy=False,
     ):
         super().__init__(
-            points, vf_lon, vf_lat, vf_distance, frame=frame, copy=copy
+            points,
+            vf_lon,
+            vf_lat,
+            vf_distance,
+            frame=frame,
+            copy=copy,
         )
 
     # /def
@@ -649,10 +675,21 @@ class PhysicsSphericalVectorField(BaseVectorField):
     base_representation = coord.PhysicsSphericalRepresentation
 
     def __init__(
-        self, points, vf_phi, vf_theta=None, vf_r=None, frame=None, copy=False
+        self,
+        points,
+        vf_phi,
+        vf_theta=None,
+        vf_r=None,
+        frame=None,
+        copy=False,
     ):
         super().__init__(
-            points, vf_phi, vf_theta, vf_r, frame=frame, copy=copy
+            points,
+            vf_phi,
+            vf_theta,
+            vf_r,
+            frame=frame,
+            copy=copy,
         )
 
     # /def
