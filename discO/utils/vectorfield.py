@@ -15,6 +15,7 @@ __all__ = [
     "CartesianVectorField",
     "CylindricalVectorField",
     "SphericalVectorField",
+    "PhysicsSphericalVectorField",
 ]
 
 
@@ -35,18 +36,16 @@ from astropy.coordinates.representation import (
     _array2string,
     _make_getter,
 )
-
-# FIRST PARTY
 from erfa import ufunc as erfa_ufunc
 
 # PROJECT-SPECIFIC
+from ._framelike import resolve_framelike
 from discO.type_hints import (
-    RepresentationType,
     FrameLikeType,
     FrameType,
     QuantityType,
+    RepresentationType,
 )
-from ._framelike import resolve_framelike
 
 ##############################################################################
 # PARAMETERS
@@ -286,7 +285,10 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         scaled_attrs = [op(getattr(self, c), *args) for c in self.components]
         scaled_points = self.points._scale_operation(op, *args)
         return self.__class__(
-            scaled_points, *scaled_attrs, copy=False, frame=self.frame,
+            scaled_points,
+            *scaled_attrs,
+            copy=False,
+            frame=self.frame,
         )
 
     # /def
@@ -313,9 +315,12 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # ----------
         # make sure points are the same
 
-        diff = self.points.represent_as(
-            coord.CartesianRepresentation,
-        ) - other.points.represent_as(coord.CartesianRepresentation)
+        diff = (
+            self.points.represent_as(
+                coord.CartesianRepresentation,
+            )
+            - other.points.represent_as(coord.CartesianRepresentation)
+        )
 
         if not np.allclose(diff.norm().value, 0):
             raise Exception("can't combine mismatching points.")
@@ -475,7 +480,9 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         new.points = self.points._apply(method, *args, **kwargs)
         for component in self.components:
             setattr(
-                new, "_" + component, apply_method(getattr(self, component)),
+                new,
+                "_" + component,
+                apply_method(getattr(self, component)),
             )
 
         # Copy other 'info' attr only if it has actually been defined.
@@ -674,7 +681,12 @@ class SphericalVectorField(BaseVectorField):
         copy: bool = False,
     ) -> None:
         super().__init__(
-            points, vf_lon, vf_lat, vf_distance, frame=frame, copy=copy,
+            points,
+            vf_lon,
+            vf_lat,
+            vf_distance,
+            frame=frame,
+            copy=copy,
         )
 
     # /def
@@ -714,7 +726,12 @@ class PhysicsSphericalVectorField(BaseVectorField):
         copy: bool = False,
     ) -> None:
         super().__init__(
-            points, vf_phi, vf_theta, vf_r, frame=frame, copy=copy,
+            points,
+            vf_phi,
+            vf_theta,
+            vf_r,
+            frame=frame,
+            copy=copy,
         )
 
     # /def

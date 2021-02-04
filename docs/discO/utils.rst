@@ -24,9 +24,3 @@ Reference/API
     :no-main-docstr:
    :inherited-members:
    :include-all-objects:
-
-
-.. automodapi:: discO.utils.vectorfield
-    :no-main-docstr:
-   :inherited-members:
-   :include-all-objects:

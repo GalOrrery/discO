@@ -11,8 +11,9 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-from ._framelike import resolve_framelike
+# PROJECT-SPECIFIC
 from . import vectorfield
+from ._framelike import resolve_framelike
 from .vectorfield import *  # noqa: F401, F403
 
 __all__ += vectorfield.__all__
