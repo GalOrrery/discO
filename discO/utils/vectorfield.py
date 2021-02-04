@@ -50,7 +50,7 @@ from discO.type_hints import (
 ##############################################################################
 # PARAMETERS
 
-VECTORFIELD_CLASSES: T.Dict[str, object] = {}
+_VECTORFIELD_CLASSES: T.Dict[str, object] = {}
 VECTORFIELD_REPRESENTATIONS: T.Dict[coord.BaseRepresentation, object] = {}
 
 
@@ -86,10 +86,6 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         by 'd_', and the class is `~astropy.units.Quantity`.
 
         """
-        # Don't do anything for base helper classes.
-        if cls.__name__ in ("BaseVectorField",):
-            return
-
         if not hasattr(cls, "base_representation"):
             raise NotImplementedError(
                 "VectorField representations must have a"
@@ -103,11 +99,19 @@ class BaseVectorField(BaseRepresentationOrDifferential):
                 "vf_" + c: u.Quantity for c in base_attr_classes
             }
 
+        # Now check caches!
         repr_name = cls.get_name()
-        if repr_name in VECTORFIELD_CLASSES:
-            raise ValueError(f"VectorField class {repr_name} already defined")
+        if repr_name in _VECTORFIELD_CLASSES:
+            raise ValueError(
+                f"VectorField class '{repr_name}' already exists.",
+            )
+        elif cls.base_representation in VECTORFIELD_REPRESENTATIONS:
+            raise ValueError(
+                "VectorField with representation "
+                f"'{cls.base_representation}' already exists.",
+            )
 
-        VECTORFIELD_CLASSES[repr_name] = cls
+        _VECTORFIELD_CLASSES[repr_name] = cls
         _invalidate_psp_cls_hash()
 
         # add to representations dict
@@ -211,7 +215,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             points,
             *(other.dot(e) for e in base_e.values()),
             copy=False,
-            frame=cls.frame,
+            frame=other.frame,
         )
 
     # /def
