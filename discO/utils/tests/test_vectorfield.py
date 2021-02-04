@@ -3,8 +3,14 @@
 """Testing :mod:`~discO.utils.vectorfield`."""
 
 __all__ = [
-    "test_VECTORFIELD_CLASSES",
+    "test__VECTORFIELD_CLASSES",
+    "test_VECTORFIELD_REPRESENTATIONS",
+    # ting classes
     "Test_BaseVectorField",
+    "Test_CartesianVectorField",
+    "Test_CylindricalVectorField",
+    "Test_PhysicsSphericalVectorField",
+    "Test_SphericalVectorField",
 ]
 
 
