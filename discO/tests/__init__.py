@@ -5,17 +5,17 @@
 
 __all__ = [
     # modules
-    "test_init",
+    "init_tests",
+    "type_hint_tests",
 ]
 
 
 ##############################################################################
 # IMPORTS
 
-# BUILT IN
-
 # PROJECT-SPECIFIC
-from . import test_init
+from . import test_init as init_tests
+from . import test_type_hints as type_hint_tests
 
 ##############################################################################
 # END

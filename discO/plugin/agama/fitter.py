@@ -21,13 +21,13 @@ import agama
 import astropy.coordinates as coord
 
 # PROJECT-SPECIFIC
-from discO.common import CoordinateType, SkyCoordType
 from discO.core.fitter import PotentialFitter
+from discO.type_hints import CoordinateType, SkyCoordType
 
 ##############################################################################
 # PARAMETERS
 
-AGAMA_FITTER_REGISTRY = dict()  # package : samplers
+AGAMA_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
 
 ##############################################################################
 # CODE
@@ -91,7 +91,7 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         pot_type: T.Optional[str] = None,
         symmetry: str = "a",
         **kwargs,
-    ):
+    ) -> None:
         if pot_type is None:
             raise ValueError("must specify a `pot_type`")
 
@@ -110,7 +110,17 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # Fitting
 
     def __call__(self, c: CoordinateType) -> SkyCoordType:
-        """Fit Potential given particles."""
+        """Fit Potential given particles.
+
+        Parameters
+        ----------
+        c : coord-like
+
+        Returns
+        -------
+        :class:`~astropy.coordinates.SkyCoord`
+
+        """
 
         position = c.represent_as(coord.CartesianRepresentation).xyz.T
         # TODO! velocities
@@ -130,7 +140,17 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
 
 class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
-    """Fit a set of particles with a Multipole expansion."""
+    """Fit a set of particles with a Multipole expansion.
+
+    Parameters
+    ----------
+    symmetry : str
+    gridsizeR : int (optional)
+    lmax : int (optional)
+    **kwargs
+        Passed to :class:`~agama.Potential`
+
+    """
 
     def __init__(
         self,
@@ -138,7 +158,7 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
         gridsizeR: int = 20,
         lmax: int = 2,
         **kwargs,
-    ):
+    ) -> None:
         kwargs.pop("pot_type", None)  # clear from kwargs
         super().__init__(
             pot_type="Multipole",

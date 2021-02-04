@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.common`."""
+"""Testing :mod:`~discO.type_hints`."""
 
 __all__ = [
     "Test_QuantityType",
@@ -17,7 +17,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # PROJECT-SPECIFIC
-from discO import common
+from discO import type_hints
 from discO.tests.helper import TypeVarTests
 
 ##############################################################################
@@ -25,7 +25,7 @@ from discO.tests.helper import TypeVarTests
 ##############################################################################
 
 
-class Test_QuantityType(TypeVarTests, obj=common.QuantityType):
+class Test_QuantityType(TypeVarTests, obj=type_hints.QuantityType):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
@@ -39,7 +39,7 @@ class Test_QuantityType(TypeVarTests, obj=common.QuantityType):
 # -------------------------------------------------------------------
 
 
-class Test_FrameType(TypeVarTests, obj=common.FrameType):
+class Test_FrameType(TypeVarTests, obj=type_hints.FrameType):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
@@ -63,7 +63,7 @@ class Test_FrameType(TypeVarTests, obj=common.FrameType):
 # -------------------------------------------------------------------
 
 
-class Test_SkyCoordType(TypeVarTests, obj=common.SkyCoordType):
+class Test_SkyCoordType(TypeVarTests, obj=type_hints.SkyCoordType):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""

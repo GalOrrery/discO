@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.common`."""
+"""Testing :mod:`~discO.config`."""
 
 __all__ = [
     "Test_conf",

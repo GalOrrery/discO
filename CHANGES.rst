@@ -7,10 +7,8 @@ Adopt Project-template from @nstarman
 New Features
 ------------
 
-discO.common
-^^^^^^^^^^^^
-
-Code that can be used all over the package. It's not core, it's common.
+discO.type_hints
+^^^^^^^^^^^^^^^^
 
 - Add types for type hinting: [#17]
 
@@ -24,6 +22,7 @@ Code that can be used all over the package. It's not core, it's common.
 
         * anything that can be used in ``frame=`` in  ``Skycoord(...,frame=)``
 
+- changed location from ``common`` to ``type_hints``
 
 discO.config
 ^^^^^^^^^^^^

@@ -35,12 +35,25 @@ from astropy.coordinates import (
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
-from discO.common import FrameLikeType, SkyCoordType
+from discO.type_hints import (
+    CoordinateType,
+    FrameLikeType,
+    RepresentationType,
+    SkyCoordType,
+)
 
 ##############################################################################
 # PARAMETERS
 
-MEASURE_REGISTRY = dict()  # key : measurer
+MEASURE_REGISTRY: T.Dict[str, PotentialBase] = dict()  # key : measurer
+
+CERR_TYPE = T.Union[
+    T.Callable,
+    CoordinateType,
+    RepresentationType,
+    float,
+    np.ndarray,
+]
 
 ##############################################################################
 # CODE
@@ -63,11 +76,11 @@ class MeasurementErrorSampler(PotentialBase):
 
     Other Parameters
     ----------------
-    method : str or None (optional, keyword only)
+    method : str or None (optional, keyword-only)
         The method to use for resampling given measurement error.
         Only used if directly instantiating a MeasurementErrorSampler, not a
         subclass.
-    return_specific_class : bool (optional, keyword only)
+    return_specific_class : bool (optional, keyword-only)
         Whether to return a `PotentialSampler` (if False, default) or
         package-specific subclass (if True).
         Only used if directly instantiating a MeasurementErrorSampler, not a
@@ -92,7 +105,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     _registry = MappingProxyType(MEASURE_REGISTRY)
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls) -> None:
         """Initialize subclass, adding to registry by class name.
 
         This method applies to all subclasses, not matter the
@@ -118,7 +131,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     def __new__(
         cls,
-        c_err=None,
+        c_err: T.Optional[CERR_TYPE] = None,
         *,
         method: T.Optional[str] = None,
         return_specific_class: bool = False,
@@ -160,7 +173,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     # /def
 
-    def __init__(self, c_err: T.Optional[callable] = None, **kwargs):
+    def __init__(self, c_err: T.Optional[CERR_TYPE] = None, **kwargs) -> None:
         super().__init__()
         self.c_err = c_err
 
@@ -172,7 +185,7 @@ class MeasurementErrorSampler(PotentialBase):
     def __call__(
         self,
         c: FrameLikeType,
-        c_err: T.Optional[FrameLikeType] = None,
+        c_err: T.Optional[CERR_TYPE] = None,
         *args,
         random: T.Union[int, np.random.Generator, None] = None,
         **kwargs,
@@ -225,7 +238,7 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
     def __call__(
         self,
         c: FrameLikeType,
-        c_err: T.Union[FrameLikeType, float, None] = None,
+        c_err: T.Optional[CERR_TYPE] = None,
         random: T.Union[int, np.random.Generator, None] = None,
     ):
         """Draw a realization given the errors.
@@ -259,7 +272,7 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
         # see 'default_rng' docs for details
         random = np.random.default_rng(random)
 
-        nd = len(c.data._values.dtype)  # the shape
+        nd: int = len(c.data._values.dtype)  # the shape
 
         units = c.data._units
         pos = c.data._values.view(dtype=np.float64).reshape(-1, nd)

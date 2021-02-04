@@ -50,7 +50,7 @@ from astropy.utils.misc import NumpyRNGContext
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
-from discO.common import FrameLikeType, SkyCoordType
+from discO.type_hints import FrameLikeType, SkyCoordType
 from discO.utils import resolve_framelike
 
 ##############################################################################
@@ -73,7 +73,7 @@ class PotentialSampler(PotentialBase):
     ----------
     potential
         The potential object.
-    frame : frame-like or None (optional, keyword only)
+    frame : frame-like or None (optional, keyword-only)
         The preferred frame in which to sample.
 
     Returns
@@ -83,10 +83,10 @@ class PotentialSampler(PotentialBase):
 
     Other Parameters
     ----------------
-    key : `~types.ModuleType` or str or None (optional, keyword only)
+    key : `~types.ModuleType` or str or None (optional, keyword-only)
         The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
-    return_specific_class : bool (optional, keyword only)
+    return_specific_class : bool (optional, keyword-only)
         Whether to return a `PotentialSampler` or package-specific subclass.
         This only applies if instantiating a `PotentialSampler`.
         Default False.
@@ -217,10 +217,11 @@ class PotentialSampler(PotentialBase):
 
         Parameters
         ----------
-        n : int
+        n : int (optional)
             number of samples
-        frame : frame-like or None
+        frame : frame-like or None (optional, keyword-only)
             output frame of samples
+        random : int or |RandomGenerator| or None (optional, keyword-only)
         **kwargs
             passed to underlying instance
 
@@ -262,18 +263,19 @@ class PotentialSampler(PotentialBase):
         ----------
         niter : int
             Number of iterations
-        n : int
+        n : int (optional)
             number of sample points.
-        frame : frame-like or None
+        frame : frame-like or None (optional, keyword-only)
             output frame of samples
-        sample_axis : int
-            allowed values : 0, 1, -1
+        sample_axis : int (optional, keyword-only)
+            allowed values : 0, 1, -1 (default)
+        random : int or |RandomGenerator| or None (optional, keyword-only)
         **kwargs
             passed to underlying instance
 
         Yields
         ------
-        SkyCoord
+        :class:`~astropy.coordinates.SkyCoord`
             sample
 
         """
@@ -312,13 +314,14 @@ class PotentialSampler(PotentialBase):
 
         Parameters
         ----------
-        n : int or sequence
+        n : int or sequence thereof (optional)
             Number of sample points.
             Can be a sequence of number of sample points
-        niter : int
+        niter : int (optional)
             Number of iterations. Must be > 0.
-        frame : frame-like or None
+        frame : frame-like or None (optional, keyword-only)
             output frame of samples
+        random : int or |RandomGenerator| or None (optional, keyword-only)
         **kwargs
             passed to underlying instance
 

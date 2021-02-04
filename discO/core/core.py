@@ -27,7 +27,7 @@ from astropy.utils.introspection import resolve_name
 
 
 class PotentialBase(metaclass=ABCMeta):
-    """Sample a Potential.
+    """Base-class for interfacing with a Potential.
 
     Raises
     ------
@@ -49,10 +49,10 @@ class PotentialBase(metaclass=ABCMeta):
         key: T.Union[
             str,
             ModuleType,
-            None,
             T.Sequence[T.Union[ModuleType, str]],
+            None,
         ] = None,
-    ):
+    ) -> None:
         """Initialize a subclass.
 
         This method applies to all subclasses, not matter the
@@ -60,7 +60,7 @@ class PotentialBase(metaclass=ABCMeta):
 
         Parameters
         ----------
-        key : str or `~types.ModuleType` or None (optional)
+        key : str or `~types.ModuleType` or Sequence thereof or None (optional)
 
             If the key is not None, resolves key module
             and stores it in attribute ``_key``.
@@ -82,7 +82,7 @@ class PotentialBase(metaclass=ABCMeta):
 
     # /def
 
-    def __class_getitem__(cls, key):
+    def __class_getitem__(cls, key: T.Union[str, T.Sequence]) -> object:
         if isinstance(key, str):
             item = cls._registry[key]
         elif len(key) == 1:
@@ -95,7 +95,7 @@ class PotentialBase(metaclass=ABCMeta):
     # /def
 
     @classproperty
-    def registry(self):
+    def registry(self) -> T.Mapping:
         """The class registry."""
         return MappingProxyType(self._registry)
 
@@ -112,7 +112,7 @@ class PotentialBase(metaclass=ABCMeta):
     # On the instance
 
     # just write it here to show it's nothing.
-    def __init__(self, *args, **kwarg):
+    def __init__(self, *args, **kwarg) -> None:
         super().__init__()
 
     # /def
@@ -133,7 +133,7 @@ class PotentialBase(metaclass=ABCMeta):
     def _infer_package(
         obj: T.Any,
         package: T.Union[ModuleType, str, None] = None,
-    ):
+    ) -> ModuleType:
 
         if inspect.ismodule(package):
             pass
@@ -157,7 +157,9 @@ class PotentialBase(metaclass=ABCMeta):
     # /def
 
     @staticmethod
-    def _parse_registry_path(path):
+    def _parse_registry_path(
+        path: T.Union[str, ModuleType, T.Sequence[T.Union[str, ModuleType]]],
+    ) -> str:
 
         if isinstance(path, str):
             parsed = path
@@ -175,7 +177,9 @@ class PotentialBase(metaclass=ABCMeta):
                         f"{path} is not <str, ModuleType, Sequence>",
                     )
         else:
-            raise TypeError(f"{path} is not <str, ModuleType, Sequence>")
+            raise TypeError(
+                f"{path} is not <str, ModuleType, or Sequence thereof>",
+            )
 
         return parsed
 
