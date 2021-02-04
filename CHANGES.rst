@@ -13,16 +13,25 @@ discO.type_hints
 - Add types for type hinting: [#17]
 
     + EllipsisType : ``type(Ellipsis)`` b/c ellipsis fails.
-    + UnitType : the type of astropy's ``UnitBase`` and ``FunctionUnitBasse``
-    + QuantityType : the type of astropy's ``Quantity``
-    + FrameType : the type of astropy's ``BaseCoordinateFrame``
-    + SkyCoordType : the type of astropy's ``SkyCoord``
+    + UnitType : the type of Astropy's ``UnitBase`` and ``FunctionUnitBasse``
+    + RepresentationOrDifferentialType : the type of Astropy's ``BaseRepresentationOrDifferential`` [#34]
+    + RepresentationType : the type of Astropy's ``BaseRepresentation`` [#34]
+    + DifferentialType : the type of Astropy's ``BaseDifferential`` [#34]
+    + FrameType : the type of Astropy's ``BaseCoordinateFrame``
+    + SkyCoordType : the type of Astropy's ``SkyCoord``
     + CoordinateType : the union of FrameType & SkyCoordType
-    + FrameLikeType : the union of CoordinateType & str
+    + GenericPosiionType : RepresentationOrDifferentialType or CoordinateType [#34]
+    + FrameLikeType : the union of CoordinateType & parseable str
 
         * anything that can be used in ``frame=`` in  ``Skycoord(...,frame=)``
+    + TableType : the type of Astropy's ``Table`` [#34]
+    + QTableType : the type of Astropy's ``QTable`` [#34]
+    + UnitType : the type of Astropy's ``UnitBase`` or ``FunctionUnitType`` [#34]
+    + UnitLikeType : UnitType or parseable str [#34]
+    + QuantityType : the type of astropy's ``Quantity``
+    + QuantityType : QuantityType or parseable str [#34]
 
-- changed location from ``common`` to ``type_hints``
+- changed location from ``common`` to ``type_hints`` [#34]
 
 discO.config
 ^^^^^^^^^^^^

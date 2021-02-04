@@ -34,8 +34,6 @@ __all__ = [
     "CoordinateType",
     "GenericPositionType",
     "FrameLikeType",
-    # modeling
-    "ModelType",
     # tables
     "TableType",
     "QTableType",
@@ -103,12 +101,6 @@ GenericPositionType = T.Union[RepresentationOrDifferentialType, CoordinateType]
 
 FrameLikeType = T.Union[CoordinateType, str]
 """|CoordinateFrame| or |SkyCoord| or `str`"""
-
-# -----------------
-# modeling
-
-ModelType = T.TypeVar("Model", bound=Model)
-"""|Model|"""
 
 # -----------------
 # table
