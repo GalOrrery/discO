@@ -110,6 +110,17 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         ``VECTORFIELD_REPRESENTATIONS``. We will need to pop the tests after.
 
         """
+        # -------------------
+        # failure
+
+        with pytest.raises(NotImplementedError):
+
+            class FailedTest(vectorfield.BaseVectorField):
+                """no ``base_representation``."""
+
+        # -------------------
+        # testing a previous success from ``setup_class``.
+
         # since no ``attr_classes``, this is built from ``base_representation``
         assert self.klass.attr_classes.keys() == {
             "vf_" + c for c in self.klass.base_representation.attr_classes
