@@ -329,10 +329,31 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test__combine_operation(self):
         """Test method ``_combine_operation``."""
-        assert False
+        # -------------------
+        # Test with ``add``
+
+        newinst = self.inst._combine_operation(operator.add, self.inst)
+
+        for comp in self.inst.points.components:
+            assert getattr(newinst.points, comp) == getattr(
+                self.inst.points,
+                comp,
+            )
+
+        for comp in self.inst.components:
+            assert getattr(newinst, comp) == 2 * getattr(self.inst, comp)
+
+        # -------------------
+        # self and other types don't match
+        # This test will be unique except in Test_SphericalVectorField
+        # where it does nothing. Oh well. shouldn't matter.
+
+        newinst = self.inst._combine_operation(
+            operator.add,
+            self.inst.represent_as(coord.SphericalRepresentation),
+        )
 
     # /def
 

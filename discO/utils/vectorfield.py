@@ -300,10 +300,10 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     def _combine_operation(self, op: T.Callable, other, reverse: bool = False):
         """Combine two vector fields.
 
-        If ``other`` is of the same phase space poition type as ``self``, the
+        If ``other`` is of the same phase space position type as ``self``, the
         components will simply be combined.  If ``other`` is a representation,
         it will be used as a base for which to evaluate the phase space
-        poition, and the result is a new representation.
+        position, and the result is a new representation.
 
         Parameters
         ----------
@@ -344,7 +344,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             )
         else:
             try:
-                self_cartesian = self.to_cartesian(other)
+                self_cartesian = self.to_cartesian()
             except TypeError:
                 return NotImplemented
 
