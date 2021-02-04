@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Vector Field."""
+"""Vector Field.
+
+This is some documentation.
+
+
+An example construction.
+
+
+"""
 
 __all__ = [
     "BaseVectorField",
@@ -27,7 +35,18 @@ from astropy.coordinates.representation import (
     _array2string,
     _make_getter,
 )
+
+# FIRST PARTY
 from erfa import ufunc as erfa_ufunc
+
+# PROJECT-SPECIFIC
+from discO.type_hints import (
+    RepresentationType,
+    FrameLikeType,
+    FrameType,
+    QuantityType,
+)
+from ._framelike import resolve_framelike
 
 ##############################################################################
 # PARAMETERS
@@ -47,9 +66,21 @@ def _invalidate_psp_cls_hash():
 
 
 class BaseVectorField(BaseRepresentationOrDifferential):
-    r"""Base Vector-Field."""
+    """Base Vector-Field.
 
-    def __init_subclass__(cls, **kwargs):
+    Parameters
+    ----------
+    points : |Representation|
+    *args
+        The components
+    frame : frame-like or None (optional, keyword only)
+        The frame of the vector-field. None (default), does not attach a frame.
+    **kwargs
+        passed along
+
+    """
+
+    def __init_subclass__(cls, **kwargs) -> None:
         """Set default ``attr_classes`` and component getters on a VectorField.
         class BaseVectorField(BaseRepresentationOrDifferential):
         For these, the components are those of the base representation prefixed
@@ -99,9 +130,15 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
     # /def
 
-    def __init__(self, points, *args, frame=None, **kwargs):
+    def __init__(
+        self,
+        points: RepresentationType,
+        *args,
+        frame: T.Optional[FrameLikeType] = None,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self._frame = frame
+        self._frame = None if frame is None else resolve_framelike(frame)
 
         vf_q1 = getattr(self, "_" + self.components[0])
         vf_qs = [getattr(self, "_" + c) for c in self.components[1:]]
@@ -117,7 +154,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     # /def
 
     @property
-    def frame(self):
+    def frame(self) -> FrameType:
         return self._frame
 
     # /def
@@ -130,7 +167,8 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
         Returns
         -------
-        This object as a `CartesianDifferential`
+        `CartesianVectorField`
+            This object, converted
 
         """
         base_e = self.points.unit_vectors()
@@ -158,12 +196,13 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
         Parameters
         ----------
-        other : CartesianVectorField
+        other : `CartesianVectorField`
             The object to convert into this vector field.
 
         Returns
         -------
-        A new Vector Field object that is this class' type.
+        BaseVectorField
+            A new Vector Field object that is this class' type.
 
         """
         points = cls.base_representation.from_cartesian(other.points)
@@ -232,7 +271,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     #######################################################
     # math
 
-    def _scale_operation(self, op, *args):
+    def _scale_operation(self, op: T.Callable, *args):
         """Scale all components.
 
         Parameters
@@ -247,15 +286,12 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         scaled_attrs = [op(getattr(self, c), *args) for c in self.components]
         scaled_points = self.points._scale_operation(op, *args)
         return self.__class__(
-            scaled_points,
-            *scaled_attrs,
-            copy=False,
-            frame=self.frame,
+            scaled_points, *scaled_attrs, copy=False, frame=self.frame,
         )
 
     # /def
 
-    def _combine_operation(self, op, other, reverse=False):
+    def _combine_operation(self, op: T.Callable, other, reverse: bool = False):
         """Combine two vector fields.
 
         If ``other`` is of the same phase space poition type as ``self``, the
@@ -267,8 +303,8 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         ----------
         op : `~operator` callable
             Operator to apply (e.g., `~operator.add`, `~operator.sub`, etc.
-        other : `~astropy.coordinates.BaseRepresentation` instance
-            The other phase space poition or representation.
+        other : `BaseVectorField` instance
+            The other phase space position or representation.
         reverse : bool
             Whether the operands should be reversed (e.g., as we got here via
             ``self.__rsub__`` because ``self`` is a subclass of ``other``).
@@ -277,12 +313,9 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # ----------
         # make sure points are the same
 
-        diff = (
-            self.points.represent_as(
-                coord.CartesianRepresentation,
-            )
-            - other.points.represent_as(coord.CartesianRepresentation)
-        )
+        diff = self.points.represent_as(
+            coord.CartesianRepresentation,
+        ) - other.points.represent_as(coord.CartesianRepresentation)
 
         if not np.allclose(diff.norm().value, 0):
             raise Exception("can't combine mismatching points.")
@@ -310,7 +343,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
     # /def
 
-    def norm(self):
+    def norm(self) -> QuantityType:
         """Vector norm.
 
         The norm is the standard Frobenius norm, i.e., the square root of the
@@ -340,7 +373,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     #######################################################
     # utils
 
-    def unit_vectors(self):
+    def unit_vectors(self) -> T.Dict[str, RepresentationType]:
         r"""Cartesian unit vectors in the direction of each component.
 
         Given unit vectors :math:`\hat{e}_c` and scale factors :math:`f_c`,
@@ -357,7 +390,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
     # /def
 
-    def scale_factors(self):
+    def scale_factors(self) -> T.Dict[str, QuantityType]:
         r"""Scale factors for each component's direction.
 
         Given unit vectors :math:`\hat{e}_c` and scale factors :math:`f_c`,
@@ -374,7 +407,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
     # /def
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         prefixstr = "    "
         # TODO combine with points
         arrstr = _array2string(
@@ -404,7 +437,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
 
     # /def
 
-    def _apply(self, method, *args, **kwargs):
+    def _apply(self, method: T.Union[str, T.Callable], *args, **kwargs):
         """Create a new representation or differential with ``method`` applied
         to the component data.
 
@@ -442,9 +475,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         new.points = self.points._apply(method, *args, **kwargs)
         for component in self.components:
             setattr(
-                new,
-                "_" + component,
-                apply_method(getattr(self, component)),
+                new, "_" + component, apply_method(getattr(self, component)),
             )
 
         # Copy other 'info' attr only if it has actually been defined.
@@ -472,32 +503,32 @@ class CartesianVectorField(BaseVectorField):
 
     base_representation = coord.CartesianRepresentation
 
+    @property
+    def x(self) -> QuantityType:
+        return self.points.x
+
+    @property
+    def y(self) -> QuantityType:
+        return self.points.y
+
+    @property
+    def z(self) -> QuantityType:
+        return self.points.z
+
     def __init__(
         self,
-        points,
+        points: RepresentationType,
         vf_x,
         vf_y=None,
         vf_z=None,
-        frame=None,
-        copy=False,
-    ):
+        frame: T.Optional[FrameLikeType] = None,
+        copy: bool = False,
+    ) -> None:
         super().__init__(points, vf_x, vf_y, vf_z, frame=frame, copy=copy)
 
     # /def
 
-    @property
-    def x(self):
-        return self.points.x
-
-    @property
-    def y(self):
-        return self.points.y
-
-    @property
-    def z(self):
-        return self.points.z
-
-    def get_xyz(self, xyz_axis=0):
+    def get_xyz(self, xyz_axis: int = 0) -> QuantityType:
         """Return a vector array of the x, y, and z coordinates.
 
         Parameters
@@ -518,7 +549,7 @@ class CartesianVectorField(BaseVectorField):
     xyz = property(get_xyz)
     # /def
 
-    def get_vf_xyz(self, vf_xyz_axis=0):
+    def get_vf_xyz(self, vf_xyz_axis: int = 0):
         """Return a vector array of the vf_x, vf_y, and vf_z coordinates.
 
         Parameters
@@ -549,7 +580,7 @@ class CartesianVectorField(BaseVectorField):
     # /def
 
     def dot(self, other):
-        """Dot product of two representations.
+        """Dot product of two vector fields.
 
         Note that any associated differentials will be dropped during this
         operation.
@@ -571,7 +602,7 @@ class CartesianVectorField(BaseVectorField):
         except Exception:
             raise TypeError(
                 "cannot only take dot product with another "
-                "representation, not a {} instance.".format(type(other)),
+                "vector field, not a {} instance.".format(type(other)),
             )
 
         if isinstance(other_c, BaseVectorField):
@@ -597,28 +628,30 @@ class CylindricalVectorField(BaseVectorField):
 
     def __init__(
         self,
-        points,
+        points: RepresentationType,
         vf_rho,
         vf_phi=None,
         vf_z=None,
-        frame=None,
-        copy=False,
-    ):
+        frame: T.Optional[FrameLikeType] = None,
+        copy: bool = False,
+    ) -> None:
         super().__init__(points, vf_rho, vf_phi, vf_z, frame=frame, copy=copy)
 
     # /def
 
     @property
-    def rho(self):
+    def rho(self) -> QuantityType:
         return self.points.rho
 
     @property
-    def phi(self):
+    def phi(self) -> QuantityType:
         return self.points.phi
 
     @property
-    def z(self):
+    def z(self) -> QuantityType:
         return self.points.z
+
+    # /def
 
 
 # /class
@@ -633,35 +666,32 @@ class SphericalVectorField(BaseVectorField):
 
     def __init__(
         self,
-        points,
+        points: RepresentationType,
         vf_lon,
         vf_lat=None,
         vf_distance=None,
-        frame=None,
-        copy=False,
-    ):
+        frame: T.Optional[FrameLikeType] = None,
+        copy: bool = False,
+    ) -> None:
         super().__init__(
-            points,
-            vf_lon,
-            vf_lat,
-            vf_distance,
-            frame=frame,
-            copy=copy,
+            points, vf_lon, vf_lat, vf_distance, frame=frame, copy=copy,
         )
 
     # /def
 
     @property
-    def lon(self):
+    def lon(self) -> QuantityType:
         return self.points.lon
 
     @property
-    def lat(self):
+    def lat(self) -> QuantityType:
         return self.points.lat
 
     @property
-    def distance(self):
+    def distance(self) -> QuantityType:
         return self.points.distance
+
+    # /def
 
 
 # /class
@@ -676,35 +706,32 @@ class PhysicsSphericalVectorField(BaseVectorField):
 
     def __init__(
         self,
-        points,
+        points: RepresentationType,
         vf_phi,
         vf_theta=None,
         vf_r=None,
-        frame=None,
-        copy=False,
-    ):
+        frame: T.Optional[FrameLikeType] = None,
+        copy: bool = False,
+    ) -> None:
         super().__init__(
-            points,
-            vf_phi,
-            vf_theta,
-            vf_r,
-            frame=frame,
-            copy=copy,
+            points, vf_phi, vf_theta, vf_r, frame=frame, copy=copy,
         )
 
     # /def
 
     @property
-    def phi(self):
+    def phi(self) -> QuantityType:
         return self.points.phi
 
     @property
-    def theta(self):
+    def theta(self) -> QuantityType:
         return self.points.theta
 
     @property
-    def r(self):
+    def r(self) -> QuantityType:
         return self.points.r
+
+    # /def
 
 
 # /class
