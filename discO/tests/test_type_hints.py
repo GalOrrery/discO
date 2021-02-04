@@ -30,8 +30,8 @@ __all__ = [
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy import table
 import pytest
+from astropy import table
 
 # PROJECT-SPECIFIC
 from discO import type_hints
@@ -43,12 +43,13 @@ from discO.tests.helper import TypeVarTests
 
 
 class Test_RepresentationOrDifferentialType(
-    TypeVarTests, obj=type_hints.RepresentationOrDifferentialType
+    TypeVarTests,
+    obj=type_hints.RepresentationOrDifferentialType,
 ):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.bound = coord.RepresentationOrDifferential
+        cls.bound = coord.BaseRepresentationOrDifferential
 
     # /def
 
@@ -62,7 +63,7 @@ class Test_RepresentationType(TypeVarTests, obj=type_hints.RepresentationType):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.bound = coord.Representation
+        cls.bound = coord.BaseRepresentation
 
     # /def
 
@@ -76,7 +77,7 @@ class Test_DifferentialType(TypeVarTests, obj=type_hints.DifferentialType):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.bound = coord.Differential
+        cls.bound = coord.BaseDifferential
 
     # /def
 

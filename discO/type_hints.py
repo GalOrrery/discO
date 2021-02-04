@@ -57,7 +57,6 @@ import typing as T
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy import table
-from astropy.modeling import Model
 
 ##############################################################################
 # TYPES
