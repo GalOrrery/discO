@@ -87,7 +87,7 @@ class Pipeline:
 
         Parameters
         ----------
-        c_err : CoordinateType
+        c_err : coord-like or callable or number or Quantity or None (optional)
         *args
         **kwargs
 

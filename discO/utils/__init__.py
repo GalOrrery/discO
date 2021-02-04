@@ -22,8 +22,8 @@ from astropy.coordinates import (
 )
 
 # PROJECT-SPECIFIC
-from discO.common import FrameLikeType
 from discO.config import conf
+from discO.type_hints import FrameLikeType
 
 ##############################################################################
 # CODE

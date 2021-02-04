@@ -20,8 +20,8 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 
 # PROJECT-SPECIFIC
-from discO.common import FrameLikeType, SkyCoordType
 from discO.core.sample import PotentialSampler
+from discO.type_hints import FrameLikeType, SkyCoordType
 
 ##############################################################################
 # CODE
@@ -36,7 +36,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
     potential : `~agama.potential`
         The potential object.
 
-    frame : frame-like or None (optional, keyword only)
+    frame : frame-like or None (optional, keyword-only)
         The preferred frame in which to sample.
 
     """

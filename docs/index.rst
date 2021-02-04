@@ -23,6 +23,7 @@ Documentation
   documentation/installation.rst
   discO/index.rst
   documentation/testing.rst
+  glossary
 
 .. _index-modules:
 

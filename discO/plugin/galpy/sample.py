@@ -17,8 +17,8 @@ import typing as T
 import numpy as np
 
 # PROJECT-SPECIFIC
-from discO.common import FrameLikeType
 from discO.core.sample import PotentialSampler
+from discO.type_hints import FrameLikeType
 
 ##############################################################################
 # CODE
@@ -33,7 +33,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
     df : `~galpy.df.df.df.df`
         Distribution Function.
 
-    frame : frame-like or None (optional, keyword only)
+    frame : frame-like or None (optional, keyword-only)
         The preferred frame in which to sample.
 
     **kwargs
@@ -56,9 +56,9 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         Parameters
         ----------
-        n : int
+        n : int (optional)
             number of samples
-        frame : frame-like or None
+        frame : frame-like or None (optional)
             output frame of samples
         **kwargs
             ignored

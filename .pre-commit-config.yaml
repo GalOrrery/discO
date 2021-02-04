@@ -35,13 +35,12 @@ repos:
     -   id: add-trailing-comma
 
 -   repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: master
+    rev: 2.1.4
     hooks:
     - id: check-mailmap
     - id: forbid-binary
     - id: script-must-have-extension
     - id: script-must-not-have-extension
-    - id: shellcheck
     - id: shfmt
 
 -   repo: https://github.com/mgedmin/check-manifest

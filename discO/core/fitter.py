@@ -28,12 +28,12 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 from .core import PotentialBase
-from discO.common import CoordinateType
+from discO.type_hints import CoordinateType
 
 ##############################################################################
 # PARAMETERS
 
-FITTER_REGISTRY = dict()  # package : samplers
+FITTER_REGISTRY: T.Dict[str, PotentialBase] = dict()  # package : samplers
 
 ##############################################################################
 # CODE
@@ -43,12 +43,6 @@ FITTER_REGISTRY = dict()  # package : samplers
 class PotentialFitter(PotentialBase):
     """Fit a Potential.
 
-    .. todo::
-
-        This is registering by the package, which I think may be the wrong
-        approach most packages have multiple fitters, which should be easily
-        accessible.
-
     Parameters
     ----------
     potential_cls
@@ -56,10 +50,10 @@ class PotentialFitter(PotentialBase):
 
     Other Parameters
     ----------------
-    key : `~types.ModuleType` or str or None (optional, keyword only)
+    key : `~types.ModuleType` or str or None (optional, keyword-only)
         The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
-    return_specific_class : bool (optional, keyword only)
+    return_specific_class : bool (optional, keyword-only)
         Whether to return a `PotentialSampler` or key-specific subclass.
         This only applies if instantiating a `PotentialSampler`.
         Default False.
@@ -71,7 +65,10 @@ class PotentialFitter(PotentialBase):
 
     _registry = FITTER_REGISTRY
 
-    def __init_subclass__(cls, key: T.Union[str, ModuleType] = None):
+    def __init_subclass__(
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
+    ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
         This method applies to all subclasses, not matter the
@@ -110,7 +107,7 @@ class PotentialFitter(PotentialBase):
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialFitter:
             # infer the key, to add to registry
-            key = self._infer_package(potential_cls, key).__name__
+            key: str = self._infer_package(potential_cls, key).__name__
 
             if key not in cls._registry:
                 raise ValueError(
@@ -151,14 +148,13 @@ class PotentialFitter(PotentialBase):
     def __call__(
         self,
         sample: CoordinateType,
-        # sample_err: T.Optional[CoordinateType] = None,
         **kwargs,
-    ):
+    ) -> object:
         """Fit.
 
         Parameters
         ----------
-        sample : `SkyCoord`
+        sample : :class:`~astropy.coordinates.SkyCoord` instance
         **kwargs
             passed to underlying instance
 
@@ -176,11 +172,7 @@ class PotentialFitter(PotentialBase):
 
     # /def
 
-    def fit(
-        self,
-        sample: CoordinateType,
-        **kwargs,
-    ):
+    def fit(self, sample: CoordinateType, **kwargs) -> object:
         """Fit.
 
         .. todo::
@@ -192,9 +184,8 @@ class PotentialFitter(PotentialBase):
 
         Parameters
         ----------
-        sample : `SkyCoord`
+        sample : :class:`~astropy.coordinates.SkyCoord` instance
             can have shape (nsamp, ) or (nsamp, niter)
-        # sample_err: T.Optional[CoordinateType] = None,
         **kwargs
             passed to underlying instance
 
