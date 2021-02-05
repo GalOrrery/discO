@@ -31,7 +31,8 @@ from discO.core.tests.test_core import Test_PotentialBase
 
 
 class Test_MeasurementErrorSampler(
-    Test_PotentialBase, obj=measurement.MeasurementErrorSampler,
+    Test_PotentialBase,
+    obj=measurement.MeasurementErrorSampler,
 ):
     @classmethod
     def setup_class(cls):
@@ -161,7 +162,9 @@ class Test_MeasurementErrorSampler(
             method, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                c_err=self.c_err, method=method, return_specific_class=True,
+                c_err=self.c_err,
+                method=method,
+                return_specific_class=True,
             )
 
             # test class type
@@ -177,7 +180,9 @@ class Test_MeasurementErrorSampler(
             method, klass = tuple(self.obj._registry.items())[0]
 
             msamp = self.obj(
-                c_err=self.c_err, method=method, return_specific_class=False,
+                c_err=self.c_err,
+                method=method,
+                return_specific_class=False,
             )
 
             # test class type
@@ -207,7 +212,9 @@ class Test_MeasurementErrorSampler(
             # AOK
 
             msamp = self.obj(
-                c_err=self.c_err, method=None, return_specific_class=False,
+                c_err=self.c_err,
+                method=None,
+                return_specific_class=False,
             )
 
             assert self.obj is not measurement.MeasurementErrorSampler

@@ -53,7 +53,11 @@ from discO.type_hints import (
 MEASURE_REGISTRY: T.Dict[str, PotentialBase] = dict()  # key : measurer
 
 CERR_TYPE = T.Union[
-    T.Callable, CoordinateType, RepresentationType, float, np.ndarray,
+    T.Callable,
+    CoordinateType,
+    RepresentationType,
+    float,
+    np.ndarray,
 ]
 
 ##############################################################################
@@ -226,7 +230,7 @@ class MeasurementErrorSampler(PotentialBase):
         if isinstance(c_err, (BaseCoordinateFrame, SkyCoord)):
             if c_err.representation_type != c.representation_type:
                 raise TypeError(
-                    "`c` and `c_err` must have matching `representation_type`."
+                    "`c` and `c_err` must have matching `representation_type`.",
                 )
             # calling ``represent_as`` fixes problems with missing components,
             # even when the representation types match, that happens when
@@ -239,7 +243,7 @@ class MeasurementErrorSampler(PotentialBase):
         elif isinstance(c_err, BaseRepresentation):
             if not isinstance(c_err, c.representation_type):
                 raise TypeError(
-                    "`c_err` must be same `representation_type` as `c`."
+                    "`c_err` must be same `representation_type` as `c`.",
                 )
             # TODO validate that in same representation as "c"
             d_pos = c_err._values.view(dtype=np.float64).reshape(nd, -1)
