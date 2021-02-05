@@ -202,6 +202,8 @@ class Test_MeasurementErrorSampler(
             with pytest.raises(ValueError) as e:
                 self.obj(method="not None")
 
+            assert "Can't specify 'method'" in str(e.value)
+
             # ---------------
             # warns on return_specific_class
 
@@ -255,14 +257,50 @@ class Test_MeasurementErrorSampler(
         super().test___call__()
 
         # --------------------------
-        # with c_err
+        # with c_err and all bells and whistles
 
-        self.inst(self.c, self.c_err)
+        self.inst(self.c, self.c_err, random=0)
 
         # ---------------
         # without c_err, using from instantiation
 
         self.inst(self.c)
+
+    # /def
+
+    @pytest.mark.skip("TODO")
+    def test_resample(self):
+        """Test method ``resample``."""
+        # ---------------
+        # c_err = None
+
+        # ---------------
+        # len(c.shape) == 1
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter = 1
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter != niter
+
+        with pytest.raises(ValueError) as e:
+            self.inst.resample("TODO! inputs")
+
+        assert "c & c_err shape mismatch" in str(e.value)
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter = niter
+
+        # ---------------
+        # 2D array, (Mapping, scalar, callable, %-unit)
+
+        # ---------------
+        # 2D array, other
+
+        with pytest.raises(NotImplementedError) as e:
+            self.inst.resample("TODO! inputs")
+
+        assert "not yet supported." in str(e.value)
 
     # /def
 

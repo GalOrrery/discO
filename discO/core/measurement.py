@@ -36,6 +36,7 @@ from astropy.coordinates import (
     BaseCoordinateFrame,
     BaseRepresentation,
     SkyCoord,
+    concatenate,
 )
 
 # PROJECT-SPECIFIC
@@ -170,7 +171,8 @@ class MeasurementErrorSampler(PotentialBase):
 
         elif method is not None:
             raise ValueError(
-                "Can't specify 'method' on MeasurementErrorSampler subclasses.",
+                f"Can't specify 'method' on {cls},"
+                " only on MeasurementErrorSampler.",
             )
 
         elif return_specific_class is not False:
@@ -181,6 +183,7 @@ class MeasurementErrorSampler(PotentialBase):
     # /def
 
     def __init__(self, c_err: T.Optional[CERR_Type] = None, **kwargs) -> None:
+        # kwargs are ignored
         super().__init__()
         self.c_err = c_err
 
@@ -193,7 +196,7 @@ class MeasurementErrorSampler(PotentialBase):
         self,
         c: CoordinateType,
         c_err: T.Optional[CERR_Type] = None,
-        *args,
+        *,
         random: T.Union[int, np.random.Generator, None] = None,
         **kwargs,
     ) -> SkyCoordType:
@@ -203,14 +206,13 @@ class MeasurementErrorSampler(PotentialBase):
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
         c_err : coord-like or callable or |Quantity| or None (optional)
-        *args
-            passed to underlying instance
+        random : |RandomGenerator| or int or None (optional, keyword only)
         **kwargs
             passed to underlying instance
 
         Returns
         -------
-        `SkyCoord`
+        :class:`~astropy.coordinates.SkyCoord`
 
         Notes
         -----
@@ -221,7 +223,93 @@ class MeasurementErrorSampler(PotentialBase):
         if c_err is None:
             c_err = self.c_err
         # call on instance
-        return self._instance(c, c_err, *args, random=random, **kwargs)
+        return self._instance(c, c_err, random=random, **kwargs)
+
+    # /def
+
+    def resample(
+        self,
+        c: SkyCoordType,
+        c_err: T.Optional[CERR_Type] = None,
+        *,
+        random: T.Union[int, np.random.Generator, None] = None,
+        **kwargs,
+    ):
+        """Draw a realization given measurement error.
+
+        .. todo::
+
+            resolve `random` here
+
+        Parameters
+        ----------
+        c : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : :class:`~astropy.coordinates.SkyCoord` instance
+        random : |RandomGenerator| or int or None (optional, keyword only)
+        **kwargs
+            passed to ``__call__``
+
+        Returns
+        -------
+        :class:`~astropy.coordinates.SkyCoord`
+
+        Notes
+        -----
+        If this is `MeasurementErrorSampler` then arguments are passed to the
+        wrapped instance (see 'method' argument on initialization).
+
+        """
+        if c_err is None:
+            c_err = self.c_err
+
+        # depends on the shape of "c": (Nsamples,) or (Nsamples, Niter)?
+        if len(c.shape) == 1:  # (Nsamples, )
+            # TODO validate c_err shape etc.
+            sample = self(c, c_err=c_err, random=random, **kwargs)
+
+        else:  # (Nsamples, Niter)
+
+            N, niter = c.shape
+
+            # need to determine how c_err should be distributed.
+            if isinstance(
+                c_err,
+                (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
+            ):
+                Nerr, *nerriter = c_err.shape
+                nerriter = nerriter or 1  # [] -> 1
+
+                if nerriter == 1:
+                    c_err = [c_err] * niter
+                elif nerriter != niter:
+                    raise ValueError("c & c_err shape mismatch")
+                else:
+                    c_err = c_err.T  # get in correct shape for iteration
+
+            # mapping, or number, or callable
+            # special case if has units of percent
+            # all other units stuff will hit the error
+            elif (
+                isinstance(c_err, Mapping)
+                or np.isscalar(c_err)
+                or callable(c_err)
+                or (getattr(c_err, "unit", u.m) == u.percent)
+            ):
+                c_err = [c_err] * niter  # distribute over `niter`
+
+            # IDK what was passed
+            else:
+                raise NotImplementedError(f"{c_err} is not yet supported.")
+
+            # /if
+
+            samples = []
+            for samp, err in zip(c.T, c_err):
+                samples.append(self(samp, c_err=err, random=random, **kwargs))
+
+            sample = concatenate(samples).reshape(c.shape)
+
+        return sample
 
     # /def
 
