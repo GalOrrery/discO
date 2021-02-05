@@ -90,6 +90,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       way.
     + ``MeasurementErrorSampler`` is a registry wrapper class and can be used
       in-place of any of its subclasses.
+    + Add method ``resample`` for ND array samples from ``PotentialSampler`` [#38]
 
 - ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]
 
