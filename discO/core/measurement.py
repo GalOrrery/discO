@@ -42,7 +42,7 @@ from astropy.coordinates import (
 from .core import PotentialBase
 from discO.type_hints import (
     CoordinateType,
-    FrameLikeType,
+    QuantityType,
     RepresentationType,
     SkyCoordType,
 )
@@ -58,6 +58,8 @@ CERR_TYPE = T.Union[
     RepresentationType,
     float,
     np.ndarray,
+    T.Mapping,
+    QuantityType,
 ]
 
 ##############################################################################
@@ -189,7 +191,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     def __call__(
         self,
-        c: FrameLikeType,
+        c: CoordinateType,
         c_err: T.Optional[CERR_TYPE] = None,
         *args,
         random: T.Union[int, np.random.Generator, None] = None,
@@ -200,7 +202,7 @@ class MeasurementErrorSampler(PotentialBase):
         Parameters
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
-        c_err : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : coord-like or callable or |Quantity| or None (optional)
         *args
             passed to underlying instance
         **kwargs
@@ -223,14 +225,26 @@ class MeasurementErrorSampler(PotentialBase):
 
     # /def
 
-    def _parse_c_err(self, c_err, c, nd):
+    def _parse_c_err(
+        self,
+        c_err: T.Optional[CERR_TYPE],
+        c: CoordinateType,
+    ) -> np.ndarray:
+        """Parse ``c_err``, given ``c``.
+
+        Parameters
+        ----------
+        c_err
+
+        """
+        nd = c.data.shape[0]
         if c_err is None:
             c_err = self.c_err
 
         if isinstance(c_err, (BaseCoordinateFrame, SkyCoord)):
             if c_err.representation_type != c.representation_type:
                 raise TypeError(
-                    "`c` and `c_err` must have matching `representation_type`.",
+                    "`c` & `c_err` must have matching `representation_type`.",
                 )
             # calling ``represent_as`` fixes problems with missing components,
             # even when the representation types match, that happens when
@@ -243,9 +257,8 @@ class MeasurementErrorSampler(PotentialBase):
         elif isinstance(c_err, BaseRepresentation):
             if not isinstance(c_err, c.representation_type):
                 raise TypeError(
-                    "`c_err` must be same `representation_type` as `c`.",
+                    "`c_err` must be the same Representation type as in `c`.",
                 )
-            # TODO validate that in same representation as "c"
             d_pos = c_err._values.view(dtype=np.float64).reshape(nd, -1)
         elif isinstance(c_err, Mapping):
             raise NotImplementedError("TODO")
@@ -284,12 +297,12 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
 
     def __call__(
         self,
-        c: FrameLikeType,
+        c: CoordinateType,
         c_err: T.Optional[CERR_TYPE] = None,
         *,
         random: T.Union[int, np.random.Generator, None] = None,
-        representation_type=None,
-    ):
+        representation_type: T.Optional[RepresentationType] = None,
+    ) -> SkyCoordType:
         """Draw a realization given the errors.
 
         .. todo::
@@ -341,7 +354,7 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
 
         # loc & error scale
         pos = rep._values.view(dtype=np.float64).reshape(nd, -1)  # shape=Nx3
-        d_pos = self._parse_c_err(c_err, cc, nd)
+        d_pos = self._parse_c_err(c_err, cc)
 
         # draw realization
         # this will have no units. We will need to add those
@@ -379,7 +392,9 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
 
 
 @lru_cache()
-def xpercenterror_factory(fractional_error: float):
+def xpercenterror_factory(
+    fractional_error: float,
+) -> T.Callable[[CoordinateType], np.ndarray]:
     r"""Factory-function to build `xpercenterror` function.
 
     Parameters
@@ -399,13 +414,14 @@ def xpercenterror_factory(fractional_error: float):
         function
 
     """
+    frac_err: float
     if hasattr(fractional_error, "unit"):
         frac_err = fractional_error.to_value(u.dimensionless_unscaled)
     else:
         frac_err = fractional_error
 
     # X percent error function
-    def xpercenterror(c: CoordinateType):
+    def xpercenterror(c: CoordinateType) -> np.ndarray:
         r"""Construct errors with {X}% error in each dimension.
 
         This function is made by
@@ -433,6 +449,7 @@ def xpercenterror_factory(fractional_error: float):
 
     # /def
 
+    # edit the docs
     xpercenterror.__doc__ = xpercenterror.__doc__.format(X=frac_err * 100)
 
     return xpercenterror

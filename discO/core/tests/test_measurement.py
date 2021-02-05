@@ -266,6 +266,95 @@ class Test_MeasurementErrorSampler(
 
     # /def
 
+    def test__parse_c_err(self):
+        """Test method ``_parse_c_err```."""
+        expected_dpos = np.array([[0.1, 0.2, 1.0], [0.2, 0.3, 1.0]])
+
+        # --------------------------
+        # with c_err = None
+        # c_err -> <SkyCoord (ICRS): (ra, dec) in deg
+        #               [(0.1, 0.2), (0.2, 0.3)]>
+        d_pos = self.inst._parse_c_err(None, self.c)
+
+        assert np.allclose(d_pos, expected_dpos)
+
+        # --------------------------
+        # BaseCoordinateFrame, SkyCoord
+
+        r_err = coord.SphericalRepresentation(
+            (0.1, 0.2) * u.deg,
+            (0.2, 0.3) * u.deg,
+            1,
+        )
+        c_err = coord.ICRS(r_err)
+
+        d_pos = self.inst._parse_c_err(c_err, self.c)
+        assert np.allclose(d_pos, expected_dpos)
+
+        # Now with the wrong representation type
+        with pytest.raises(TypeError) as e:
+            self.inst._parse_c_err(
+                coord.ICRS(
+                    r_err.to_cartesian(),
+                    representation_type=coord.CartesianRepresentation,
+                ),
+                self.c,
+            )
+
+        assert (
+            "`c` & `c_err` must have matching `representation_type`."
+            in str(e.value)
+        )
+
+        # --------------------------
+        # BaseRepresentation
+
+        d_pos = self.inst._parse_c_err(r_err, self.c)
+        assert np.allclose(d_pos, expected_dpos)
+
+        # Now with the wrong representation type
+        with pytest.raises(TypeError) as e:
+            self.inst._parse_c_err(r_err.to_cartesian(), self.c)
+
+        assert (
+            "`c_err` must be the same Representation type as in `c`."
+            in str(e.value)
+        )
+
+        # --------------------------
+        # Mapping
+
+        with pytest.raises(NotImplementedError):
+            self.inst._parse_c_err({}, self.c)
+
+        # --------------------------
+        # percent error
+
+        d_pos = self.inst._parse_c_err(10 * u.percent, self.c)
+        assert np.allclose(d_pos, expected_dpos[:, :-1])
+
+        # --------------------------
+        # number
+
+        d_pos = self.inst._parse_c_err(0.1, self.c)
+        assert d_pos == 0.1
+
+        # --------------------------
+        # callable
+
+        d_pos = self.inst._parse_c_err(lambda c: 0.1, self.c)
+        assert d_pos == 0.1
+
+        # --------------------------
+        # unrecognized
+
+        with pytest.raises(NotImplementedError) as e:
+            self.inst._parse_c_err(NotImplementedError(), self.c)
+
+        assert "is not yet supported." in str(e.value)
+
+    # /def
+
     #################################################################
     # Pipeline Tests
 
@@ -444,17 +533,23 @@ def test_xpercenterror_factory():
     # --------------------------
     # fractional error input
 
-    func2 = measurement.xpercenterror_factory(0.1)
+    func2 = measurement.xpercenterror_factory(0.2)
     res2 = func2(crd)
 
     assert callable(func2)
-    assert np.allclose(res2, [0.1, 0.1, 0.1])
+    assert np.allclose(res2, [0.2, 0.2, 0.2])
 
     # --------------------------
     # caching
 
     assert measurement.xpercenterror_factory(10 * u.percent) is func
-    assert measurement.xpercenterror_factory(0.1) is func2
+    assert measurement.xpercenterror_factory(0.2) is func2
+
+    # --------------------------
+    # docstring editing
+
+    assert "10.0%" in func.__doc__
+    assert "20.0%" in func2.__doc__
 
 
 # /def
