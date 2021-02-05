@@ -93,6 +93,9 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
 - ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]
 
+- ``xpercenterror_factory`` : to build ``xpercenterror`` function. [#36]
+  Convenience function for construct errors with X% error in each dimension.
+
 
 **discO.core.fitter**
 

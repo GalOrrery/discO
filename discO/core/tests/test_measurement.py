@@ -266,6 +266,95 @@ class Test_MeasurementErrorSampler(
 
     # /def
 
+    def test__parse_c_err(self):
+        """Test method ``_parse_c_err```."""
+        expected_dpos = np.array([[0.1, 0.2, 1.0], [0.2, 0.3, 1.0]])
+
+        # --------------------------
+        # with c_err = None
+        # c_err -> <SkyCoord (ICRS): (ra, dec) in deg
+        #               [(0.1, 0.2), (0.2, 0.3)]>
+        d_pos = self.inst._parse_c_err(None, self.c)
+
+        assert np.allclose(d_pos, expected_dpos)
+
+        # --------------------------
+        # BaseCoordinateFrame, SkyCoord
+
+        r_err = coord.SphericalRepresentation(
+            (0.1, 0.2) * u.deg,
+            (0.2, 0.3) * u.deg,
+            1,
+        )
+        c_err = coord.ICRS(r_err)
+
+        d_pos = self.inst._parse_c_err(c_err, self.c)
+        assert np.allclose(d_pos, expected_dpos)
+
+        # Now with the wrong representation type
+        with pytest.raises(TypeError) as e:
+            self.inst._parse_c_err(
+                coord.ICRS(
+                    r_err.to_cartesian(),
+                    representation_type=coord.CartesianRepresentation,
+                ),
+                self.c,
+            )
+
+        assert (
+            "`c` & `c_err` must have matching `representation_type`."
+            in str(e.value)
+        )
+
+        # --------------------------
+        # BaseRepresentation
+
+        d_pos = self.inst._parse_c_err(r_err, self.c)
+        assert np.allclose(d_pos, expected_dpos)
+
+        # Now with the wrong representation type
+        with pytest.raises(TypeError) as e:
+            self.inst._parse_c_err(r_err.to_cartesian(), self.c)
+
+        assert (
+            "`c_err` must be the same Representation type as in `c`."
+            in str(e.value)
+        )
+
+        # --------------------------
+        # Mapping
+
+        with pytest.raises(NotImplementedError):
+            self.inst._parse_c_err({}, self.c)
+
+        # --------------------------
+        # percent error
+
+        d_pos = self.inst._parse_c_err(10 * u.percent, self.c)
+        assert np.allclose(d_pos, expected_dpos[:, :-1])
+
+        # --------------------------
+        # number
+
+        d_pos = self.inst._parse_c_err(0.1, self.c)
+        assert d_pos == 0.1
+
+        # --------------------------
+        # callable
+
+        d_pos = self.inst._parse_c_err(lambda c: 0.1, self.c)
+        assert d_pos == 0.1
+
+        # --------------------------
+        # unrecognized
+
+        with pytest.raises(NotImplementedError) as e:
+            self.inst._parse_c_err(NotImplementedError(), self.c)
+
+        assert "is not yet supported." in str(e.value)
+
+    # /def
+
     #################################################################
     # Pipeline Tests
 
@@ -318,52 +407,88 @@ class Test_GaussianMeasurementErrorSampler(
         # test "random" by setting the seed
         # doing this here b/c want to control random for all the rest.
 
+        expected_ra = [1.01257302, 2.02098002]
+        expected_dec = [1.97357903, 2.83929919]
+        expected_dist = [1.64042265, 1.36159505]
+
         res = self.inst(self.c, random=0)
-        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
-        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
+        assert np.allclose(res.ra.deg, expected_ra)
+        assert np.allclose(res.dec.deg, expected_dec)
+        assert np.allclose(res.distance, expected_dist)
 
         res = self.inst(self.c, random=np.random.default_rng(0))
-        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
-        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
+        assert np.allclose(res.ra.deg, expected_ra)
+        assert np.allclose(res.dec.deg, expected_dec)
+        assert np.allclose(res.distance, expected_dist)
 
         # --------------------------
         # "c" and "c_err" | random
 
         res = self.inst(self.c, self.c_err, random=0)
-        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
-        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
+        assert np.allclose(res.ra.deg, expected_ra)
+        assert np.allclose(res.dec.deg, expected_dec)
+        assert np.allclose(res.distance, expected_dist)
 
         # --------------------------
         # "c" and "c_err", c_err is BaseCoordinateFrame, not SkyCoord | random
 
         res = self.inst(self.c, self.c_err.frame, random=0)
-        assert np.allclose(res.ra.deg, [1.01257302, 2.12808453])
-        assert np.allclose(res.dec.deg, [1.97357903, 3.03147004])
+        assert np.allclose(res.ra.deg, expected_ra)
+        assert np.allclose(res.dec.deg, expected_dec)
+        assert np.allclose(res.distance, expected_dist)
 
         # --------------------------
         # "c" and "c_err", c_err is BaseRepresentation | random
 
-        with pytest.raises(NotImplementedError):
+        res = self.inst(
+            self.c,
+            self.c_err.represent_as(coord.SphericalRepresentation),
+            random=0,
+        )
 
-            self.inst(
-                self.c,
-                self.c_err.represent_as(coord.SphericalRepresentation),
-                random=0,
-            )
+        assert np.allclose(res.ra.deg, expected_ra)
+        assert np.allclose(res.dec.deg, expected_dec)
+        assert np.allclose(res.distance, expected_dist)
 
         # --------------------------
         # "c" and c_err, c_err is scalar | random
 
         res = self.inst(self.c, 0.1, random=0)
-        assert np.allclose(res.ra.deg, [1.01257302, 2.06404227])
-        assert np.allclose(res.dec.deg, [1.98678951, 3.01049001])
+        assert np.allclose(res.ra.deg, [1.01257302, 2.01049001])
+        assert np.allclose(res.dec.deg, [1.98678951, 2.94643306])
+        assert np.allclose(res.distance, [1.06404227, 1.03615951])
 
         # --------------------------
         # "c" and c_err, c_err is callable | random
 
         res = self.inst(self.c, lambda c: 0.1, random=0)
-        assert np.allclose(res.ra.deg, [1.01257302, 2.06404227])
-        assert np.allclose(res.dec.deg, [1.98678951, 3.01049001])
+        assert np.allclose(res.ra.deg, [1.01257302, 2.01049001])
+        assert np.allclose(res.dec.deg, [1.98678951, 2.94643306])
+        assert np.allclose(res.distance, [1.06404227, 1.03615951])
+
+        # ------------------
+        # :fun:`~discO.core.measurement.xpercenterror_factory`
+
+        xpercenterror = measurement.xpercenterror_factory(10 * u.percent)
+
+        res = self.inst(self.c, xpercenterror, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.02098002])
+        assert np.allclose(res.dec.deg, [1.97357903, 2.83929919])
+        assert np.allclose(res.distance, [1.06404227, 1.03615951])
+
+        # ------------------
+        # a raw percent scalar has the same effect
+
+        res = self.inst(self.c, 10 * u.percent, random=0)
+        assert np.allclose(res.ra.deg, [1.01257302, 2.02098002])
+        assert np.allclose(res.dec.deg, [1.97357903, 2.83929919])
+        assert np.allclose(res.distance, [1.06404227, 1.03615951])
+
+        # --------------------------
+        # "c" and c_err, c_err is Mapping | random
+
+        with pytest.raises(NotImplementedError):
+            self.inst(self.c, {}, random=0)
 
         # --------------------------
         # "c" and c_err, c_err is none of the above | random
@@ -385,6 +510,49 @@ class Test_GaussianMeasurementErrorSampler(
 
 
 # /class
+
+
+##############################################################################
+# Test Utils
+
+
+def test_xpercenterror_factory():
+    """Test :fun:`~discO.core.measurement.xpercenterror_factory`."""
+    rep = coord.SphericalRepresentation(1 * u.rad, 1 * u.rad, 1 * u.kpc)
+    crd = coord.ICRS(rep.reshape(-1, 1))
+
+    # --------------------------
+    # percent input
+
+    func = measurement.xpercenterror_factory(10 * u.percent)
+    res = func(crd)
+
+    assert callable(func)
+    assert np.allclose(res, [0.1, 0.1, 0.1])
+
+    # --------------------------
+    # fractional error input
+
+    func2 = measurement.xpercenterror_factory(0.2)
+    res2 = func2(crd)
+
+    assert callable(func2)
+    assert np.allclose(res2, [0.2, 0.2, 0.2])
+
+    # --------------------------
+    # caching
+
+    assert measurement.xpercenterror_factory(10 * u.percent) is func
+    assert measurement.xpercenterror_factory(0.2) is func2
+
+    # --------------------------
+    # docstring editing
+
+    assert "10.0%" in func.__doc__
+    assert "20.0%" in func2.__doc__
+
+
+# /def
 
 
 ##############################################################################
