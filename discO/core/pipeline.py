@@ -16,10 +16,9 @@ import typing as T
 
 # PROJECT-SPECIFIC
 from .fitter import PotentialFitter
-from .measurement import MeasurementErrorSampler
+from .measurement import CERR_Type, MeasurementErrorSampler
 from .sample import PotentialSampler, Random_Like
 from discO.type_hints import FrameLikeType
-
 
 ##############################################################################
 # CODE
@@ -34,11 +33,13 @@ class Pipeline:
     sampler : `PotentialSampler`
         Sample the potential.
 
-    measurer : `MeasurementErrorSampler` (optional)
+    measurer : `MeasurementErrorSampler` or None (optional)
 
-    fitter : `PotentialFitter` (optional)
+    fitter : `PotentialFitter` or None  (optional)
 
-    residual :
+    residualer : None (optional)
+
+    statisticer : None (optional)
 
 
     Raises
@@ -81,13 +82,13 @@ class Pipeline:
 
     def __call__(
         self,
-        n,
+        n: int,
         *,
-        frame=None,
-        random=None,
-        c_err=None,
-        original_pot=None,
-        observable=None,
+        frame: T.Optional[FrameLikeType] = None,
+        random: T.Optional[Random_Like] = None,
+        c_err: T.Optional[CERR_Type] = None,
+        original_pot: T.Optional[object] = None,
+        observable: T.Optional[str] = None,
         **kwargs,
     ):
         """Call.
@@ -97,7 +98,7 @@ class Pipeline:
         n
         frame : frame-like or None (optional, keyword-only)
         random : |RandomGenerator| or int or None (optional, keyword-only)
-        c_err : coord-like or callable or number or Quantity or None (optional, keyword-only)
+        c_err : coord-like or callable or number (optional, keyword-only)
         original_pot : object or None (optional, keyword-only)
         observable : str or None (optional, keyword-only)
         **kwargs
@@ -122,14 +123,14 @@ class Pipeline:
 
     def run(
         self,
-        n,
-        niter=1,
+        n: T.Union[int, T.Sequence[int]],
+        niter: int = 1,
         *,
-        frame=None,
-        random=None,
-        c_err=None,
-        original_pot=None,
-        observable=None,
+        frame: T.Optional[FrameLikeType] = None,
+        random: T.Optional[Random_Like] = None,
+        c_err: T.Optional[CERR_Type] = None,
+        original_pot: T.Optional[object] = None,
+        observable: T.Optional[str] = None,
         **kwargs,
     ):
         """Call.
@@ -177,7 +178,10 @@ class Pipeline:
         if self._residualer is not None:
 
             oi = self._residualer.evaluate(
-                oi, original_pot=original_pot, observable=observable, **kwargs,
+                oi,
+                original_pot=original_pot,
+                observable=observable,
+                **kwargs,
             )
             result._residual = oi
 
@@ -314,7 +318,7 @@ class Pipeline:
     #################################################################
     # utils
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String Representation.
 
         Returns

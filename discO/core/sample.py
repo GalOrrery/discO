@@ -296,7 +296,7 @@ class PotentialSampler(PotentialBase):
 
     def sample(
         self,
-        n: int = 1,
+        n: T.Union[int, T.Sequence[int]] = 1,
         niter: int = 1,
         *,
         frame: T.Optional[FrameLikeType] = None,

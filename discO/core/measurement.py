@@ -52,7 +52,7 @@ from discO.type_hints import (
 
 MEASURE_REGISTRY: T.Dict[str, PotentialBase] = dict()  # key : measurer
 
-CERR_TYPE = T.Union[
+CERR_Type = T.Union[
     T.Callable,
     CoordinateType,
     RepresentationType,
@@ -138,7 +138,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     def __new__(
         cls,
-        c_err: T.Optional[CERR_TYPE] = None,
+        c_err: T.Optional[CERR_Type] = None,
         *,
         method: T.Optional[str] = None,
         return_specific_class: bool = False,
@@ -180,7 +180,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     # /def
 
-    def __init__(self, c_err: T.Optional[CERR_TYPE] = None, **kwargs) -> None:
+    def __init__(self, c_err: T.Optional[CERR_Type] = None, **kwargs) -> None:
         super().__init__()
         self.c_err = c_err
 
@@ -192,7 +192,7 @@ class MeasurementErrorSampler(PotentialBase):
     def __call__(
         self,
         c: CoordinateType,
-        c_err: T.Optional[CERR_TYPE] = None,
+        c_err: T.Optional[CERR_Type] = None,
         *args,
         random: T.Union[int, np.random.Generator, None] = None,
         **kwargs,
@@ -227,7 +227,7 @@ class MeasurementErrorSampler(PotentialBase):
 
     def _parse_c_err(
         self,
-        c_err: T.Optional[CERR_TYPE],
+        c_err: T.Optional[CERR_Type],
         c: CoordinateType,
     ) -> np.ndarray:
         """Parse ``c_err``, given ``c``.
@@ -298,7 +298,7 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
     def __call__(
         self,
         c: CoordinateType,
-        c_err: T.Optional[CERR_TYPE] = None,
+        c_err: T.Optional[CERR_Type] = None,
         *,
         random: T.Union[int, np.random.Generator, None] = None,
         representation_type: T.Optional[RepresentationType] = None,
