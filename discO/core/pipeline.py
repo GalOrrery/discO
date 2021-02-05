@@ -17,10 +17,8 @@ import typing as T
 # PROJECT-SPECIFIC
 from .fitter import PotentialFitter
 from .measurement import MeasurementErrorSampler
-from .sample import PotentialSampler
-
-##############################################################################
-# PARAMETERS
+from .sample import PotentialSampler, Random_Like
+from discO.type_hints import FrameLikeType
 
 
 ##############################################################################
@@ -52,42 +50,92 @@ class Pipeline:
 
     def __init__(
         self,
-        sample: PotentialSampler,
-        measure: T.Optional[MeasurementErrorSampler] = None,
-        fit: T.Optional[PotentialFitter] = None,
-        residual: T.Optional[T.Callable] = None,
-        statistic: T.Optional[T.Callable] = None,
+        sampler: PotentialSampler,
+        measurer: T.Optional[MeasurementErrorSampler] = None,
+        fitter: T.Optional[PotentialFitter] = None,
+        residualer: T.Optional[T.Callable] = None,
+        statisticer: T.Optional[T.Callable] = None,
     ):
         # can set `fit` without `measure`
-        if fit is not None and measure is None:
+        if fitter is not None and measurer is None:
             pass
-        # cannot set `residual` without `fit`
-        if residual is not None and fit is None:
+        # cannot set `residualer` without `fitter`
+        if residualer is not None and fitter is None:
             raise ValueError
-        # cannot set `statistic` without `residual`
-        if statistic is not None and residual is None:
+        # cannot set `statistic` without `residualer`
+        if statisticer is not None and residualer is None:
             raise ValueError
 
-        self._sampler = sample
-        self._measure = measure
-        self._fitter = fit
-        self._residual = residual
-        self._statistic = statistic
+        self._sampler = sampler
+        self._measurer = measurer
+        self._fitter = fitter
+        self._residualer = residualer
+        self._statisticer = statisticer
 
-        self._sample_result = None
-        self._measure_result = None
-        self._fit_result = None
-        self._residual_result = None
-        self._statistic_result = None
+        self._result = None
 
     # /def
 
-    def __call__(self, c_err=None, *args, **kwargs):
+    #################################################################
+    # Call
+
+    def __call__(
+        self,
+        n,
+        *,
+        frame=None,
+        random=None,
+        c_err=None,
+        original_pot=None,
+        observable=None,
+        **kwargs,
+    ):
         """Call.
 
         Parameters
         ----------
-        c_err : coord-like or callable or number or Quantity or None (optional)
+        n
+        frame : frame-like or None (optional, keyword-only)
+        random : |RandomGenerator| or int or None (optional, keyword-only)
+        c_err : coord-like or callable or number or Quantity or None (optional, keyword-only)
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
+        **kwargs
+
+        Returns
+        -------
+        object
+
+        """
+        return self.run(
+            n,
+            niter=1,
+            frame=frame,
+            random=random,
+            c_err=c_err,
+            original_pot=original_pot,
+            observable=observable,
+            **kwargs,
+        )
+
+    # /defs
+
+    def run(
+        self,
+        n,
+        niter=1,
+        *,
+        frame=None,
+        random=None,
+        c_err=None,
+        original_pot=None,
+        observable=None,
+        **kwargs,
+    ):
+        """Call.
+
+        Parameters
+        ----------
         *args
         **kwargs
 
@@ -96,41 +144,54 @@ class Pipeline:
         object
 
         """
+        result = PipelineResult(self)
+        # Now evaluate, passing around the output -> input
+
         # ----------
         # sample
 
-        result = self._sampler(*args, **kwargs)
-        self._sample_result = result
+        oi = self._sampler.sample(
+            n, niter=niter, frame=frame, random=random, **kwargs
+        )
+        result._samples = oi
 
         # ----------
         # measure
 
-        if self._measure is not None:
-            result = self._measure(result, c_err=c_err, *args, **kwargs)
-            self._measure_result = result
+        if self._measurer is not None:
+
+            oi = self._measurer.resample(
+                oi, c_err=c_err, random=random, **kwargs
+            )
+            result._measured = oi
 
         # ----------
         # fit
 
-        result = self._fitter(result, **kwargs)
-        self._fit_result = result
+        oi = self._fitter.fit(oi, **kwargs)
+        result._fit = oi
 
         # ----------
         # residual
 
-        if self._residual is not None:
+        if self._residualer is not None:
 
-            result = self._residual(result, **kwargs)
-            self._residual_result = result
+            oi = self._residualer.evaluate(
+                oi, original_pot=original_pot, observable=observable, **kwargs,
+            )
+            result._residual = oi
 
         # ----------
         # statistic
 
-        if self._statistic is not None:
+        if self._statisticer is not None:
 
-            result = self._statistic(result, **kwargs)
-            self._statistic_result = result
+            oi = self._statisticer(oi, **kwargs)
+            result._statistic = oi
 
+        # ----------
+
+        self._result = result  # link
         return result
 
     # /defs
@@ -250,12 +311,82 @@ class Pipeline:
 
     # /def
 
+    #################################################################
+    # utils
+
+    def __repr__(self):
+        """String Representation.
+
+        Returns
+        -------
+        str
+
+        """
+        s = (
+            "Pipeline:\n"
+            f"    sampler: {self._sampler}\n"
+            f"    measurer: {self._measurer}\n"
+            f"    fitter: {self._fitter}\n"
+            f"    residual: {self._residualer}\n"
+            f"    statistic: {self._statisticer}\n"
+        )
+
+        return s
+
+    # /def
+
 
 # /class
 
 
 # -------------------------------------------------------------------
 
+
+class PipelineResult:
+    """:class:`~discO.core.Pipeline` Evaluation Result."""
+
+    def __init__(
+        self,
+        pipe: Pipeline,
+        samples=None,
+        measured=None,
+        fit=None,
+        residual=None,
+        statistic=None,
+    ):
+        self._samples = samples
+        self._measured = measured
+        self._fit = fit
+        self._residual = residual
+        self._statistic = statistic
+
+    # /def
+
+    # -----------------
+    # Properties
+
+    @property
+    def samples(self):
+        return self._samples
+
+    @property
+    def measured(self):
+        return self._measured
+
+    @property
+    def fit(self):
+        return self._fit
+
+    @property
+    def residual(self):
+        return self._residual
+
+    @property
+    def statistic(self):
+        return self._statistic
+
+
+# /class
 
 ##############################################################################
 # END
