@@ -5,6 +5,7 @@
 
 __all__ = [
     "Pipeline",
+    "PipelineResult",
 ]
 
 
@@ -13,6 +14,7 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
+import weakref
 
 # PROJECT-SPECIFIC
 from .fitter import PotentialFitter
@@ -358,6 +360,10 @@ class PipelineResult:
         residual=None,
         statistic=None,
     ):
+        # reference to parent
+        self._parent_ref = weakref.ref(pipe)
+
+        # results
         self._samples = samples
         self._measured = measured
         self._fit = fit
@@ -368,6 +374,12 @@ class PipelineResult:
 
     # -----------------
     # Properties
+
+    @property
+    def _parent(self):
+        return self._parent_ref()
+
+    # /def
 
     @property
     def samples(self):

@@ -9,6 +9,7 @@ __all__ = [
     "sample_tests",
     "measurement_tests",
     "fitter_tests",
+    "pipeline_tests",
     # instance
     "test",
 ]
@@ -27,6 +28,7 @@ from astropy.tests.runner import TestRunner
 from . import test_core as core_tests
 from . import test_fitter as fitter_tests
 from . import test_measurement as measurement_tests
+from . import test_pipeline as pipeline_tests
 from . import test_sample as sample_tests
 
 ##############################################################################

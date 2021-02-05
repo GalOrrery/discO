@@ -117,7 +117,12 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
     + ``PotentialSampler`` to ``MeasurementErrorSampler`` to
       ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``.
-    + Pipeines can also be created by concatenation.
+    + Pipelines can also be created by concatenation.
+
+
+- ``PipelineResult`` store results of a pipe [#37]
+
+  + produced by ``Pipeline`` at end of a ``run`` or call.
 
 
 discO.data
