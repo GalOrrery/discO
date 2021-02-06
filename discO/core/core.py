@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Baseclass for classes that interact with a Potential."""
+"""For classes that interact with a Potential."""
 
 __all__ = [
-    "PotentialBase",
+    "CommonBase",
 ]
 
 
@@ -26,7 +26,7 @@ from astropy.utils.introspection import resolve_name
 ##############################################################################
 
 
-class PotentialBase(metaclass=ABCMeta):
+class CommonBase(metaclass=ABCMeta):
     """Base-class for interfacing with a Potential.
 
     Raises
@@ -64,10 +64,6 @@ class PotentialBase(metaclass=ABCMeta):
 
             If the key is not None, resolves key module
             and stores it in attribute ``_key``.
-
-            .. todo::
-
-                Maybe store as a string instead.
 
         """
         super().__init_subclass__()

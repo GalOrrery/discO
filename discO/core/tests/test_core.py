@@ -3,7 +3,7 @@
 """Testing :mod:`~discO.core.core`."""
 
 __all__ = [
-    "Test_PotentialBase",
+    "Test_CommonBase",
 ]
 
 
@@ -29,7 +29,7 @@ from discO.tests.helper import ObjectTest
 ##############################################################################
 
 
-class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
+class Test_CommonBase(ObjectTest, obj=core.CommonBase):
 
     #################################################################
     # Method Tests
@@ -71,7 +71,7 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
     # /def
 
     def test_registry(self):
-        # This doesn't run on `Test_PotentialBase`, but should
+        # This doesn't run on `Test_CommonBase`, but should
         # run on all registry subclasses.
         if isinstance(self.obj._registry, Mapping):
             assert isinstance(self.obj.registry, MappingProxyType)
@@ -87,7 +87,7 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
 
         # ---------
 
-        # This doesn't run on `Test_PotentialBase`, but should
+        # This doesn't run on `Test_CommonBase`, but should
         # run on all registry subclasses.
         if isinstance(self.obj._registry, Mapping):
             # a very basic equality test
@@ -109,7 +109,7 @@ class Test_PotentialBase(ObjectTest, obj=core.PotentialBase):
     @abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
-        if self.obj is core.PotentialBase:
+        if self.obj is core.CommonBase:
 
             with pytest.raises(TypeError) as e:
                 self.obj()

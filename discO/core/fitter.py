@@ -27,20 +27,20 @@ from types import ModuleType
 import numpy as np
 
 # PROJECT-SPECIFIC
-from .core import PotentialBase
+from .core import CommonBase
 from discO.type_hints import CoordinateType
 
 ##############################################################################
 # PARAMETERS
 
-FITTER_REGISTRY: T.Dict[str, PotentialBase] = dict()  # package : samplers
+FITTER_REGISTRY: T.Dict[str, CommonBase] = dict()  # package : samplers
 
 ##############################################################################
 # CODE
 ##############################################################################
 
 
-class PotentialFitter(PotentialBase):
+class PotentialFitter(CommonBase):
     """Fit a Potential.
 
     Parameters
@@ -77,7 +77,7 @@ class PotentialFitter(PotentialBase):
         """
         super().__init_subclass__(key=key)
 
-        if key is not None:  # same trigger as PotentialBase
+        if key is not None:  # same trigger as CommonBase
             # get the registry on this (the parent) object
             # cls._key defined in super()
             cls.__bases__[0]._registry[cls._key] = cls

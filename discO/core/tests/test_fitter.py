@@ -22,7 +22,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import fitter
-from discO.core.tests.test_core import Test_PotentialBase as PotentialBase_Test
+from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
 
 ##############################################################################
 # PARAMETERS
@@ -103,7 +103,7 @@ def teardown_module(module):
 ##############################################################################
 
 
-class Test_PotentialFitter(PotentialBase_Test, obj=fitter.PotentialFitter):
+class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
