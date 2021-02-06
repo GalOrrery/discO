@@ -305,7 +305,8 @@ class MeasurementErrorSampler(PotentialBase):
 
             samples = []
             for samp, err in zip(c.T, c_err):
-                samples.append(self(samp, c_err=err, random=random, **kwargs))
+                result = self(samp, c_err=err, random=random, **kwargs)
+                samples.append(result)
 
             sample = concatenate(samples).reshape(c.shape)
 

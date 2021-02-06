@@ -268,37 +268,116 @@ class Test_MeasurementErrorSampler(
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_resample(self):
-        """Test method ``resample``."""
+        """Test method ``resample``.
+
+        When Test_MeasurementErrorSampler this calls on the wrapped instance,
+        which is GaussianMeasurementErrorSampler.
+
+        Subclasses should do real tests on the output. This only tests
+        that we can even call the method.
+
+        .. todo::
+
+            Tests in the subclasses that the results make sense.
+            ie, follow the expected distribution
+
+        """
         # ---------------
         # c_err = None
+
+        res = self.inst.resample(self.c, random=0)
+        assert res.shape == self.c.shape
+        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
+        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        # TODO! more tests
+
+        # ---------------
+        # random
+
+        res2 = self.inst.resample(self.c, random=1)
+        for c in res2.representation_component_names.keys():
+            assert not np.allclose(getattr(res, c), getattr(res2, c))
+        assert np.allclose(res2.ra.value, np.array([1.03455842, 1.73936855]))
+        assert np.allclose(res2.dec.value, np.array([2.16432363, 3.27160676]))
+        # TODO! more tests
 
         # ---------------
         # len(c.shape) == 1
 
+        assert len(self.c.shape) == 1
+
+        res = self.inst.resample(self.c, self.c_err, random=0)
+        assert res.shape == self.c.shape
+        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
+        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        # TODO! more tests
+
         # ---------------
         # 2D array, SkyCoord, nerriter = 1
+
+        c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
+
+        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+        )
 
         # ---------------
         # 2D array, SkyCoord, nerriter != niter
 
+        c_err = coord.concatenate(
+            [self.c_err, self.c_err, self.c_err],
+        ).reshape(len(self.c), -1)
+
         with pytest.raises(ValueError) as e:
-            self.inst.resample("TODO! inputs")
+            self.inst.resample(c, c_err)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
 
+        c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
+            len(self.c),
+            -1,
+        )
+        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+        )
+
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
+
+        res = self.inst.resample(c, c_err=1 * u.percent, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.0012573, 1.001049], [2.0025146, 2.002098]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.9973579, 1.98928661], [2.99603685, 2.98392992]]),
+        )
 
         # ---------------
         # 2D array, other
 
         with pytest.raises(NotImplementedError) as e:
-            self.inst.resample("TODO! inputs")
+            self.inst.resample(self.c, NotImplementedError())
 
         assert "not yet supported." in str(e.value)
 
