@@ -104,12 +104,23 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
                 **kwargs,
             }
 
-    # /defs
+    # /def
+
+    @property
+    def potential_kwargs(self) -> MappingProxyType:
+        if self.__class__ is AGAMAPotentialFitter:
+            kwargs = MappingProxyType(self._instance._kwargs)
+        else:
+            kwargs = MappingProxyType(self._kwargs)
+
+        return kwargs
+
+    # /def
 
     #######################################################
     # Fitting
 
-    def __call__(self, c: CoordinateType) -> SkyCoordType:
+    def __call__(self, c: CoordinateType, **kwargs) -> SkyCoordType:
         """Fit Potential given particles.
 
         Parameters
@@ -128,7 +139,11 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
         particles = (position, mass)
 
-        return self._fitter(particles=particles, **self._kwargs)
+        # kwargs
+        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
+        kw.update(kwargs)
+
+        return self._fitter(particles=particles, **kw)
 
     # /def
 
@@ -172,7 +187,6 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
 
 
 # /class
-
 
 ##############################################################################
 # END

@@ -4,6 +4,7 @@
 
 __all__ = [
     "CommonBase",
+    "PotentialWrapper",
 ]
 
 
@@ -18,11 +19,420 @@ from collections import Sequence
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
+import astropy.coordinates as coord
+import typing_extensions as TE
+from astropy.utils import sharedmethod
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
 
+# PROJECT-SPECIFIC
+import discO.type_hints as TH
+from discO.utils import resolve_framelike
+
+##############################################################################
+# PARAMETERS
+
+WRAPPER_REGISTRY: T.Dict[str, object] = dict()
+
+SCorF = T.Union[TH.SkyCoordType, TE.Literal[False]]
+
 ##############################################################################
 # CODE
+##############################################################################
+
+
+class PotentialWrapperMeta(ABCMeta):
+    """Meta-class for Potential Wrapper."""
+
+    def _convert_to_frame(
+        cls,
+        points: TH.PositionType,
+        frame: T.Optional[TH.FrameLikeType],
+    ) -> T.Tuple[TH.CoordinateType, T.Union[TH.FrameType, str, None]]:
+        """Convert points to the given coordinate frame.
+
+        Parameters
+        ----------
+        points : |SkyCoord| or |CoordinateFrame| or |Representation|
+            The points at which to evaluate the potential.
+        frame : |CoordinateFrame| or None
+            The frame in to which `points` are transformed.
+            If None, then no transformation is applied.
+
+        Returns
+        -------
+        points : |CoordinateFrame| or |SkyCoord|
+            Same type as `points`, in the potential's frame.
+        from_frame : |CoordinateFrame|
+            The frame of the input points,
+
+        """
+        # "from_frame" is the frame of the input points
+        if isinstance(points, coord.SkyCoord):
+            from_frame = points.frame.replicate_without_data()
+        elif isinstance(points, coord.BaseCoordinateFrame):
+            from_frame = points.replicate_without_data()
+        elif isinstance(points, coord.BaseRepresentation):
+            points = frame.realize_frame(points)
+            from_frame = None
+            frame = None
+        else:
+            raise TypeError(
+                f"points is <{type(points)}> not "
+                "<SkyCoord, CoordinateFrame, or Representation>.",
+            )
+
+        if (frame is None) or (
+            isinstance(frame, coord.BaseCoordinateFrame)
+            and frame == from_frame  # errors if not frame instance
+        ):  # don't need to xfm
+            return points, from_frame
+
+        return points.transform_to(resolve_framelike(frame)), from_frame
+
+    # /def
+
+    def _return_points(
+        cls,
+        points: TH.CoordinateType,
+        from_frame: TH.FrameType,
+        rep: TH.RepresentationType,
+        representation_type: TH.RepresentationType,
+    ) -> TH.CoordinateType:
+        """Helper method for making sure points are returned correctly.
+
+        Parameters
+        ----------
+        points : |CoordinateFrame| or |SkyCoord|
+        from_frame : |CoordinateFrame|
+        rep : |Representation|
+        representation_type: |Representation|
+
+        Returns
+        -------
+        point : |CoordinateFrame| or |SkyCoord|
+
+        """
+        is_sc: SCorF = True if isinstance(points, coord.SkyCoord) else False
+
+        # if need to change representation type
+        # convert rep -> build frame -> (?) make SkyCoord
+        if representation_type is not None:
+            rep: TH.RepresentationType = rep.represent_as(representation_type)
+            points: TH.FrameType = from_frame.realize_frame(
+                rep,
+                representation_type=representation_type,
+            )
+
+            if is_sc:  # it was & should be a SkyCoord
+                points: TH.SkyCoordType = coord.SkyCoord(points, copy=False)
+
+        return points
+
+    # /def
+
+    ########################
+    # Methods
+
+    @abstractmethod
+    def specific_potential(
+        self,
+        potential: T.Any,
+        points: TH.PositionType,
+        *,
+        frame: T.Optional[TH.FrameType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        **kwargs,
+    ):
+        """Evaluate the specific potential.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the potential.
+        frame : |CoordinateFrame| or None (optional, keyword-only)
+            The frame of the potential. Potentials do not have an intrinsic
+            reference frame, but if one is assigned, then anything needs to be
+            converted to that frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+        **kwargs
+            Arguments into the potential.
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError()
+
+    # /def
+
+    @abstractmethod
+    def specific_force(
+        self,
+        potential: T.Any,
+        points: TH.PositionType,
+        *,
+        frame: T.Optional[TH.FrameType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        **kwargs,
+    ):
+        """Evaluate the specific force.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the potential.
+        frame : |CoordinateFrame| or None (optional, keyword-only)
+            The frame of the potential. Potentials do not have an intrinsic
+            reference frame, but if one is assigned, then anything needs to be
+            converted to that frame.
+        representation_type : |Representation| class or None (optional)
+            The representation type in which to return data.
+        **kwargs
+            Arguments into the potential.
+
+        Returns
+        -------
+        `~discO.utils.vectorfield.BaseVectorField` subclass instance
+            Type set by `representation_type`
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError()
+
+    # /def
+
+    @abstractmethod
+    def acceleration(
+        self,
+        potential: T.Any,
+        points: TH.PositionType,
+        *,
+        frame: T.Optional[TH.FrameType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+    ):
+        """Evaluate the acceleration.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the potential.
+        frame : |CoordinateFrame| or None (optional, keyword-only)
+            The frame of the potential. Potentials do not have an intrinsic
+            reference frame, but if one is assigned, then anything needs to be
+            converted to that frame.
+        representation_type : |Representation| class or None (optional)
+            The representation type in which to return data.
+
+        Returns
+        -------
+        `~discO.utils.vectorfield.BaseVectorField` subclass instance
+
+
+        """
+        raise NotImplementedError()
+
+    # /def
+
+
+# /class
+
+# -------------------------------------------------------------------
+
+
+class PotentialWrapper(metaclass=PotentialWrapperMeta):
+    """Base-class for evaluating potentials.
+
+    Parameters
+    ----------
+    potential : object
+        The potential
+    frame : frame-like (optional, keyword-only)
+        The natural frame of the potential.
+
+    """
+
+    def __init_subclass__(
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
+    ) -> None:
+        """Initialize subclass, optionally adding to registry.
+
+        Parameters
+        ----------
+        key : str or Module or None (optional)
+            Optionally register subclasses by key.
+            Not registered if key is None.
+
+        """
+        if inspect.ismodule(key):  # module -> str
+            key = key.__name__
+
+        cls._key: T.Optional[str] = key
+
+        if key is not None:  # same trigger as CommonBase
+            # cls._key defined in super()
+            WRAPPER_REGISTRY[cls._key] = cls
+
+    # /def
+
+    def __class_getitem__(cls, key: str) -> PotentialWrapperMeta:
+        """Get class from registry.
+
+        Parameters
+        ----------
+        key : str
+            Get class from registry.
+
+        Returns
+        -------
+        class
+            class from registry.
+
+        """
+        return WRAPPER_REGISTRY[key]
+
+    # /def
+
+    ####################################################
+
+    def __init__(
+        self, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+    ):
+        # Initialize wrapper for potential.
+        self.__wrapped__: object = potential  # a la decorator
+
+        # the "intrinsic" frame of the potential.
+        # keep None as None, resolve else-wise.
+        self._frame = resolve_framelike(frame) if frame is not None else frame
+
+    # /def
+
+    @property
+    def frame(self) -> T.Optional[TH.FrameType]:
+        """The |CoordinateFrame| of the potential."""
+        return self._frame
+
+    # /def
+
+    @sharedmethod
+    def _convert_to_frame(
+        self,
+        points: TH.PositionType,
+        frame: T.Optional[TH.FrameType],
+    ) -> T.Tuple[TH.FrameType, TH.FrameType]:
+        """Convert points to the given coordinate frame.
+
+        Parameters
+        ----------
+        points : |SkyCoord| or |CoordinateFrame| or |Representation|
+            The points at which to evaluate the potential.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+
+        Returns
+        -------
+        object
+            Same type as `points`, in the potential's frame.
+
+        """
+        # call on metaclass
+        return self.__class__._convert_to_frame(points, frame)
+
+    # /def
+
+    ####################################################
+    # Methods
+
+    @sharedmethod
+    def specific_potential(
+        self,
+        points: TH.PositionType,
+        *,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        **kwargs,
+    ) -> T.Tuple[TH.CoordinateType, TH.QuantityType]:
+        """Evaluate the specific potential.
+
+        Parameters
+        ----------
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the potential.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+            None means no representation is forced.
+        **kwargs
+            Arguments into the potential.
+
+        """
+        return self.__class__.specific_potential(
+            self.__wrapped__,  # potential
+            points=points,
+            frame=self.frame,
+            representation_type=representation_type,
+            **kwargs,
+        )
+
+    # /def
+
+    @sharedmethod
+    def specific_force(
+        self,
+        points: TH.PositionType,
+        *,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        **kwargs,
+    ) -> T.Tuple[TH.CoordinateType, TH.QuantityType]:
+        """Evaluate the specific force.
+
+        Parameters
+        ----------
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the force.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+        **kwargs
+            Arguments into the potential.
+
+        Returns
+        -------
+        `~discO.utils.vectorfield.BaseVectorField` subclass instance
+            Type set by `representation_type`
+
+        """
+        return self.__class__.specific_force(
+            self.__wrapped__,
+            points=points,
+            frame=self.frame,
+            representation_type=representation_type,
+            **kwargs,
+        )
+
+    acceleration = specific_force
+    # /def
+
+
+# /class
+
+
 ##############################################################################
 
 

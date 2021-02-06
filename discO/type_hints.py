@@ -2,13 +2,13 @@
 
 """Type hints.
 
-This project extensively uses `~typing` hints.
-Note that this is NOT static typing.
+This project extensively uses :mod:`~typing` hints.
+Note that this is not (necessarily) static typing.
 
 
 **TypeVar**
 
-Most of the types are :mod:`~typing.TypeVar` with a standard format: for an
+Most of the types are :class:`~typing.TypeVar` with a standard format: for an
 object X, the variable name and TypeVar name are "{X}Type" and the TypeVar is
 bound to X such that all subclasses of X permit the same type hint.
 
@@ -32,6 +32,7 @@ __all__ = [
     "FrameType",
     "SkyCoordType",
     "CoordinateType",
+    "PositionType",
     "GenericPositionType",
     "FrameLikeType",
     # tables
@@ -95,8 +96,11 @@ SkyCoordType = T.TypeVar("SkyCoord", bound=coord.SkyCoord)
 CoordinateType = T.Union[FrameType, SkyCoordType]
 """|CoordinateFrame| or |SkyCoord|"""
 
+PositionType = T.Union[RepresentationType, CoordinateType]
+"""|BaseRepresentation|, |CoordinateFrame|, or |SkyCoord|"""
+
 GenericPositionType = T.Union[RepresentationOrDifferentialType, CoordinateType]
-"""|BaseRepresentationOrDifferential| |CoordinateFrame| or |SkyCoord|"""
+"""|BaseRepresentationOrDifferential|, |CoordinateFrame|, or |SkyCoord|"""
 
 FrameLikeType = T.Union[CoordinateType, str]
 """|CoordinateFrame| or |SkyCoord| or `str`"""

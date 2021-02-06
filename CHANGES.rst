@@ -61,10 +61,22 @@ classes.
 
 subclasses must override the ``_registry`` and ``__call__`` methods.
 
+**discO.core.core**
+
+- ``CommonBase`` : base class
+
+    + provides tools for working with class registries
+
+- ``PotentialWrapper`` : base class for wrapping Potentials [#39]
+
+    + unified interface for the specific potential and specific force.
+    + all methods are both instance and static methods.
+    + specific force returns a vector field.
+
 
 **discO.core.sample**
 
-``PotentialSampler`` : base class for sampling potentials [#17]
+- ``PotentialSampler`` : base class for sampling potentials [#17]
 
     + registers subclasses. Each subclass is for sampling from potentials from
       a different package. Eg. ``GalpyPotentialSampler`` for sampling
@@ -162,6 +174,12 @@ discO.plugin.agama
     + Fit ``agama`` potentials with a multipole
     + Subclass of ``AGAMAPotentialFitter``
 
+- ``AGAMAPotentialWrapper`` : for wrapping Potentials [#39]
+
+    + unified interface for the specific potential and specific force.
+    + all methods are both instance and static methods.
+    + specific force returns a vector field.
+
 
 discO.plugin.galpy
 ^^^^^^^^^^^^^^^^^^
@@ -170,6 +188,12 @@ discO.plugin.galpy
 
     + Sample from ``galpy`` potentials with a corresponding distribution function.
     + stores the mass and potential as attributes on the returned ``SkyCoord``
+
+- ``GalpyPotentialWrapper`` : for wrapping Potentials [#39]
+
+    + unified interface for the specific potential and specific force.
+    + all methods are both instance and static methods.
+    + specific force returns a vector field.
 
 
 discO.utils

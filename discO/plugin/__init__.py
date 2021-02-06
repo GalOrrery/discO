@@ -12,16 +12,16 @@ from discO.setup_package import HAS_AGAMA, HAS_GALPY
 
 if HAS_AGAMA:
     # PROJECT-SPECIFIC
-    from .agama import AGAMAPotentialSampler
+    from . import agama
 
-    __all__ += ["AGAMAPotentialSampler"]
+    __all__ += ["agama"]
 
 
 if HAS_GALPY:
     # PROJECT-SPECIFIC
-    from .galpy import GalpyPotentialSampler
+    from . import galpy
 
-    __all__ += ["GalpyPotentialSampler"]
+    __all__ += ["galpy"]
 
 
 ##############################################################################

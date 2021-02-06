@@ -4,6 +4,8 @@
 
 __all__ = [
     "Test_CommonBase",
+    "Test_PotentialWrapperMeta",
+    "Test_PotentialWrapper",
 ]
 
 
@@ -16,6 +18,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 # THIRD PARTY
+import astropy.coordinates as coord
+import astropy.units as u
 import pytest
 from astropy.utils.introspection import resolve_name
 
@@ -188,7 +192,273 @@ class Test_CommonBase(ObjectTest, obj=core.CommonBase):
 # /class
 
 
-# -------------------------------------------------------------------
+#####################################################################
+
+
+class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        # test class
+        class TestClass(metaclass=cls.obj):
+            _frame = coord.Galactocentric()
+
+        cls.subclass = TestClass
+
+        cls.frame = coord.ICRS
+        cls.rep = coord.SphericalRepresentation(
+            lon=[0, 1, 2] * u.deg,
+            lat=[3, 4, 5] * u.deg,
+            distance=[6, 7, 8] * u.kpc,
+        )
+        cls.points = coord.SkyCoord(cls.frame(cls.rep), copy=False)
+
+        # the potential
+        cls.potential = object()
+
+    # /def
+
+    #################################################################
+    # Method Tests
+
+    def test__convert_to_frame(self):
+        """Test method ``_convert_to_frame``."""
+        # ---------------
+        # frame is None
+
+        points, from_frame = self.subclass._convert_to_frame(self.points, None)
+        assert points is self.points
+        assert isinstance(from_frame, self.frame)
+
+        # ---------------
+        # frame is CoordinateFrame / SkyCoord
+
+        points, from_frame = self.subclass._convert_to_frame(
+            self.points,
+            coord.Galactocentric(),
+        )
+        assert isinstance(points.frame, coord.Galactocentric)
+        assert isinstance(from_frame, self.frame)
+
+        points, from_frame = self.subclass._convert_to_frame(
+            self.points.frame,
+            coord.Galactocentric(),
+        )
+        assert isinstance(points, coord.Galactocentric)
+        assert isinstance(from_frame, self.frame)
+
+        # ---------------
+        # Representation
+
+        points, from_frame = self.subclass._convert_to_frame(
+            self.points.data,
+            coord.Galactocentric(),
+        )
+        assert isinstance(points, coord.Galactocentric)
+        assert from_frame is None
+
+        # ---------------
+        # TypeError
+
+        with pytest.raises(TypeError) as e:
+            self.subclass._convert_to_frame(
+                TypeError,
+                coord.Galactocentric(),
+            )
+
+        assert "<SkyCoord, CoordinateFrame, or Representation>" in str(e.value)
+
+    # /def
+
+    def test_specific_potential(self):
+        """Test method ``specific_force``."""
+        with pytest.raises(NotImplementedError):
+            self.subclass.specific_potential(self.potential, self.points)
+
+    # /def
+
+    def test_specific_force(self):
+        """Test method ``specific_force``."""
+        with pytest.raises(NotImplementedError):
+            self.subclass.specific_force(self.potential, self.points)
+
+    # /def
+
+    def test_acceleration(self):
+        """Test method ``acceleration``."""
+        with pytest.raises(NotImplementedError):
+            self.subclass.acceleration(self.potential, self.points)
+
+    # /def
+
+    #################################################################
+    # Usage Tests
+
+
+# /class
+
+
+#####################################################################
+
+
+class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        # subclasses can define an attribute "potential" that is used by the
+        # wrapper. Else, let's just make an object
+        if not hasattr(cls, "potential"):
+            cls.potential = object()
+
+        cls.inst = cls.obj(cls.potential, frame="galactocentric")
+
+        cls.frame = coord.ICRS
+        cls.rep = coord.SphericalRepresentation(
+            lon=[0, 1, 2] * u.deg,
+            lat=[3, 4, 5] * u.deg,
+            distance=[6, 7, 8] * u.kpc,
+        )
+        cls.points = coord.SkyCoord(cls.frame(cls.rep), copy=False)
+
+        class SubClass(cls.obj, key=cls.obj.__name__):
+            pass
+
+        cls.subclass = SubClass
+
+    # /def
+
+    @classmethod
+    def teardown_class(cls):
+        """Teardown fixtures for testing."""
+        core.WRAPPER_REGISTRY.pop(cls.subclass._key)
+
+    # /def
+
+    #################################################################
+    # Method Tests
+
+    def test___init_subclass__(self):
+        """Test method ``__init_subclass__``."""
+        # ---------------
+        # None
+
+        class SubClass1(self.obj, key=None):
+            pass
+
+        assert None not in core.WRAPPER_REGISTRY.keys()
+
+        # ---------------
+        # module
+
+        class SubClass2(self.obj, key=pytest):
+            pass
+
+        assert "pytest" in core.WRAPPER_REGISTRY.keys()
+
+        core.WRAPPER_REGISTRY.pop("pytest")  # cleanup
+
+        # ---------------
+        # string
+
+        class SubClass3(self.obj, key="pytest"):
+            pass
+
+        assert "pytest" in core.WRAPPER_REGISTRY.keys()
+
+        core.WRAPPER_REGISTRY.pop("pytest")  # cleanup
+
+    # /def
+
+    def test___class_getitem__(self):
+        """Test method ``__class_getitem__``."""
+        assert self.obj[self.subclass._key] is self.subclass
+
+    # /def
+
+    def test___init__(self):
+        """Test method ``__init__``."""
+        # ---------------
+        # basic
+
+        obj = self.obj(2)
+
+        assert obj.__wrapped__ == 2
+        assert obj._frame is None
+
+        # ---------------
+        # specify frame
+
+        obj = self.obj(2, frame="galactocentric")
+
+        assert obj.__wrapped__ == 2
+        assert isinstance(obj._frame, coord.Galactocentric)
+
+    # /def
+
+    def test_frame(self):
+        """Test method ``frame``."""
+        assert self.inst.frame is self.inst._frame
+        assert isinstance(self.inst.frame, coord.Galactocentric)
+
+    # /def
+
+    def test__convert_to_frame(self):
+        """Test method ``_convert_to_frame``."""
+        # ---------------
+        # frame is None
+
+        points, from_frame = self.inst._convert_to_frame(self.points, None)
+        assert points is self.points
+        assert isinstance(from_frame, self.frame)
+
+        # ---------------
+        # frame is CoordinateFrame / SkyCoord
+
+        points, from_frame = self.inst._convert_to_frame(
+            self.points,
+            coord.Galactocentric(),
+        )
+        assert isinstance(points.frame, coord.Galactocentric)
+        assert isinstance(from_frame, self.frame)
+
+        # ---------------
+        # Representation
+
+        points, from_frame = self.inst._convert_to_frame(
+            self.points.data,
+            coord.Galactocentric(),
+        )
+        assert isinstance(points, coord.Galactocentric)
+        assert from_frame is None
+
+    # /def
+
+    @abstractmethod
+    def test_specific_potential(self):
+        """Test method ``specific_potential``."""
+        with pytest.raises(NotImplementedError):
+            self.inst.specific_potential(self.points)
+
+    # /def
+
+    @abstractmethod
+    def test_specific_force(self):
+        """Test method ``specific_force``."""
+        with pytest.raises(NotImplementedError):
+            self.inst.specific_force(self.points)
+
+    # /def
+
+    @abstractmethod
+    def test_acceleration(self):
+        """Test method ``acceleration``."""
+        with pytest.raises(NotImplementedError):
+            self.inst.acceleration(self.points)
+
+    # /def
+
+
+# /class
 
 
 ##############################################################################

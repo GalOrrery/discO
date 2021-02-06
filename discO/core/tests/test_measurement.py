@@ -23,7 +23,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import measurement
-from discO.core.tests.test_core import Test_CommonBase
+from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
 
 ##############################################################################
 # TESTS
@@ -31,7 +31,7 @@ from discO.core.tests.test_core import Test_CommonBase
 
 
 class Test_MeasurementErrorSampler(
-    Test_CommonBase,
+    CommonBase_Test,
     obj=measurement.MeasurementErrorSampler,
 ):
     @classmethod

@@ -11,6 +11,9 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
+# BUILT-IN
+from types import MappingProxyType
+
 # THIRD PARTY
 import agama
 import pytest
@@ -153,6 +156,30 @@ class Test_AGAMAPotentialFitter(
 
     # -------------------------------
 
+    def test_potential_kwargs(self):
+        """Test attribute ``potential_kwargs``."""
+        if self.inst.__class__ is fitter.AGAMAPotentialFitter:
+            assert self.inst.potential_kwargs == MappingProxyType(
+                self.inst._instance._kwargs,
+            )
+        else:
+            assert self.inst.potential_kwargs == MappingProxyType(
+                self.inst._kwargs,
+            )
+
+    # /def
+
+    # -------------------------------
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        # run tests on super
+        super().test___call__()
+
+        # TODO! actually run tests
+
+    # /def
+
 
 # /class
 
@@ -169,6 +196,17 @@ class Test_AGAMAMultipolePotentialFitter(
         """Setup fixtures for testing."""
         super().setup_class()
         cls.inst = cls.obj(symmetry="a")
+
+    # /def
+
+    # -------------------------------
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        # run tests on super
+        super().test___call__()
+
+        # TODO! actually run tests
 
     # /def
 

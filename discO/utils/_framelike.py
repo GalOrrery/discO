@@ -12,6 +12,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import inspect
 import typing as T
 
 # THIRD PARTY
@@ -69,6 +70,8 @@ def resolve_framelike(
         frame = frame.replicate_without_data()
     elif isinstance(frame, SkyCoord):
         frame = frame.frame.replicate_without_data()
+    elif inspect.isclass(frame) and issubclass(frame, BaseCoordinateFrame):
+        frame = frame()
 
     elif error_if_not_type:
         raise TypeError(

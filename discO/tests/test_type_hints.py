@@ -11,6 +11,7 @@ __all__ = [
     "Test_FrameType",
     "Test_SkyCoordType",
     "Test_CoordinateType",
+    "Test_PositionType",
     "Test_GenericPositionType",
     "Test_FrameLikeType",
     # tables
@@ -128,6 +129,16 @@ class Test_SkyCoordType(TypeVarTests, obj=type_hints.SkyCoordType):
 @pytest.mark.skip("TODO")
 class Test_CoordinateType:
     """Test CoordinateType."""
+
+
+# /class
+
+# -------------------------------------------------------------------
+
+
+@pytest.mark.skip("TODO")
+class Test_PositionType:
+    """Test PositionType."""
 
 
 # /class

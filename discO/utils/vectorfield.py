@@ -152,9 +152,13 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         if not isinstance(points, coord.BaseRepresentation):
             raise TypeError("points is not <BaseRepresentation>.")
 
-        self.points = points.represent_as(self.base_representation)
+        self._points = points.represent_as(self.base_representation)
 
     # /def
+
+    @property
+    def points(self):
+        return self._points
 
     @property
     def frame(self) -> FrameType:
@@ -481,7 +485,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             apply_method = operator.methodcaller(method, *args, **kwargs)
 
         new = super().__new__(self.__class__)
-        new.points = self.points._apply(method, *args, **kwargs)
+        new._points = self.points._apply(method, *args, **kwargs)
         for component in self.components:
             setattr(
                 new,

@@ -56,6 +56,7 @@ class Test_resolve_framelike:
     def test_frame_is_BaseCoordinateFrame():
         """Test when frame is a BaseCoordinateFrame."""
         # basic usage
+        assert resolve_framelike(frame=coord.ICRS) == coord.ICRS()
         assert resolve_framelike(frame=coord.ICRS()) == coord.ICRS()
 
         # replicates without data
