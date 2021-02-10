@@ -528,7 +528,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             key = package.split(".")[0]
 
         else:
-            raise TypeError("package must be <module> or <str> or None.")
+            raise TypeError("package must be <module, str, or None>.")
 
         return key
 

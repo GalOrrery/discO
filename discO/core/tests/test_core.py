@@ -245,6 +245,18 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
         assert "the potential must have a frame." in str(e.value)
 
         # ---------------
+        # representation_type is wrong
+
+        with pytest.raises(TypeError) as e:
+            self.subclass._convert_to_frame(
+                self.points.data,
+                None,
+                representation_type=TypeError,
+            )
+
+        assert "<Representation, str, or None>" in str(e.value)
+
+        # ---------------
         # frame is None and points is Representation
         # passes through unchanged
 
@@ -509,6 +521,11 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
         assert self.inst._infer_key(self.points, None) == "astropy"
         assert self.inst._infer_key(None, pytest) == "pytest"
         assert self.inst._infer_key(None, "pytest") == "pytest"
+
+        with pytest.raises(TypeError) as e:
+            self.inst._infer_key(None, TypeError)
+
+        assert "package must be <module, str, or None>" in str(e.value)
 
     # /def
 
