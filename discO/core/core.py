@@ -21,6 +21,9 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import astropy.coordinates as coord
 import typing_extensions as TE
+from astropy.coordinates.representation import (
+    REPRESENTATION_CLASSES as _REP_CLSs,
+)
 from astropy.utils import sharedmethod
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
@@ -49,6 +52,7 @@ class PotentialWrapperMeta(ABCMeta):
         cls,
         points: TH.PositionType,
         frame: T.Optional[TH.FrameLikeType],
+        representation_type: T.Optional[TH.RepresentationType] = None,
     ) -> T.Tuple[TH.CoordinateType, T.Union[TH.FrameType, str, None]]:
         """Convert points to the given coordinate frame.
 
@@ -68,70 +72,83 @@ class PotentialWrapperMeta(ABCMeta):
             The frame of the input points,
 
         """
+        if (frame is None) and isinstance(
+            points,
+            (coord.SkyCoord, coord.BaseCoordinateFrame),
+        ):
+            raise TypeError(
+                "To pass points as SkyCoord or CoordinateFrame, "
+                "the potential must have a frame.",
+            )
+
+        # -----------
+        # from_frame
+
         # "from_frame" is the frame of the input points
         if isinstance(points, coord.SkyCoord):
             from_frame = points.frame.replicate_without_data()
+            from_rep = points.representation_type
         elif isinstance(points, coord.BaseCoordinateFrame):
             from_frame = points.replicate_without_data()
-        elif isinstance(points, coord.BaseRepresentation):
-            points = frame.realize_frame(points)
+            from_rep = points.representation_type
+        elif isinstance(points, coord.BaseRepresentation):  # (frame is None)
             from_frame = None
-            frame = None
+            from_rep = points.__class__
         else:
             raise TypeError(
                 f"points is <{type(points)}> not "
                 "<SkyCoord, CoordinateFrame, or Representation>.",
             )
 
-        if (frame is None) or (
-            isinstance(frame, coord.BaseCoordinateFrame)
-            and frame == from_frame  # errors if not frame instance
-        ):  # don't need to xfm
-            return points, from_frame
+        # -----------
+        # parse rep
 
-        return points.transform_to(resolve_framelike(frame)), from_frame
-
-    # /def
-
-    def _return_points(
-        cls,
-        points: TH.CoordinateType,
-        rep: TH.RepresentationType,
-        representation_type: T.Optional[TH.RepresentationType],
-        frame: TH.FrameType,
-    ) -> TH.CoordinateType:
-        """Helper method for making sure points are returned correctly.
-
-        Parameters
-        ----------
-        points : |CoordinateFrame| or |SkyCoord|
-        frame : |CoordinateFrame|
-            Frame of the data
-        rep : |Representation|
-        representation_type: |Representation|
-
-        Returns
-        -------
-        point : |CoordinateFrame| or |SkyCoord|
-
-        """
-        # if need to change representation type
-        # convert rep -> build frame -> (?) make SkyCoord
-        if representation_type is not None:
-            is_sc: SCorF = (
-                True if isinstance(points, coord.SkyCoord) else False
+        if representation_type is None:
+            rep_type = from_rep
+        elif inspect.isclass(representation_type) and issubclass(
+            representation_type,
+            coord.BaseRepresentation,
+        ):
+            rep_type = representation_type
+        elif isinstance(representation_type, str):
+            rep_type = _REP_CLSs[representation_type]
+        else:
+            raise TypeError(
+                f"representation_type is <{type(representation_type)}> not "
+                "<Representation, str, or None>.",
             )
 
-            rep: TH.RepresentationType = rep.represent_as(representation_type)
-            points: TH.FrameType = frame.realize_frame(
-                rep,
-                representation_type=representation_type,
+        # -----------
+        # to frame
+
+        # potential doesn't have a frame
+        if frame is None:
+            p = points
+        elif from_frame is None:  # but frame is not
+            p = resolve_framelike(frame).realize_frame(
+                points,
+                representation_type=rep_type,
             )
+        # don't need to transform
+        elif (
+            isinstance(frame, coord.BaseCoordinateFrame)  # catch comp error
+            and frame == from_frame  # equivalent frames
+        ):
+            p = points
+        else:
+            p = points.transform_to(resolve_framelike(frame))
 
-            if is_sc:  # it was & should be a SkyCoord
-                points: TH.SkyCoordType = coord.SkyCoord(points, copy=False)
+        # -----------
+        # to rep
 
-        return points
+        if isinstance(p, coord.BaseRepresentation):
+            p = p.represent_as(rep_type)
+        elif isinstance(p, coord.BaseCoordinateFrame):
+            p._data = p._data.represent_as(rep_type)
+        else:  # SkyCoord
+            p.frame._data = p.frame._data.represent_as(rep_type)
+
+        return p, from_frame
 
     # /def
 
@@ -170,7 +187,7 @@ class PotentialWrapperMeta(ABCMeta):
         NotImplementedError
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Please use the appropriate subpackage.")
 
     # /def
 
@@ -211,7 +228,7 @@ class PotentialWrapperMeta(ABCMeta):
         NotImplementedError
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Please use the appropriate subpackage.")
 
     # /def
 
@@ -245,7 +262,7 @@ class PotentialWrapperMeta(ABCMeta):
 
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Please use the appropriate subpackage.")
 
     # /def
 
@@ -350,27 +367,36 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     # /def
 
-    def __repr__(self) -> str:
-        """String representation."""
-        r = super().__repr__()
-        r = r[r.index("at") + 3 :]  # noqa: E203  # includes ">"
+    def __call__(
+        self,
+        points: TH.PositionType,
+        *,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        **kwargs,
+    ):
+        """Evaluate the specific potential.
 
-        # the potential
-        ps = repr(self.__wrapped__).strip()
-        ps = ps[1:] if ps.startswith("<") else ps
-        ps = ps[:-1] if ps.endswith(">") else ps
+        Parameters
+        ----------
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the potential.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+            None means no representation is forced.
+        **kwargs
+            Arguments into the potential.
 
-        # the frame
-        fs = repr(self.frame).strip()
-        fs = fs[1:] if fs.startswith("<") else fs
-        fs = fs[:-1] if fs.endswith(">") else fs
+        Returns
+        -------
+        points : |CoordinateFrame| or |SkyCoord|
+        values : |Quantity|
 
-        return "\n".join(
-            (
-                self.__class__.__name__ + ": at <" + r,
-                indent("potential : " + ps),
-                indent("frame     : " + fs),
-            ),
+        """
+        return self.specific_potential(
+            points, representation_type=representation_type, **kwargs
         )
 
     # /def
@@ -457,7 +483,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # /def
 
     ####################################################
-    # Utilities
+    # Misc
 
     @staticmethod
     def _infer_key(
@@ -505,6 +531,31 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             raise TypeError("package must be <module> or <str> or None.")
 
         return key
+
+    # /def
+
+    def __repr__(self) -> str:
+        """String representation."""
+        r = super().__repr__()
+        r = r[r.index("at") + 3 :]  # noqa: E203  # includes ">"
+
+        # the potential
+        ps = repr(self.__wrapped__).strip()
+        ps = ps[1:] if ps.startswith("<") else ps
+        ps = ps[:-1] if ps.endswith(">") else ps
+
+        # the frame
+        fs = repr(self.frame).strip()
+        fs = fs[1:] if fs.startswith("<") else fs
+        fs = fs[:-1] if fs.endswith(">") else fs
+
+        return "\n".join(
+            (
+                self.__class__.__name__ + ": at <" + r,
+                indent("potential : " + ps),
+                indent("frame     : " + fs),
+            ),
+        )
 
     # /def
 

@@ -224,38 +224,87 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
     def test__convert_to_frame(self):
         """Test method ``_convert_to_frame``."""
         # ---------------
-        # frame is None
+        # points is not SkyCoord, BaseCoordinateFrame or BaseRepresentation
 
-        points, from_frame = self.subclass._convert_to_frame(self.points, None)
-        assert points is self.points
-        assert isinstance(from_frame, self.frame)
+        with pytest.raises(TypeError) as e:
+            self.subclass._convert_to_frame(self.points.data._values, None)
 
-        # ---------------
-        # frame is CoordinateFrame / SkyCoord
-
-        points, from_frame = self.subclass._convert_to_frame(
-            self.points,
-            coord.Galactocentric(),
-        )
-        assert isinstance(points.frame, coord.Galactocentric)
-        assert isinstance(from_frame, self.frame)
-
-        points, from_frame = self.subclass._convert_to_frame(
-            self.points.frame,
-            coord.Galactocentric(),
-        )
-        assert isinstance(points, coord.Galactocentric)
-        assert isinstance(from_frame, self.frame)
+        assert "<SkyCoord, CoordinateFrame, or Representation>" in str(e.value)
 
         # ---------------
-        # Representation
+        # frame is None and points is SkyCoord or CoordinateFrame
+
+        with pytest.raises(TypeError) as e:
+            self.subclass._convert_to_frame(self.points, None)
+
+        assert "the potential must have a frame." in str(e.value)
+
+        with pytest.raises(TypeError) as e:
+            self.subclass._convert_to_frame(self.points.frame, None)
+
+        assert "the potential must have a frame." in str(e.value)
+
+        # ---------------
+        # frame is None and points is Representation
+        # passes through unchanged
 
         points, from_frame = self.subclass._convert_to_frame(
             self.points.data,
-            coord.Galactocentric(),
+            None,
         )
-        assert isinstance(points, coord.Galactocentric)
+        assert points is self.points.data
         assert from_frame is None
+
+        # ------------------------------
+
+        for p in (self.points, self.points.frame, self.points.data):
+
+            # ---------------
+            # frame is CoordinateFrame / SkyCoord
+            for frame in (
+                coord.Galactocentric(),
+                coord.Galactocentric,
+                "galactocentric",
+            ):
+                points, from_frame = self.subclass._convert_to_frame(p, frame)
+
+                # the points
+                if isinstance(points, coord.SkyCoord):
+                    assert isinstance(points.frame, coord.Galactocentric)
+                elif isinstance(points, coord.BaseCoordinateFrame):
+                    assert isinstance(points, coord.Galactocentric)
+                else:
+                    assert isinstance(points, coord.BaseRepresentation)
+                    assert from_frame is None
+
+                # the frame
+                if hasattr(p, "frame"):
+                    assert isinstance(from_frame, p.frame.__class__)
+                elif isinstance(p, coord.BaseCoordinateFrame):
+                    assert isinstance(from_frame, p.__class__)
+                else:
+                    assert from_frame is None
+
+            # ---------------
+            # representation
+
+            for rep_type in (
+                None,
+                coord.PhysicsSphericalRepresentation,
+                "physicsspherical",
+            ):
+
+                points, from_frame = self.subclass._convert_to_frame(
+                    p,
+                    "galactocentric",
+                    representation_type=rep_type,
+                )
+                if rep_type is None:
+                    expected = self.points.representation_type
+                else:
+                    expected = coord.PhysicsSphericalRepresentation
+
+                assert isinstance(points.data, expected)
 
         # ---------------
         # TypeError
@@ -270,50 +319,30 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
 
     # /def
 
-    def test__return_points(self):
-        """Test method ``_return_points``."""
-        # representation_type is None
-        points = self.subclass._return_points(
-            self.points,
-            self.points.data,
-            None,
-            self.points.frame,
-        )
-
-        assert points is self.points
-
-        # representation_type is not None
-        points = self.subclass._return_points(
-            self.points,
-            self.points.data,
-            self.points.representation_type,
-            self.points.frame,
-        )
-
-        assert isinstance(points, coord.SkyCoord)
-        assert isinstance(points.frame, self.points.frame.__class__)
-        assert isinstance(points.data, self.points.data.__class__)
-
-    # /def
-
     def test_specific_potential(self):
         """Test method ``specific_force``."""
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(NotImplementedError) as e:
             self.subclass.specific_potential(self.potential, self.points)
+
+        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
     def test_specific_force(self):
         """Test method ``specific_force``."""
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(NotImplementedError) as e:
             self.subclass.specific_force(self.potential, self.points)
+
+        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
     def test_acceleration(self):
         """Test method ``acceleration``."""
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(NotImplementedError) as e:
             self.subclass.acceleration(self.potential, self.points)
+
+        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
@@ -444,14 +473,10 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
 
     # /def
 
-    def test___repr__(self):
-        """Test method ``__repr__``."""
-        s = repr(self.inst)
-
-        assert isinstance(s, str)
-        assert self.inst.__class__.__name__ in s
-        assert "potential :" in s
-        assert "frame     :" in s
+    def test___call__(self):
+        """Test method ``__call__``."""
+        with pytest.raises(NotImplementedError):
+            self.inst(self.points)
 
     # /def
 
@@ -484,6 +509,19 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
         assert self.inst._infer_key(self.points, None) == "astropy"
         assert self.inst._infer_key(None, pytest) == "pytest"
         assert self.inst._infer_key(None, "pytest") == "pytest"
+
+    # /def
+
+    def test___repr__(self):
+        """Test method ``__repr__``."""
+        s = repr(self.inst)
+
+        assert isinstance(s, str)
+        assert self.inst.__class__.__name__ in s
+        assert "potential :" in s
+        assert "frame     :" in s
+
+    # /def
 
 
 # /class

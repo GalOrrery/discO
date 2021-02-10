@@ -57,18 +57,24 @@ class Test_AGAMAPotentialWrapperMeta(
     def test_specific_potential(self):
         """Test method ``specific_force``."""
         # ---------------
+        # when there isn't a frame
+
+        with pytest.raises(TypeError) as e:
+            self.subclass.specific_potential(self.potential, self.points)
+
+        assert "the potential must have a frame." in str(e.value)
+        # ---------------
         # basic
 
         points, values = self.subclass.specific_potential(
             self.potential,
-            self.points,
+            self.points.data,
         )
 
         # the points are unchanged
-        assert points is self.points
+        assert points is self.points.data
         # check data types
-        assert isinstance(points, coord.SkyCoord)
-        assert isinstance(points.frame, self.frame)
+        assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
         assert values.unit == u.km ** 2 / u.s ** 2
@@ -90,9 +96,8 @@ class Test_AGAMAPotentialWrapperMeta(
                 self.points,
                 frame=frame,
             )
-            assert points is self.points
             assert isinstance(points, coord.SkyCoord)
-            assert isinstance(points.frame, self.frame)
+            assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
             assert values.unit == u.km ** 2 / u.s ** 2
 
@@ -104,9 +109,9 @@ class Test_AGAMAPotentialWrapperMeta(
         points, values = self.subclass.specific_potential(
             self.potential,
             self.points,
+            frame=self.points.frame.replicate_without_data(),
             representation_type=coord.CartesianRepresentation,
         )
-        assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
@@ -120,9 +125,17 @@ class Test_AGAMAPotentialWrapperMeta(
     def test_specific_force(self):
         """Test method ``specific_force``."""
         # ---------------
+        # when there isn't a frame
+
+        with pytest.raises(TypeError) as e:
+            self.subclass.specific_force(self.potential, self.points)
+
+        assert "the potential must have a frame." in str(e.value)
+
+        # ---------------
         # basic
 
-        vf = self.subclass.specific_force(self.potential, self.points)
+        vf = self.subclass.specific_force(self.potential, self.points.data)
         assert isinstance(vf, vectorfield.BaseVectorField)
         assert isinstance(vf.points, coord.CartesianRepresentation)
         assert hasattr(vf, "vf_x")
@@ -163,6 +176,7 @@ class Test_AGAMAPotentialWrapperMeta(
         vf = self.subclass.specific_force(
             self.potential,
             self.points,
+            frame=self.points.frame.replicate_without_data(),
             representation_type=coord.CylindricalRepresentation,
         )
 
@@ -171,7 +185,7 @@ class Test_AGAMAPotentialWrapperMeta(
         assert hasattr(vf, "vf_rho")
         assert hasattr(vf, "vf_phi")
         assert hasattr(vf, "vf_z")
-        assert vf.frame is None
+        assert isinstance(vf.frame, self.frame)
 
         # TODO! test the specific values
 
@@ -212,17 +226,28 @@ class Test_AGAMAPotentialWrapper(
     # Method Tests
 
     def test_specific_potential(self):
-        """Test method ``specific_force``."""
+        """Test method ``specific_potential``."""
         # ---------------
         # basic
 
+        points, values = self.inst.specific_potential(self.points.data)
+
+        # check data types
+        assert isinstance(points, self.inst.frame.__class__)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.km ** 2 / u.s ** 2
+
+        # TODO! test the specific values
+
+        # ---------------
+        # with a frame
+
         points, values = self.inst.specific_potential(self.points)
 
-        # the points are unchanged
-        assert points is self.points
         # check data types
         assert isinstance(points, coord.SkyCoord)
-        assert isinstance(points.frame, self.frame)
+        assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
         assert values.unit == u.km ** 2 / u.s ** 2
@@ -251,7 +276,67 @@ class Test_AGAMAPotentialWrapper(
         )
         assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
-        assert isinstance(points.frame, self.frame)
+        assert isinstance(points.frame, self.inst.frame.__class__)
+        assert isinstance(points.data, coord.CartesianRepresentation)
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.km ** 2 / u.s ** 2
+
+        # TODO! test the specific values
+
+    # /def
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        # ---------------
+        # basic
+
+        points, values = self.inst(self.points.data)
+
+        # check data types
+        assert isinstance(points, self.inst.frame.__class__)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.km ** 2 / u.s ** 2
+
+        # TODO! test the specific values
+
+        # ---------------
+        # with a frame
+
+        points, values = self.inst(self.points)
+
+        # check data types
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.inst.frame.__class__)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.km ** 2 / u.s ** 2
+
+        # TODO! test the specific values
+
+        # ---------------
+        # can't pass frame
+        # test the different inputs
+
+        with pytest.raises(TypeError) as e:
+
+            points, values = self.inst(
+                self.points,
+                frame=coord.Galactocentric(),
+            )
+
+        assert "multiple values for keyword argument 'frame'" in str(e.value)
+
+        # ---------------
+        # representation_type
+
+        points, values = self.inst(
+            self.points,
+            representation_type=coord.CartesianRepresentation,
+        )
+        assert points is not self.points
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
         assert values.unit == u.km ** 2 / u.s ** 2

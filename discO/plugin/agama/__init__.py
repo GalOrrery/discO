@@ -91,7 +91,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         """
         shape = points.shape[:]  # copy the shape
 
-        p, from_frame = self._convert_to_frame(points, frame)
+        p, _ = self._convert_to_frame(points, frame)
         r = p.represent_as(coord.CartesianRepresentation)
         r = r.reshape(-1)  # unfortunately can't flatten in-place
 
@@ -102,15 +102,9 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         r.shape = shape
         values.shape = shape
 
-        points = self._return_points(  # get points to right rep
-            points,
-            r,
-            representation_type,
-            from_frame,
-        )
-
         # TODO! ScalarField to package together
-        return points, values
+        p, _ = self._convert_to_frame(p, frame, representation_type)
+        return p, values
 
     # /def
 
@@ -147,9 +141,9 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
         """
         shape = points.shape[:]  # copy the shape
-        p, from_frame = self._convert_to_frame(points, frame)
-        r = p.represent_as(coord.CartesianRepresentation)
-        r = r.reshape(-1)  # unfortunately can't flatten in-place
+        p, _ = self._convert_to_frame(points, frame)
+        # AGAMA uses a flattened Cartesian representation
+        r = p.represent_as(coord.CartesianRepresentation).reshape(-1)
 
         agama.setUnits(mass=1, length=1, velocity=1)  # TODO! bad
         Fx, Fy, Fz = (

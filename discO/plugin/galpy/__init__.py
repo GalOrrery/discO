@@ -76,21 +76,15 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
             The specific potential at `points`.
 
         """
-        p, from_frame = self._convert_to_frame(points, frame)
+        p, _ = self._convert_to_frame(points, frame)
         r = p.represent_as(coord.CylindricalRepresentation)
 
         # TODO! be careful about phi definition!
         values = potential(r.rho, r.z, phi=r.phi, **kwargs)
 
-        points = self._return_points(  # get points to right rep
-            points,
-            r,
-            representation_type,
-            from_frame,
-        )
-
         # TODO! ScalarField to package together
-        return points, values
+        p, _ = self._convert_to_frame(p, frame, representation_type)
+        return p, values
 
     # /def
 
@@ -136,7 +130,6 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         ).to(_KMS2)
         Fz = potential.zforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
 
-        # TODO? convert back to from_frame?
         vf = vectorfield.CylindricalVectorField(
             points=r,
             vf_rho=Frho,
