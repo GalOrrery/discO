@@ -122,6 +122,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       out the desired subclass, and how to fit the potential.
     + ``__call__`` and ``fit`` are used to fit the potential, with the latter
       working on N-D samples (multiple iterations).
+    + returns a ``PotentialWrapper`` [#40]
 
 
 **discO.core.pipeline**
@@ -153,13 +154,13 @@ Where classes for external packages are held.
 discO.plugin.agama
 ^^^^^^^^^^^^^^^^^^
 
-- AGAMAPotentialSampler [#17]
+- ``AGAMAPotentialSampler`` [#17]
 
     + Sample from ``agama`` potentials.
     + Subclass of ``PotentialSampler``
     + stores the mass and potential as attributes on the returned ``SkyCoord``
 
-- AGAMAPotentialFitter [#20]
+- ``AGAMAPotentialFitter`` [#20]
 
     + Fit ``agama`` potentials.
     + Subclass of ``PotentialFitter``
@@ -168,8 +169,9 @@ discO.plugin.agama
       subclasses. This is controlled by the argument ``return_specific_class``. If False, it returns the subclass itself.
     + Takes a ``pot_type`` argument which is used to figure
       out the desired subclass, and how to fit the potential.
+    + returns a ``AGAMAPotentialWrapper`` [#40]
 
-- AGAMAMultipolePotentialFitter [#20]
+- ``AGAMAMultipolePotentialFitter`` [#20]
 
     + Fit ``agama`` potentials with a multipole
     + Subclass of ``AGAMAPotentialFitter``
@@ -184,7 +186,7 @@ discO.plugin.agama
 discO.plugin.galpy
 ^^^^^^^^^^^^^^^^^^
 
-- GalpyPotentialSampler [#17]
+- ``GalpyPotentialSampler`` [#17]
 
     + Sample from ``galpy`` potentials with a corresponding distribution function.
     + stores the mass and potential as attributes on the returned ``SkyCoord``
@@ -199,7 +201,7 @@ discO.plugin.galpy
 discO.utils
 ^^^^^^^^^^^
 
-- resolve_framelike [#17]
+- ``resolve_framelike`` [#17]
 
     Determine the frame and return a blank instance for anything that can be
     used in ``frame=`` in  ``Skycoord(...,frame=)``
