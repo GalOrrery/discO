@@ -32,6 +32,13 @@ except ImportError:
 else:
     HAS_GALPY = True
 
+    # TODO better way of ensuring unit!
+    # THIRD PARTY
+    from galpy.util.config import __config__
+
+    __config__.set("astropy", "astropy-units", "True")
+    __config__.set("astropy", "astropy-coords", "True")
+
 
 ##############################################################################
 # END

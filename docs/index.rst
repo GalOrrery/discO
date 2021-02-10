@@ -43,6 +43,10 @@ Examples
 
 Document example notebooks here
 
+.. toctree::
+    :maxdepth: 1
+
+    examples/wrapping_potentials.ipynb
 
 .. _index-contributing:
 

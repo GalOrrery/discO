@@ -49,7 +49,7 @@ from astropy.coordinates import SkyCoord, concatenate
 from astropy.utils.misc import NumpyRNGContext
 
 # PROJECT-SPECIFIC
-from .core import PotentialBase
+from .core import CommonBase
 from discO.type_hints import FrameLikeType, SkyCoordType
 from discO.utils import resolve_framelike
 
@@ -66,7 +66,7 @@ Random_Like = T.Union[int, np.random.Generator, np.random.RandomState, None]
 ##############################################################################
 
 
-class PotentialSampler(PotentialBase):
+class PotentialSampler(CommonBase):
     """Sample a Potential.
 
     Parameters
@@ -113,7 +113,7 @@ class PotentialSampler(PotentialBase):
         """
         super().__init_subclass__(key=key)
 
-        if key is not None:  # same trigger as PotentialBase
+        if key is not None:  # same trigger as CommonBase
             # cls._key defined in super()
             cls.__bases__[0]._registry[cls._key] = cls
 

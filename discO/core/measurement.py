@@ -40,7 +40,7 @@ from astropy.coordinates import (
 )
 
 # PROJECT-SPECIFIC
-from .core import PotentialBase
+from .core import CommonBase
 from discO.type_hints import (
     CoordinateType,
     QuantityType,
@@ -51,7 +51,7 @@ from discO.type_hints import (
 ##############################################################################
 # PARAMETERS
 
-MEASURE_REGISTRY: T.Dict[str, PotentialBase] = dict()  # key : measurer
+MEASURE_REGISTRY: T.Dict[str, CommonBase] = dict()  # key : measurer
 
 CERR_Type = T.Union[
     T.Callable,
@@ -68,7 +68,7 @@ CERR_Type = T.Union[
 ##############################################################################
 
 
-class MeasurementErrorSampler(PotentialBase):
+class MeasurementErrorSampler(CommonBase):
     """Draw a realization given measurement errors.
 
     Parameters

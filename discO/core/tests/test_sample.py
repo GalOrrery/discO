@@ -22,14 +22,14 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import sample
-from discO.core.tests.test_core import Test_PotentialBase as PotentialBase_Test
+from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
 
 ##############################################################################
 # TESTS
 ##############################################################################
 
 
-class Test_PotentialSampler(PotentialBase_Test, obj=sample.PotentialSampler):
+class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""

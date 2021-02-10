@@ -7,6 +7,11 @@ This is some documentation.
 
 An example construction.
 
+.. todo::
+
+    store VECTORFIELD_REPRESENTATIONS keys as str, not the BaseRepresentation
+    class.
+
 
 """
 
@@ -24,6 +29,7 @@ __all__ = [
 
 # BUILT-IN
 import functools
+import inspect
 import operator
 import typing as T
 
@@ -31,6 +37,9 @@ import typing as T
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
+from astropy.coordinates.representation import (
+    REPRESENTATION_CLASSES as _REP_CLSs,
+)
 from astropy.coordinates.representation import (
     BaseRepresentationOrDifferential,
     _array2string,
@@ -152,9 +161,15 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         if not isinstance(points, coord.BaseRepresentation):
             raise TypeError("points is not <BaseRepresentation>.")
 
-        self.points = points.represent_as(self.base_representation)
+        # TODO store in CoordinateFrame. If representation, use GenericFrame
+        # "points" property and stuff links to the _points.data
+        self._points = points.represent_as(self.base_representation)
 
     # /def
+
+    @property
+    def points(self):
+        return self._points
 
     @property
     def frame(self) -> FrameType:
@@ -238,11 +253,21 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # The default is to convert via cartesian coordinates.
         self_cartesian = self.to_cartesian()
 
-        if issubclass(other_class, BaseVectorField):
+        if inspect.isclass(other_class) and issubclass(
+            other_class,
+            BaseVectorField,
+        ):
             pass
-        elif issubclass(other_class, coord.BaseRepresentation):
+        elif inspect.isclass(other_class) and issubclass(
+            other_class,
+            coord.BaseRepresentation,
+        ):
             # convert other_class to the corresponding VectorField
             other_class = VECTORFIELD_REPRESENTATIONS[other_class]
+        elif isinstance(other_class, str):
+            rep_cls = _REP_CLSs[other_class]
+            # convert rep_cls to the corresponding VectorField
+            other_class = VECTORFIELD_REPRESENTATIONS[rep_cls]
         else:
             raise TypeError
 
@@ -481,7 +506,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             apply_method = operator.methodcaller(method, *args, **kwargs)
 
         new = super().__new__(self.__class__)
-        new.points = self.points._apply(method, *args, **kwargs)
+        new._points = self.points._apply(method, *args, **kwargs)
         for component in self.components:
             setattr(
                 new,

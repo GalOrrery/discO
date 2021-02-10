@@ -18,6 +18,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import copy
 import operator
 
 # THIRD PARTY
@@ -188,13 +189,11 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
         # resolve_frame
         with pytest.raises(TypeError):  # not instance
-            self.klass(self.points, frame=coord.ICRS, **self.kwargs)
+            self.klass(self.points, frame=object, **self.kwargs)
 
-        inst = self.klass(self.points, frame=coord.ICRS(), **self.kwargs)
-        assert inst.frame == coord.ICRS()
-
-        inst = self.klass(self.points, frame="icrs", **self.kwargs)
-        assert inst.frame == coord.ICRS()
+        for frame in (coord.ICRS, coord.ICRS(), "icrs"):
+            inst = self.klass(self.points, frame=frame, **self.kwargs)
+            assert inst.frame == coord.ICRS()
 
         # -------------------
         # errors
@@ -284,6 +283,17 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # TODO! more tests, of the specific vectorfield values.
 
         # -------------------
+        # convert thru str
+
+        inst = self.inst.represent_as("cartesian")
+
+        assert isinstance(inst, vectorfield.CartesianVectorField)
+        assert inst.points == self.inst.points.represent_as(
+            coord.CartesianRepresentation,
+        )
+        # TODO! more tests, of the specific vectorfield values.
+
+        # -------------------
         # failed
 
         with pytest.raises(TypeError):
@@ -354,6 +364,18 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
             operator.add,
             self.inst.represent_as(coord.SphericalRepresentation),
         )
+
+        # -------------------
+        # incompatible points
+
+        inst = copy.deepcopy(self.inst)
+        inst._points = self.inst.points * 2
+
+        with pytest.raises(Exception) as e:
+
+            self.inst._combine_operation(operator.add, inst)
+
+        assert "can't combine mismatching points." in str(e.value)
 
     # /def
 
