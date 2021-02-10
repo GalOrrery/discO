@@ -479,6 +479,12 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
 
     # /def
 
+    def test__infer_key(self):
+        """Test method ``_infer_key``."""
+        assert self.inst._infer_key(self.points, None) == "astropy"
+        assert self.inst._infer_key(None, pytest) == "pytest"
+        assert self.inst._infer_key(None, "pytest") == "pytest"
+
 
 # /class
 

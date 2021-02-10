@@ -46,7 +46,9 @@ class PotentialWrapperMeta(ABCMeta):
     """Meta-class for Potential Wrapper."""
 
     def _convert_to_frame(
-        cls, points: TH.PositionType, frame: T.Optional[TH.FrameLikeType],
+        cls,
+        points: TH.PositionType,
+        frame: T.Optional[TH.FrameLikeType],
     ) -> T.Tuple[TH.CoordinateType, T.Union[TH.FrameType, str, None]]:
         """Convert points to the given coordinate frame.
 
@@ -122,7 +124,8 @@ class PotentialWrapperMeta(ABCMeta):
 
             rep: TH.RepresentationType = rep.represent_as(representation_type)
             points: TH.FrameType = frame.realize_frame(
-                rep, representation_type=representation_type,
+                rep,
+                representation_type=representation_type,
             )
 
             if is_sc:  # it was & should be a SkyCoord
@@ -268,7 +271,8 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # On the class
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, optionally adding to registry.
 
@@ -314,7 +318,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         # PotentialWrapper can become any of it's registered subclasses.
         if cls is PotentialWrapper:
             # try to infer the package of the potential.
-            key = cls._infer_package(potential, package=None)
+            key = cls._infer_key(potential, package=None)
 
             # if key in wrapper, return that class.
             if key in WRAPPER_REGISTRY:
@@ -346,10 +350,10 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     # /def
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation."""
         r = super().__repr__()
-        r = r[r.index("at") + 3:]  # includes ">"
+        r = r[r.index("at") + 3 :]  # noqa: E203  # includes ">"
 
         # the potential
         ps = repr(self.__wrapped__).strip()
@@ -366,7 +370,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
                 self.__class__.__name__ + ": at <" + r,
                 indent("potential : " + ps),
                 indent("frame     : " + fs),
-            )
+            ),
         )
 
     # /def
@@ -396,6 +400,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             None means no representation is forced.
         **kwargs
             Arguments into the potential.
+
+        Returns
+        -------
+        points : |CoordinateFrame| or |SkyCoord|
+        values : |Quantity|
 
         """
         return self.__class__.specific_potential(
@@ -451,14 +460,37 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # Utilities
 
     @staticmethod
-    def _infer_package(
-        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
+    def _infer_key(
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
     ) -> str:
+        """Figure out the package name of an object.
 
-        if inspect.ismodule(package):
-            package = package.__name__
-        elif isinstance(package, str):
-            pass
+        .. todo::
+
+            Break out as utility function.
+            Combine with the one in CommonBase.
+
+        Parameters
+        ----------
+        obj : object
+            The object. What's its package?
+        package : :class:`~types.ModuleType` or str of None (optional)
+            Any hints about the package.
+            If module, then the module's name is returned.
+            If string, then this is returned.
+            If None (default), `obj` is inspected.
+
+        Returns
+        -------
+        key : str
+            The inferred key name.
+
+        """
+        if isinstance(package, str):
+            key = package
+        elif inspect.ismodule(package):
+            key = package.__name__
         elif package is None:  # Need to get package from obj
             info = inspect.getmodule(obj)
 
@@ -467,12 +499,12 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             else:
                 package = info.__package__
 
-            package = package.split(".")[0]
+            key = package.split(".")[0]
 
         else:
             raise TypeError("package must be <module> or <str> or None.")
 
-        return package
+        return key
 
     # /def
 
@@ -504,7 +536,10 @@ class CommonBase(metaclass=ABCMeta):
     def __init_subclass__(
         cls,
         key: T.Union[
-            str, ModuleType, T.Sequence[T.Union[ModuleType, str]], None,
+            str,
+            ModuleType,
+            T.Sequence[T.Union[ModuleType, str]],
+            None,
         ] = None,
     ) -> None:
         """Initialize a subclass.
@@ -581,7 +616,8 @@ class CommonBase(metaclass=ABCMeta):
 
     @staticmethod
     def _infer_package(
-        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
     ) -> ModuleType:
 
         if inspect.ismodule(package):
