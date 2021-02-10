@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.plugin.galpy` wrappers."""
+"""Testing :mod:`~discO.plugin.galpy.wrapper`."""
 
 __all__ = [
     "Test_GalpyPotentialWrapperMeta",
@@ -27,7 +27,7 @@ from discO.core.tests.test_core import (
 from discO.core.tests.test_core import (
     Test_PotentialWrapperMeta as PotentialWrapperMeta_Test,
 )
-from discO.plugin import galpy as plugin
+from discO.plugin.galpy import wrapper
 from discO.utils import resolve_framelike, vectorfield
 
 ##############################################################################
@@ -37,7 +37,7 @@ from discO.utils import resolve_framelike, vectorfield
 
 class Test_GalpyPotentialWrapperMeta(
     PotentialWrapperMeta_Test,
-    obj=plugin.GalpyPotentialMeta,
+    obj=wrapper.GalpyPotentialMeta,
 ):
     @classmethod
     def setup_class(cls):
@@ -214,7 +214,7 @@ class Test_GalpyPotentialWrapperMeta(
 
 class Test_GalpyPotentialWrapper(
     PotentialWrapper_Test,
-    obj=plugin.GalpyPotentialWrapper,
+    obj=wrapper.GalpyPotentialWrapper,
 ):
     @classmethod
     def setup_class(cls):

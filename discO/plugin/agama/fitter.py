@@ -22,7 +22,7 @@ import astropy.coordinates as coord
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from . import AGAMAPotentialWrapper
+from .wrapper import AGAMAPotentialWrapper
 from discO.core.fitter import PotentialFitter
 
 ##############################################################################
