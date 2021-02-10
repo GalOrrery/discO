@@ -283,6 +283,17 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # TODO! more tests, of the specific vectorfield values.
 
         # -------------------
+        # convert thru str
+
+        inst = self.inst.represent_as("cartesian")
+
+        assert isinstance(inst, vectorfield.CartesianVectorField)
+        assert inst.points == self.inst.points.represent_as(
+            coord.CartesianRepresentation,
+        )
+        # TODO! more tests, of the specific vectorfield values.
+
+        # -------------------
         # failed
 
         with pytest.raises(TypeError):
