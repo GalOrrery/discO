@@ -95,16 +95,17 @@ class PotentialWrapperMeta(ABCMeta):
     def _return_points(
         cls,
         points: TH.CoordinateType,
-        from_frame: TH.FrameType,
         rep: TH.RepresentationType,
-        representation_type: TH.RepresentationType,
+        representation_type: T.Optional[TH.RepresentationType],
+        frame: TH.FrameType,
     ) -> TH.CoordinateType:
         """Helper method for making sure points are returned correctly.
 
         Parameters
         ----------
         points : |CoordinateFrame| or |SkyCoord|
-        from_frame : |CoordinateFrame|
+        frame : |CoordinateFrame|
+            Frame of the data
         rep : |Representation|
         representation_type: |Representation|
 
@@ -113,13 +114,20 @@ class PotentialWrapperMeta(ABCMeta):
         point : |CoordinateFrame| or |SkyCoord|
 
         """
-        is_sc: SCorF = True if isinstance(points, coord.SkyCoord) else False
-
         # if need to change representation type
         # convert rep -> build frame -> (?) make SkyCoord
         if representation_type is not None:
+            is_sc: SCorF = (
+                True
+                if isinstance(
+                    points,
+                    coord.SkyCoord,
+                )
+                else False
+            )
+
             rep: TH.RepresentationType = rep.represent_as(representation_type)
-            points: TH.FrameType = from_frame.realize_frame(
+            points: TH.FrameType = frame.realize_frame(
                 rep,
                 representation_type=representation_type,
             )
@@ -323,33 +331,6 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     def frame(self) -> T.Optional[TH.FrameType]:
         """The |CoordinateFrame| of the potential."""
         return self._frame
-
-    # /def
-
-    @sharedmethod
-    def _convert_to_frame(
-        self,
-        points: TH.PositionType,
-        frame: T.Optional[TH.FrameType],
-    ) -> T.Tuple[TH.FrameType, TH.FrameType]:
-        """Convert points to the given coordinate frame.
-
-        Parameters
-        ----------
-        points : |SkyCoord| or |CoordinateFrame| or |Representation|
-            The points at which to evaluate the potential.
-            Potentials do not have an intrinsic reference frame, but if we
-            have assigned one, then anything needs to be converted to that
-            frame.
-
-        Returns
-        -------
-        object
-            Same type as `points`, in the potential's frame.
-
-        """
-        # call on metaclass
-        return self.__class__._convert_to_frame(points, frame)
 
     # /def
 

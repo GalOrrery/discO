@@ -270,6 +270,32 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
 
     # /def
 
+    def test__return_points(self):
+        """Test method ``_return_points``."""
+        # representation_type is None
+        points = self.subclass._return_points(
+            self.points,
+            self.points.data,
+            None,
+            self.points.frame,
+        )
+
+        assert points is self.points
+
+        # representation_type is not None
+        points = self.subclass._return_points(
+            self.points,
+            self.points.data,
+            self.points.representation_type,
+            self.points.frame,
+        )
+
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.points.frame.__class__)
+        assert isinstance(points.data, self.points.data.__class__)
+
+    # /def
+
     def test_specific_potential(self):
         """Test method ``specific_force``."""
         with pytest.raises(NotImplementedError):
@@ -399,37 +425,6 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
         """Test method ``frame``."""
         assert self.inst.frame is self.inst._frame
         assert isinstance(self.inst.frame, coord.Galactocentric)
-
-    # /def
-
-    def test__convert_to_frame(self):
-        """Test method ``_convert_to_frame``."""
-        # ---------------
-        # frame is None
-
-        points, from_frame = self.inst._convert_to_frame(self.points, None)
-        assert points is self.points
-        assert isinstance(from_frame, self.frame)
-
-        # ---------------
-        # frame is CoordinateFrame / SkyCoord
-
-        points, from_frame = self.inst._convert_to_frame(
-            self.points,
-            coord.Galactocentric(),
-        )
-        assert isinstance(points.frame, coord.Galactocentric)
-        assert isinstance(from_frame, self.frame)
-
-        # ---------------
-        # Representation
-
-        points, from_frame = self.inst._convert_to_frame(
-            self.points.data,
-            coord.Galactocentric(),
-        )
-        assert isinstance(points, coord.Galactocentric)
-        assert from_frame is None
 
     # /def
 

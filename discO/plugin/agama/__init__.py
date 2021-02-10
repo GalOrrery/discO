@@ -104,9 +104,9 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
         points = self._return_points(  # get points to right rep
             points,
-            from_frame,
             r,
             representation_type,
+            from_frame,
         )
 
         # TODO! ScalarField to package together
