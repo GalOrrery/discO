@@ -401,6 +401,22 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
 
     # /def
 
+    def test___new__(self):
+        """Test method ``__new__``."""
+        # when potential is right type if returns self
+        assert isinstance(self.obj(self.potential), self.obj)
+
+        # for tests run in the subclass of PotentialWrapper,
+        # let's see if PotentialWrapper can correctly infer
+        # the package.
+        if self.obj is not core.PotentialWrapper:
+            wrapped = core.PotentialWrapper(self.potential)
+
+            assert isinstance(wrapped, core.PotentialWrapper)
+            assert isinstance(wrapped, self.obj)  # it's the subclass
+
+    # /def
+
     def test___init__(self):
         """Test method ``__init__``."""
         # ---------------

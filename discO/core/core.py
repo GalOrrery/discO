@@ -118,12 +118,7 @@ class PotentialWrapperMeta(ABCMeta):
         # convert rep -> build frame -> (?) make SkyCoord
         if representation_type is not None:
             is_sc: SCorF = (
-                True
-                if isinstance(
-                    points,
-                    coord.SkyCoord,
-                )
-                else False
+                True if isinstance(points, coord.SkyCoord) else False
             )
 
             rep: TH.RepresentationType = rep.represent_as(representation_type)
@@ -271,6 +266,9 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     """
 
+    ####################################################
+    # On the class
+
     def __init_subclass__(
         cls,
         key: T.Union[str, ModuleType, None] = None,
@@ -313,7 +311,24 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     # /def
 
+    def __new__(
+        cls, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+    ):
+        # PotentialWrapper can become any of it's registered subclasses.
+        if cls is PotentialWrapper:
+            # try to infer the package of the potential.
+            key = cls._infer_package(potential, package=None)
+
+            # if key in wrapper, return that class.
+            if key in WRAPPER_REGISTRY:
+                return super().__new__(WRAPPER_REGISTRY[key])
+
+        return super().__new__(cls)
+
+    # /def
+
     ####################################################
+    # On the instance
 
     def __init__(
         self, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
@@ -408,6 +423,36 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
     acceleration = specific_force
+    # /def
+
+    ####################################################
+    # Utilities
+
+    @staticmethod
+    def _infer_package(
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
+    ) -> str:
+
+        if inspect.ismodule(package):
+            package = package.__name__
+        elif isinstance(package, str):
+            pass
+        elif package is None:  # Need to get package from obj
+            info = inspect.getmodule(obj)
+
+            if info is None:  # fails for c-compiled things
+                package = obj.__class__.__module__
+            else:
+                package = info.__package__
+
+            package = package.split(".")[0]
+
+        else:
+            raise TypeError("package must be <module> or <str> or None.")
+
+        return package
+
     # /def
 
 
