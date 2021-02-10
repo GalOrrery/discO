@@ -24,6 +24,7 @@ import typing_extensions as TE
 from astropy.utils import sharedmethod
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
+from astropy.utils.misc import indent
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -45,9 +46,7 @@ class PotentialWrapperMeta(ABCMeta):
     """Meta-class for Potential Wrapper."""
 
     def _convert_to_frame(
-        cls,
-        points: TH.PositionType,
-        frame: T.Optional[TH.FrameLikeType],
+        cls, points: TH.PositionType, frame: T.Optional[TH.FrameLikeType],
     ) -> T.Tuple[TH.CoordinateType, T.Union[TH.FrameType, str, None]]:
         """Convert points to the given coordinate frame.
 
@@ -123,8 +122,7 @@ class PotentialWrapperMeta(ABCMeta):
 
             rep: TH.RepresentationType = rep.represent_as(representation_type)
             points: TH.FrameType = frame.realize_frame(
-                rep,
-                representation_type=representation_type,
+                rep, representation_type=representation_type,
             )
 
             if is_sc:  # it was & should be a SkyCoord
@@ -270,8 +268,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # On the class
 
     def __init_subclass__(
-        cls,
-        key: T.Union[str, ModuleType, None] = None,
+        cls, key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, optionally adding to registry.
 
@@ -346,6 +343,31 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     def frame(self) -> T.Optional[TH.FrameType]:
         """The |CoordinateFrame| of the potential."""
         return self._frame
+
+    # /def
+
+    def __repr__(self):
+        """String representation."""
+        r = super().__repr__()
+        r = r[r.index("at") + 3:]  # includes ">"
+
+        # the potential
+        ps = repr(self.__wrapped__).strip()
+        ps = ps[1:] if ps.startswith("<") else ps
+        ps = ps[:-1] if ps.endswith(">") else ps
+
+        # the frame
+        fs = repr(self.frame).strip()
+        fs = fs[1:] if fs.startswith("<") else fs
+        fs = fs[:-1] if fs.endswith(">") else fs
+
+        return "\n".join(
+            (
+                self.__class__.__name__ + ": at <" + r,
+                indent("potential : " + ps),
+                indent("frame     : " + fs),
+            )
+        )
 
     # /def
 
@@ -430,8 +452,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     @staticmethod
     def _infer_package(
-        obj: T.Any,
-        package: T.Union[ModuleType, str, None] = None,
+        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
     ) -> str:
 
         if inspect.ismodule(package):
@@ -483,10 +504,7 @@ class CommonBase(metaclass=ABCMeta):
     def __init_subclass__(
         cls,
         key: T.Union[
-            str,
-            ModuleType,
-            T.Sequence[T.Union[ModuleType, str]],
-            None,
+            str, ModuleType, T.Sequence[T.Union[ModuleType, str]], None,
         ] = None,
     ) -> None:
         """Initialize a subclass.
@@ -563,8 +581,7 @@ class CommonBase(metaclass=ABCMeta):
 
     @staticmethod
     def _infer_package(
-        obj: T.Any,
-        package: T.Union[ModuleType, str, None] = None,
+        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
     ) -> ModuleType:
 
         if inspect.ismodule(package):

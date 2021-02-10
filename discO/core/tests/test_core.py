@@ -444,6 +444,17 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
 
     # /def
 
+    def test___repr__(self):
+        """Test method ``__repr__``."""
+        s = repr(self.inst)
+
+        assert isinstance(s, str)
+        assert self.inst.__class__.__name__ in s
+        assert "potential :" in s
+        assert "frame     :" in s
+
+    # /def
+
     @abstractmethod
     def test_specific_potential(self):
         """Test method ``specific_potential``."""
