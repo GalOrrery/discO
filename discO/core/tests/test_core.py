@@ -476,6 +476,14 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
         assert obj.__wrapped__ == 2
         assert isinstance(obj._frame, coord.Galactocentric)
 
+        # ---------------
+        # on a wrapper
+
+        obj = self.obj(obj, frame="galactocentric")
+
+        assert obj.__wrapped__ == 2
+        assert isinstance(obj._frame, coord.Galactocentric)
+
     # /def
 
     def test_frame(self):

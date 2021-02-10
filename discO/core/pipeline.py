@@ -17,10 +17,10 @@ import typing as T
 import weakref
 
 # PROJECT-SPECIFIC
+import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .sample import PotentialSampler, Random_Like
-from discO.type_hints import FrameLikeType
 
 ##############################################################################
 # CODE
@@ -86,7 +86,7 @@ class Pipeline:
         self,
         n: int,
         *,
-        frame: T.Optional[FrameLikeType] = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
         random: T.Optional[Random_Like] = None,
         c_err: T.Optional[CERR_Type] = None,
         original_pot: T.Optional[object] = None,
@@ -128,7 +128,7 @@ class Pipeline:
         n: T.Union[int, T.Sequence[int]],
         niter: int = 1,
         *,
-        frame: T.Optional[FrameLikeType] = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
         random: T.Optional[Random_Like] = None,
         c_err: T.Optional[CERR_Type] = None,
         original_pot: T.Optional[object] = None,
