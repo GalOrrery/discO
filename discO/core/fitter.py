@@ -66,7 +66,8 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
