@@ -37,12 +37,6 @@ def resolve_framelike(
 ):
     """Determine the frame and return a blank instance.
 
-    .. todo::
-
-        should this be in skycoord.utils? (but conf)
-
-        This as a decorator, so it autoresolves
-
     Parameters
     ----------
     frame : frame-like instance or None (optional)

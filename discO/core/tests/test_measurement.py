@@ -159,7 +159,7 @@ class Test_MeasurementErrorSampler(
             # ---------------
             # with return_specific_class
 
-            method, klass = tuple(self.obj._registry.items())[0]
+            method, klass = tuple(self.obj._registry.items())[-1]
 
             msamp = self.obj(
                 c_err=self.c_err,
@@ -177,7 +177,7 @@ class Test_MeasurementErrorSampler(
             # ---------------
             # as wrapper class
 
-            method, klass = tuple(self.obj._registry.items())[0]
+            method, klass = tuple(self.obj._registry.items())[-1]
 
             msamp = self.obj(
                 c_err=self.c_err,
