@@ -66,8 +66,7 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls,
-        key: T.Union[str, ModuleType, None] = None,
+        cls, key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -183,10 +182,11 @@ class PotentialFitter(CommonBase):
             **kwargs,
         )
 
-        if not isinstance(potential, PotentialWrapper):
-            potential = PotentialWrapper(potential, frame=self.frame)
-
-        return potential
+        return (
+            PotentialWrapper(potential, frame=self.frame)
+            if not isinstance(potential, PotentialWrapper)
+            else potential
+        )
 
     # /def
 

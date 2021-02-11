@@ -338,6 +338,14 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # -------------------------------
 
+    def test_frame(self):
+        """Test property ``frame``."""
+        assert self.inst.frame is self.inst._frame
+
+    # /def
+
+    # -------------------------------
+
     def test___call__(self):
         """Test method ``__call__``.
 
