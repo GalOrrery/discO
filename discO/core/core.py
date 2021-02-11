@@ -15,7 +15,7 @@ __all__ = [
 import inspect
 import typing as T
 from abc import ABCMeta, abstractmethod
-from collections import Sequence
+from collections.abc import Sequence
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY

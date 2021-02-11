@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.plugin.agama.fitter`."""
+"""Testing :mod:`~discO.plugin.galpy.fitter`."""
 
 __all__ = [
-    "Test_AGAMAPotentialFitter",
-    "Test_AGAMAMultipolePotentialFitter",
+    "Test_GalpyPotentialFitter",
+    "Test_GalpySCFPotentialFitter",
 ]
 
 
@@ -12,52 +12,55 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
-import agama
 import pytest
+from galpy import potential as gpot
 
 # PROJECT-SPECIFIC
 from discO.core.tests.test_fitter import (
     Test_PotentialFitter as PotentialFitterTester,
 )
-from discO.plugin.agama import fitter
+from discO.plugin.galpy import GalpyPotentialWrapper, fitter
 
 ##############################################################################
 # TESTS
 ##############################################################################
 
 
-class Test_AGAMAPotentialFitter(
+class Test_GalpyPotentialFitter(
     PotentialFitterTester,
-    obj=fitter.AGAMAPotentialFitter,
+    obj=fitter.GalpyPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.potential = agama.Potential
+        cls.potential = gpot.Potential
 
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
             def __init__(
                 self,
-                symmetry="a",
+                potential_cls,
+                frame=None,
                 **kwargs,
             ):
-                kwargs.pop("pot_type", None)  # clear from kwargs
-                super().__init__(
-                    pot_type="Multipole",
-                    symmetry="a",
-                    gridsizeR=20,
-                    lmax=2,
-                    **kwargs,
-                )
+                super().__init__(potential_cls, frame=frame, **kwargs)
 
             # /defs
 
+            def __call__(self, c, **kwargs):
+                return GalpyPotentialWrapper(
+                    gpot.Potential(),
+                    frame=self.frame,
+                )
+
+            # /def
+
         cls.SubClassUnitTest = SubClassUnitTest
+        # /class
 
         # make instance. It depends.
-        if cls.obj is fitter.AGAMAPotentialFitter:
-            cls.inst = cls.obj(pot_type="unittest", symmetry="a")
+        if cls.obj is fitter.GalpyPotentialFitter:
+            cls.inst = cls.obj(cls.potential, key="unittest")
 
     # /def
 
@@ -75,16 +78,16 @@ class Test_AGAMAPotentialFitter(
         # super().test___new__()
 
         # --------------------------
-        if self.obj is fitter.AGAMAPotentialFitter:
+        if self.obj is fitter.GalpyPotentialFitter:
 
             # --------------------------
             # for object not in registry
 
             with pytest.raises(ValueError) as e:
-                self.obj(pot_type=None)
+                self.obj(None, key=None)
 
             assert (
-                "PotentialFitter has no registered fitter for `pot_type`: None"
+                "PotentialFitter has no registered fitter for key: None"
             ) in str(e.value)
 
             # ---------------
@@ -92,7 +95,11 @@ class Test_AGAMAPotentialFitter(
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(pot_type="unittest", return_specific_class=True)
+            msamp = self.obj(
+                gpot.Potential,
+                key="unittest",
+                return_specific_class=True,
+            )
 
             # test class type
             assert isinstance(msamp, klass)
@@ -106,7 +113,11 @@ class Test_AGAMAPotentialFitter(
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(pot_type="unittest", return_specific_class=False)
+            msamp = self.obj(
+                gpot.Potential,
+                key="unittest",
+                return_specific_class=False,
+            )
 
             # test class type
             assert not isinstance(msamp, klass)
@@ -119,15 +130,15 @@ class Test_AGAMAPotentialFitter(
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
 
-            pot_type = tuple(self.obj._registry.keys())[0]
+            key = tuple(self.obj._registry.keys())[0]
 
             # ---------------
             # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                self.obj(pot_type=pot_type, key="not None")
+                self.obj(key=key)
 
-            assert "Can't specify 'pot_type'" in str(e.value)
+            assert "Can't specify 'key'" in str(e.value)
 
             # ---------------
             # warning
@@ -169,15 +180,16 @@ class Test_AGAMAPotentialFitter(
 # -------------------------------------------------------------------
 
 
-class Test_AGAMAMultipolePotentialFitter(
-    Test_AGAMAPotentialFitter,
-    obj=fitter.AGAMAMultipolePotentialFitter,
+class Test_GalpySCFPotentialFitter(
+    Test_GalpyPotentialFitter,
+    obj=fitter.GalpySCFPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
         super().setup_class()
-        cls.inst = cls.obj(symmetry="a")
+        cls.potential = gpot.SCFPotential
+        cls.inst = cls.obj()
 
     # /def
 

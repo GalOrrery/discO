@@ -197,6 +197,10 @@ discO.plugin.galpy
     + all methods are both instance and static methods.
     + specific force returns a vector field.
 
+- ``GalpySCFPotentialFitter`` : for fitting an SCF to particles [#41]
+
+    + fit galpy SCF potential
+    + returns a ``GalpyPotentialWrapper`` with the specified frame.
 
 discO.utils
 ^^^^^^^^^^^
