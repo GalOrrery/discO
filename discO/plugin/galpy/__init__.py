@@ -12,12 +12,14 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from . import sample
+from . import fitter, sample
+from .fitter import *  # noqa: F401, F403
 from .sample import *  # noqa: F401, F403
 from .wrapper import GalpyPotentialWrapper
 
 # __all__
 __all__ += sample.__all__  # flatten
+__all__ += fitter.__all__  # flatten
 
 ##############################################################################
 # END
