@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.plugin.agama` wrappers."""
+"""Testing :mod:`~discO.plugin.agama.wrapper`."""
 
 __all__ = [
     "Test_AGAMAPotentialWrapperMeta",
@@ -27,7 +27,7 @@ from discO.core.tests.test_core import (
 from discO.core.tests.test_core import (
     Test_PotentialWrapperMeta as PotentialWrapperMeta_Test,
 )
-from discO.plugin import agama as plugin
+from discO.plugin.agama import wrapper
 from discO.utils import resolve_framelike, vectorfield
 
 ##############################################################################
@@ -37,7 +37,7 @@ from discO.utils import resolve_framelike, vectorfield
 
 class Test_AGAMAPotentialWrapperMeta(
     PotentialWrapperMeta_Test,
-    obj=plugin.AGAMAPotentialMeta,
+    obj=wrapper.AGAMAPotentialMeta,
 ):
     @classmethod
     def setup_class(cls):
@@ -209,7 +209,7 @@ class Test_AGAMAPotentialWrapperMeta(
 
 class Test_AGAMAPotentialWrapper(
     PotentialWrapper_Test,
-    obj=plugin.AGAMAPotentialWrapper,
+    obj=wrapper.AGAMAPotentialWrapper,
 ):
     @classmethod
     def setup_class(cls):

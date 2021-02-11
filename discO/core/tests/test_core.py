@@ -319,6 +319,14 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
                 assert isinstance(points.data, expected)
 
         # ---------------
+        # same frame
+
+        points, from_frame = self.subclass._convert_to_frame(
+            self.points,
+            frame=self.points.frame.replicate_without_data(),
+        )
+
+        # ---------------
         # TypeError
 
         with pytest.raises(TypeError) as e:
@@ -456,6 +464,12 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
             assert isinstance(wrapped, core.PotentialWrapper)
             assert isinstance(wrapped, self.obj)  # it's the subclass
 
+        if core.WRAPPER_REGISTRY:  # not empty
+            potential = tuple(core.WRAPPER_REGISTRY.values())[0]
+            wrapped = core.PotentialWrapper(potential)
+
+            assert isinstance(wrapped, core.PotentialWrapper)
+
     # /def
 
     def test___init__(self):
@@ -472,6 +486,14 @@ class Test_PotentialWrapper(ObjectTest, obj=core.PotentialWrapper):
         # specify frame
 
         obj = self.obj(2, frame="galactocentric")
+
+        assert obj.__wrapped__ == 2
+        assert isinstance(obj._frame, coord.Galactocentric)
+
+        # ---------------
+        # on a wrapper
+
+        obj = self.obj(obj, frame="galactocentric")
 
         assert obj.__wrapped__ == 2
         assert isinstance(obj._frame, coord.Galactocentric)

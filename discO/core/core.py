@@ -351,6 +351,10 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     def __init__(
         self, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
     ):
+        # if it's a wrapper, have to pop back
+        if isinstance(potential, PotentialWrapper):
+            potential = potential.__wrapped__
+
         # Initialize wrapper for potential.
         self.__wrapped__: object = potential  # a la decorator
 

@@ -21,8 +21,9 @@ import agama
 import astropy.coordinates as coord
 
 # PROJECT-SPECIFIC
+import discO.type_hints as TH
+from .wrapper import AGAMAPotentialWrapper
 from discO.core.fitter import PotentialFitter
-from discO.type_hints import CoordinateType, SkyCoordType
 
 ##############################################################################
 # PARAMETERS
@@ -89,9 +90,12 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     def __init__(
         self,
         pot_type: T.Optional[str] = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
         symmetry: str = "a",
         **kwargs,
     ) -> None:
+        super().__init__(agama.Potential, frame=frame)
+
         if pot_type is None:
             raise ValueError("must specify a `pot_type`")
 
@@ -120,7 +124,9 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     #######################################################
     # Fitting
 
-    def __call__(self, c: CoordinateType, **kwargs) -> SkyCoordType:
+    def __call__(
+        self, c: TH.CoordinateType, **kwargs
+    ) -> AGAMAPotentialWrapper:
         """Fit Potential given particles.
 
         Parameters
@@ -143,7 +149,9 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
         kw.update(kwargs)
 
-        return self._fitter(particles=particles, **kw)
+        potential = self._fitter(particles=particles, **kw)
+
+        return AGAMAPotentialWrapper(potential, frame=self.frame)
 
     # /def
 
@@ -169,6 +177,7 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
 
     def __init__(
         self,
+        frame: T.Optional[TH.FrameLikeType] = None,
         symmetry: str = "a",
         gridsizeR: int = 20,
         lmax: int = 2,
@@ -176,6 +185,7 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
     ) -> None:
         kwargs.pop("pot_type", None)  # clear from kwargs
         super().__init__(
+            frame=frame,
             pot_type="Multipole",
             symmetry=symmetry,
             gridsizeR=gridsizeR,

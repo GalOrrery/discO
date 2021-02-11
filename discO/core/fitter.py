@@ -27,8 +27,8 @@ from types import ModuleType
 import numpy as np
 
 # PROJECT-SPECIFIC
-from .core import CommonBase
-from discO.type_hints import CoordinateType
+import discO.type_hints as TH
+from .core import CommonBase, PotentialWrapper
 
 ##############################################################################
 # PARAMETERS
@@ -100,7 +100,6 @@ class PotentialFitter(CommonBase):
         **kwargs,
     ):
         self = super().__new__(cls)
-        self._fitter = potential_cls
 
         # The class PotentialFitter is a wrapper for anything in its registry
         # If directly instantiating a PotentialFitter (not subclass) we must
@@ -142,15 +141,29 @@ class PotentialFitter(CommonBase):
 
     # /def
 
+    def __init__(
+        self,
+        potential_cls,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        **kwargs,
+    ):
+        self._fitter = potential_cls
+        self._frame = frame
+
+    # /def
+
+    @property
+    def frame(self) -> TH.FrameType:
+        """The frame of the potential"""
+        return self._frame
+
+    # /def
+
     #######################################################
     # Fitting
 
-    def __call__(
-        self,
-        sample: CoordinateType,
-        **kwargs,
-    ) -> object:
-        """Fit.
+    def __call__(self, sample: TH.CoordinateType, **kwargs) -> object:
+        """Fit a potential given the data.
 
         Parameters
         ----------
@@ -164,15 +177,21 @@ class PotentialFitter(CommonBase):
 
         """
         # call on instance
-        return self._instance(
+        potential = self._instance(
             sample,
             # c_err=c_err,
             **kwargs,
         )
 
+        return (
+            PotentialWrapper(potential, frame=self.frame)
+            if not isinstance(potential, PotentialWrapper)
+            else potential
+        )
+
     # /def
 
-    def fit(self, sample: CoordinateType, **kwargs) -> object:
+    def fit(self, sample: TH.CoordinateType, **kwargs) -> object:
         """Fit.
 
         .. todo::
