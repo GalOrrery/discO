@@ -5,18 +5,16 @@
 
 __all__ = [
     "scf_compute_coeffs_nbody",
-    "scf_compute_coeffs_spherical_nbody",
 ]
 
 
 ##############################################################################
 # IMPORTS
 
+# PROJECT-SPECIFIC
 from .self_consistent_field import (
     scf_compute_coeffs_nbody,
-    scf_compute_coeffs_spherical_nbody,
 )
-
 
 ##############################################################################
 # END

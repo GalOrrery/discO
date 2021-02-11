@@ -21,7 +21,7 @@ __all__ = [
 import inspect
 import typing as T
 import warnings
-from types import ModuleType
+from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import numpy as np
@@ -97,7 +97,7 @@ class PotentialFitter(CommonBase):
         *,
         key: T.Union[ModuleType, str, None] = None,
         return_specific_class: bool = False,
-        **kwargs,
+        **kwargs,  # includes frame
     ):
         self = super().__new__(cls)
 
@@ -143,19 +143,39 @@ class PotentialFitter(CommonBase):
 
     def __init__(
         self,
-        potential_cls,
+        potential_cls: T.Any,
+        *,
         frame: T.Optional[TH.FrameLikeType] = None,
         **kwargs,
     ):
-        self._fitter = potential_cls
-        self._frame = frame
+        self._fitter: T.Any = potential_cls
+        self._frame: T.Optional[TH.FrameLikeType] = frame
+
+        if not hasattr(self, "_instance"):
+            self._kwargs: T.Dict[str, T.Any] = kwargs
 
     # /def
 
     @property
-    def frame(self) -> TH.FrameType:
+    def potential(self) -> T.Any:
+        """The potential used for fitting."""
+        return self._fitter
+
+    @property
+    def frame(self) -> T.Optional[TH.FrameLikeType]:
         """The frame of the potential"""
         return self._frame
+
+    # /def
+
+    @property
+    def potential_kwargs(self):
+        if hasattr(self, "_instance"):
+            kwargs = MappingProxyType(self._instance._kwargs)
+        else:
+            kwargs = MappingProxyType(self._kwargs)
+
+        return kwargs
 
     # /def
 

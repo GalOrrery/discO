@@ -21,9 +21,9 @@ from galpy.potential import SCFPotential
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .potentials import scf_compute_coeffs_nbody
 from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
+from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
 
 ##############################################################################
 # PARAMETERS
@@ -155,7 +155,9 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
         self, frame: T.Optional[TH.FrameLikeType] = None, **kwargs
     ) -> None:
         super().__init__(
-            potential_cls=SCFPotential, frame=frame, **kwargs,
+            potential_cls=SCFPotential,
+            frame=frame,
+            **kwargs,
         )
 
     # /def
@@ -194,7 +196,7 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
 
         if scale_factor.unit.physical_type not in ("length", "dimensionless"):
             raise u.UnitsError(
-                "scale factor must have units of length or be dimensionless"
+                "scale factor must have units of length or be dimensionless",
             )
         elif not scale_factor.isscalar:
             raise ValueError("scale factor must be a scalar.")
