@@ -110,17 +110,6 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
     # /def
 
-    @property
-    def potential_kwargs(self) -> MappingProxyType:
-        if self.__class__ is AGAMAPotentialFitter:
-            kwargs = MappingProxyType(self._instance._kwargs)
-        else:
-            kwargs = MappingProxyType(self._kwargs)
-
-        return kwargs
-
-    # /def
-
     #######################################################
     # Fitting
 

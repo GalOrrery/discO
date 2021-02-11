@@ -171,7 +171,7 @@ class PotentialFitter(CommonBase):
     @property
     def potential_kwargs(self):
         if hasattr(self, "_instance"):
-            kwargs = MappingProxyType(self._instance._kwargs)
+            kwargs = self._instance.potential_kwargs
         else:
             kwargs = MappingProxyType(self._kwargs)
 

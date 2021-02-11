@@ -13,6 +13,7 @@ __all__ = [
 # BUILT-IN
 import inspect
 from abc import abstractmethod
+from types import MappingProxyType
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -338,9 +339,33 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # -------------------------------
 
+    def test_potential(self):
+        """Test property ``potential``."""
+        assert self.inst.potential is self.inst._fitter
+
+    # /def
+
+    # -------------------------------
+
     def test_frame(self):
         """Test property ``frame``."""
         assert self.inst.frame is self.inst._frame
+
+    # /def
+
+    # -------------------------------
+
+    def test_potential_kwargs(self):
+        """Test attribute ``potential_kwargs``."""
+        if hasattr(self.inst, "_instance"):
+            assert (
+                self.inst.potential_kwargs
+                == self.inst._instance.potential_kwargs
+            )
+        else:
+            assert self.inst.potential_kwargs == MappingProxyType(
+                self.inst._kwargs,
+            )
 
     # /def
 

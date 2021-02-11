@@ -12,7 +12,10 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import inspect
 import typing as T
+import warnings
+from types import MappingProxyType
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -35,103 +38,109 @@ GALPY_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
 ##############################################################################
 
 
-# class GalpyPotentialFitter(PotentialFitter, key="galpy"):
-#     """Fit a set of particles"""
+class GalpyPotentialFitter(PotentialFitter, key="galpy"):
+    """Fit a set of particles"""
 
-#     #######################################################
-#     # On the class
+    #######################################################
+    # On the class
 
-#     _registry = GALPY_FITTER_REGISTRY
+    _registry = GALPY_FITTER_REGISTRY
 
-#     #################################################################
-#     # On the instance
+    #################################################################
+    # On the instance
 
-#     def __new__(
-#         cls,
-#         potential_cls: T.Any,
-#         *,
-#         key: T.Optional[str] = None,
-#         return_specific_class: bool = False,
-#         **kwargs,
-#     ):
-#         self = super().__new__(cls, potential_cls)
+    def __new__(
+        cls,
+        potential_cls: T.Any,
+        *,
+        key: T.Optional[str] = None,
+        return_specific_class: bool = False,
+        **kwargs,
+    ):
+        self = super().__new__(cls, potential_cls)
 
-#         # The class GalpyPotentialFitter is a wrapper for anything in its
-#         # registry If directly instantiating a GalpyPotentialFitter (not
-#         # subclass) we must also instantiate the appropriate subclass. Error
-#         # if can't find.
-#         if cls is GalpyPotentialFitter:
+        # The class GalpyPotentialFitter is a wrapper for anything in its
+        # registry If directly instantiating a GalpyPotentialFitter (not
+        # subclass) we must also instantiate the appropriate subclass. Error
+        # if can't find.
+        if cls is GalpyPotentialFitter:
 
-#             if key not in cls._registry:
-#                 raise ValueError(
-#                     "PotentialFitter has no registered fitter for key: "
-#                     f"{key}",
-#                 )
+            if key not in cls._registry:
+                raise ValueError(
+                    "PotentialFitter has no registered fitter for key: "
+                    f"{key}",
+                )
 
-#             # from registry. Registered in __init_subclass__
-#             # some subclasses accept the potential_cls as an argument,
-#             # others do not.
-#             subcls = cls._registry[key]
-#             sig = inspect.signature(subcls)
-#             ba = sig.bind_partial(potential_cls=potential_cls, **kwargs)
-#             ba.apply_defaults()
+            # from registry. Registered in __init_subclass__
+            # some subclasses accept the potential_cls as an argument,
+            # others do not.
+            subcls = cls._registry[key]
+            sig = inspect.signature(subcls)
+            ba = sig.bind_partial(potential_cls=potential_cls, **kwargs)
+            ba.apply_defaults()
 
-#             instance = cls._registry[key](*ba.args, **ba.kwargs)
+            instance = cls._registry[key](*ba.args, **ba.kwargs)
 
-#             if return_specific_class:
-#                 return instance
+            if return_specific_class:
+                return instance
 
-#             self._instance = instance
+            self._instance = instance
 
-#         elif key is not None:
-#             raise ValueError(
-#                 "Can't specify 'key' on GalpyPotentialFitter subclasses.",
-#             )
+        elif key is not None:
+            raise ValueError(
+                "Can't specify 'key' on GalpyPotentialFitter subclasses.",
+            )
 
-#         elif return_specific_class is not False:
-#             warnings.warn("Ignoring argument `return_specific_class`")
+        elif return_specific_class is not False:
+            warnings.warn("Ignoring argument `return_specific_class`")
 
-#         return self
+        return self
 
-#     # /def
+    # /def
 
-#     #######################################################
-#     # Fitting
+    @property
+    def potential_kwargs(self) -> MappingProxyType:
+        if self.__class__ is GalpyPotentialFitter:
+            kwargs = MappingProxyType(self._instance._kwargs)
+        else:
+            kwargs = MappingProxyType(self._kwargs)
 
-#     # def __call__(self, c: TH.CoordinateType, **kwargs) -> TH.SkyCoordType:
-#     #     """Fit Potential given particles.
+        return kwargs
 
-#     #     Parameters
-#     #     ----------
-#     #     c : coord-like
+    # /def
 
-#     #     Returns
-#     #     -------
-#     #     :class:`~astropy.coordinates.SkyCoord`
+    #######################################################
+    # Fitting
 
-#     #     """
+    def __call__(
+        self,
+        c: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
+    ) -> TH.SkyCoordType:
+        """Fit Potential given particles.
 
-#     #     position = c.represent_as(coord.CartesianRepresentation).xyz.T
-#     #     mass = c.mass  # TODO! what if don't have? have as parameter?
+        Parameters
+        ----------
+        c : coord-like
 
-#     #     particles = (position, mass)
+        Returns
+        -------
+        :class:`~astropy.coordinates.SkyCoord`
 
-#     #     # kwargs
-#     #     kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
-#     #     kw.update(kwargs)
+        """
+        return self._instance(c, mass=mass, **kwargs)
 
-#     #     return self._fitter(particles=particles, **kw)
-
-#     # # /def
+    # /def
 
 
-# # /class
+# /class
 
 
 #####################################################################
 
 
-class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
+class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
     """Fit a set of particles with a Multipole expansion.
 
     Parameters
@@ -146,7 +155,10 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
 
     def __new__(cls, **kwargs):
         return super().__new__(
-            cls, SCFPotential, key=None, return_specific_class=False, **kwargs
+            cls,
+            SCFPotential,
+            # key=None, return_specific_class=False,
+            **kwargs,
         )
 
     # /def
@@ -208,6 +220,10 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
         if mass is None:
             mass = c.mass
 
+        # kwargs
+        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
+        kw.update(kwargs)
+
         # a dimensionless scale factor is assigned the same units as the
         # positions, so that (r / a) does not introduce an inadvertent scaling
         # from the units.
@@ -215,14 +231,7 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
             scale_factor = scale_factor.value * position.unit
 
         Acos, Asin = scf_compute_coeffs_nbody(
-            position,
-            mass,
-            N=Nmax,
-            L=Lmax,
-            a=scale_factor,
-            radial_order=None,  # TODO!
-            costheta_order=None,  # TODO!
-            phi_order=None,  # TODO!
+            position, mass, N=Nmax, L=Lmax, a=scale_factor, **kw
         )
 
         return GalpyPotentialWrapper(
