@@ -155,7 +155,9 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
         self, frame: T.Optional[TH.FrameLikeType] = None, **kwargs
     ) -> None:
         super().__init__(
-            potential_cls=SCFPotential, frame=frame, **kwargs,
+            potential_cls=SCFPotential,
+            frame=frame,
+            **kwargs,
         )
 
     # /def
