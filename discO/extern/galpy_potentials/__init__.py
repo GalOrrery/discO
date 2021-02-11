@@ -12,9 +12,7 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from .self_consistent_field import (
-    scf_compute_coeffs_nbody,
-)
+from .self_consistent_field import scf_compute_coeffs_nbody
 
 ##############################################################################
 # END

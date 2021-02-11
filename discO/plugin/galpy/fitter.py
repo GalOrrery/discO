@@ -155,9 +155,7 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
         self, frame: T.Optional[TH.FrameLikeType] = None, **kwargs
     ) -> None:
         super().__init__(
-            potential_cls=SCFPotential,
-            frame=frame,
-            **kwargs,
+            potential_cls=SCFPotential, frame=frame, **kwargs,
         )
 
     # /def
@@ -168,6 +166,7 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
     def __call__(
         self,
         c: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
         Nmax: int = 10,
         Lmax: int = 10,
         scale_factor: TH.QuantityType = 1 * u.one,
@@ -204,7 +203,8 @@ class GalpySCFPotentialFitter(PotentialFitter, key="scf"):
         # --------------
 
         position = c.represent_as(coord.CartesianRepresentation).xyz
-        mass = c.mass  # TODO! what if don't have? have as parameter?
+        if mass is None:
+            mass = c.mass
 
         # a dimensionless scale factor is assigned the same units as the
         # positions, so that (r / a) does not introduce an inadvertent scaling
