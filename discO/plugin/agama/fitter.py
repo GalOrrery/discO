@@ -151,7 +151,7 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
         potential = self._fitter(particles=particles, **kw)
 
-        return AGAMAPotentialWrapper(potential, self.frame)
+        return AGAMAPotentialWrapper(potential, frame=self.frame)
 
     # /def
 

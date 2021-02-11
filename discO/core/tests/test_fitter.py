@@ -22,6 +22,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import fitter
+from discO.core.core import PotentialWrapper
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
 
 ##############################################################################
@@ -79,7 +80,7 @@ multicrd.mass = crd.mass.reshape((5, 2))
 class FitterSubClass(fitter.PotentialFitter, key="test_discO"):
     def __call__(self, c, **kwargs):
         c.represent_as(coord.CartesianRepresentation)
-        return object()
+        return PotentialWrapper(object(), frame=None)
 
     # /def
 
@@ -113,7 +114,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
         class SubClassUnitTest(cls.obj, key="unittest"):
             def __call__(self, c, **kwargs):
                 c.represent_as(coord.CartesianRepresentation)
-                return cls.potential()
+                return PotentialWrapper(cls.potential(), frame=None)
 
         cls.SubClassUnitTest = SubClassUnitTest
 
@@ -356,7 +357,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
     def test_call_parametrize(self, sample):
         """Parametrized call tests."""
         res = self.inst(sample)
-        assert isinstance(res, self.potential)
+        assert isinstance(res.__wrapped__, self.potential)
 
     # /def
 
@@ -372,12 +373,14 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
         pots = self.inst.fit(sample)
 
         if len(sample.shape) == 1:
-            assert isinstance(pots, sample.potential)
+            assert isinstance(pots.__wrapped__, sample.potential)
 
         else:
             assert isinstance(pots, np.ndarray)
             assert len(pots) == sample.shape[1]
-            assert all([isinstance(p, sample.potential) for p in pots])
+            assert all(
+                [isinstance(p.__wrapped__, sample.potential) for p in pots],
+            )
 
         # and then cleanup
         del sample.potential
