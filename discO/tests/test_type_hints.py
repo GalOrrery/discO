@@ -44,8 +44,7 @@ from discO.tests.helper import TypeVarTests
 
 
 class Test_RepresentationOrDifferentialType(
-    TypeVarTests,
-    obj=type_hints.RepresentationOrDifferentialType,
+    TypeVarTests, obj=type_hints.RepresentationOrDifferentialType,
 ):
     @classmethod
     def setup_class(cls):
@@ -67,6 +66,17 @@ class Test_RepresentationType(TypeVarTests, obj=type_hints.RepresentationType):
         cls.bound = coord.BaseRepresentation
 
     # /def
+
+
+# /class
+
+
+# -------------------------------------------------------------------
+
+
+@pytest.mark.skip("TODO")
+class Test_RepresentationLikeType:
+    """Test RepresentationLikeType."""
 
 
 # /class

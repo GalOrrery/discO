@@ -5,6 +5,7 @@
 
 __all__ = [
     "resolve_framelike",
+    "resolve_representationlike",
 ]
 
 
@@ -20,11 +21,15 @@ from astropy.coordinates import (
     BaseCoordinateFrame,
     SkyCoord,
     sky_coordinate_parsers,
+    BaseRepresentation,
+)
+from astropy.coordinates.representation import (
+    REPRESENTATION_CLASSES as _REP_CLSs,
 )
 
 # PROJECT-SPECIFIC
 from discO.config import conf
-from discO.type_hints import FrameLikeType
+import discO.type_hints as TH
 
 ##############################################################################
 # CODE
@@ -32,20 +37,21 @@ from discO.type_hints import FrameLikeType
 
 
 def resolve_framelike(
-    frame: T.Optional[FrameLikeType],
+    frame: T.Union[TH.FrameLikeType, None, T.Any],
     error_if_not_type: bool = True,
-):
+) -> T.Union[TH.FrameType, T.Any]:
     """Determine the frame and return a blank instance.
 
     Parameters
     ----------
-    frame : frame-like instance or None (optional)
+    frame : frame-like instance or None
         If BaseCoordinateFrame, replicates without data.
         If str, uses astropy parsers to determine frame class
         If None (default), gets default frame name from config, and parses.
 
     error_if_not_type : bool
         Whether to raise TypeError if `frame` is not one of the allowed types.
+        If False, pass through unchanged.
 
     Returns
     -------
@@ -75,6 +81,49 @@ def resolve_framelike(
         )
 
     return frame
+
+
+# /def
+
+
+def resolve_representationlike(
+    representation: T.Union[TH.RepresentationLikeType, T.Any],
+    error_if_not_type: bool = True,
+) -> T.Union[TH.RepresentationType, T.Any]:
+    """Determine the representation and return the class.
+
+    Parameters
+    ----------
+    representation : |Representation| or str
+        If Representation (instance or class), return the class.
+        If str, uses astropy to determine class
+
+    error_if_not_type : bool
+        Whether to raise TypeError if `representation` is not one of the
+        allowed types. If False, pass through unchanged.
+
+    Returns
+    -------
+    frame : `~astropy.coordinates.BaseCoordinateFrame` instance
+        Replicated without data.
+
+    """
+    if isinstance(representation, str):
+        representation = _REP_CLSs[representation]
+    elif isinstance(representation, BaseRepresentation):
+        representation = representation.__class__
+    elif inspect.isclass(representation) and issubclass(
+        representation, BaseRepresentation
+    ):
+        pass
+
+    elif error_if_not_type:
+        raise TypeError(
+            "Input representation must be an astropy representation subclass, "
+            f"not a '{representation}'",
+        )
+
+    return representation
 
 
 # /def

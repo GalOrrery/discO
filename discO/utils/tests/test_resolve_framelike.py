@@ -4,6 +4,7 @@
 
 __all__ = [
     "Test_resolve_framelike",
+    "Test_resolve_representationlike",
 ]
 
 
@@ -17,7 +18,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.config import conf
-from discO.utils import resolve_framelike
+from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # TESTS
@@ -78,7 +79,7 @@ class Test_resolve_framelike:
 
     @staticmethod
     def test_error_if_not_type():
-        """Test when frame is a SkyCoord."""
+        """Test when frame is not the right type."""
         # raise error if pass bad argument type
         with pytest.raises(TypeError):
             resolve_framelike(Exception, error_if_not_type=True)
@@ -90,6 +91,72 @@ class Test_resolve_framelike:
         # check it doesn't error if
         assert (
             resolve_framelike(Exception, error_if_not_type=False) is Exception
+        )
+
+    # /def
+
+
+# /class
+
+
+# -------------------------------------------------------------------
+
+
+class Test_resolve_representationlike:
+    """Test function :func:`~discO.utils.resolve_representationlike`."""
+
+    @staticmethod
+    def test_representation_is_str():
+        """Test when representation is a string."""
+        # basic usage
+        assert (
+            resolve_representationlike(representation="cartesian")
+            == coord.CartesianRepresentation
+        )
+
+    # /def
+
+    @staticmethod
+    def test_representation_is_BaseCoordinateFrame():
+        """Test when representation is a BaseCoordinateFrame."""
+        # basic usage
+        assert (
+            resolve_representationlike(
+                representation=coord.CartesianRepresentation
+            )
+            == coord.CartesianRepresentation
+        )
+        assert (
+            resolve_representationlike(
+                representation=coord.CartesianRepresentation()
+            )
+            == coord.CartesianRepresentation
+        )
+
+        # replicates without data
+        c = coord.SphericalRepresentation(lon=1 * u.deg, lat=2 * u.deg)
+        assert (
+            resolve_representationlike(representation=c)
+            == coord.SphericalRepresentation
+        )
+
+    # /def
+
+    @staticmethod
+    def test_error_if_not_type():
+        """Test when representation is not the right type."""
+        # raise error if pass bad argument type
+        with pytest.raises(TypeError):
+            resolve_representationlike(Exception, error_if_not_type=True)
+
+        # check this is the default behavior
+        with pytest.raises(TypeError):
+            resolve_representationlike(Exception)
+
+        # check it doesn't error if
+        assert (
+            resolve_representationlike(Exception, error_if_not_type=False)
+            is Exception
         )
 
     # /def

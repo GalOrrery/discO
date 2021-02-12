@@ -5,6 +5,7 @@
 
 __all__ = [
     "resolve_framelike",
+    "resolve_representationlike",
 ]
 
 
@@ -13,7 +14,7 @@ __all__ = [
 
 # PROJECT-SPECIFIC
 from . import vectorfield
-from ._framelike import resolve_framelike
+from ._framelike import resolve_framelike, resolve_representationlike
 from .vectorfield import *  # noqa: F401, F403
 
 __all__ += vectorfield.__all__
