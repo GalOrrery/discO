@@ -16,6 +16,7 @@ discO.type_hints
     + UnitType : the type of Astropy's ``UnitBase`` and ``FunctionUnitBasse``
     + RepresentationOrDifferentialType : the type of Astropy's ``BaseRepresentationOrDifferential`` [#34]
     + RepresentationType : the type of Astropy's ``BaseRepresentation`` [#34]
+    + RepresentationLikeType : RepresentationType or str [#42]
     + DifferentialType : the type of Astropy's ``BaseDifferential`` [#34]
     + FrameType : the type of Astropy's ``BaseCoordinateFrame``
     + SkyCoordType : the type of Astropy's ``SkyCoord``
@@ -220,7 +221,12 @@ discO.utils
 - ``resolve_framelike`` [#17]
 
     Determine the frame and return a blank instance for anything that can be
-    used in ``frame=`` in  ``Skycoord(...,frame=)``
+    used in ``frame=`` in  ``Skycoord(...,frame=)``.
+    None resolves to the configured default frame.
+
+- ``resolve_representationlike`` [#42]
+
+    Determine the representation type given a class, instance, or string name.
 
 - vector fields [#35]
 
