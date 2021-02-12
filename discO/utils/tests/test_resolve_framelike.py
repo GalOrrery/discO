@@ -122,13 +122,13 @@ class Test_resolve_representationlike:
         # basic usage
         assert (
             resolve_representationlike(
-                representation=coord.CartesianRepresentation
+                representation=coord.CartesianRepresentation,
             )
             == coord.CartesianRepresentation
         )
         assert (
             resolve_representationlike(
-                representation=coord.CartesianRepresentation()
+                representation=coord.CartesianRepresentation(),
             )
             == coord.CartesianRepresentation
         )

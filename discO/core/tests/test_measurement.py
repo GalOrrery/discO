@@ -30,6 +30,26 @@ from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
 ##############################################################################
 
 
+def test__MEASURE_REGISTRY():
+    """Test the registry ``_MEASURE_REGISTRY``."""
+    assert isinstance(measurement._MEASURE_REGISTRY, dict)
+    assert all(
+        [isinstance(key, str) for key in measurement._MEASURE_REGISTRY.keys()],
+    )
+    assert all(
+        [
+            issubclass(val, measurement.MeasurementErrorSampler)
+            for val in measurement._MEASURE_REGISTRY.values()
+        ],
+    )
+
+
+# /def
+
+
+##############################################################################
+
+
 class Test_MeasurementErrorSampler(
     CommonBase_Test,
     obj=measurement.MeasurementErrorSampler,
@@ -44,7 +64,12 @@ class Test_MeasurementErrorSampler(
             coord.ICRS(ra=[0.1, 0.2] * u.deg, dec=[0.2, 0.3] * u.deg),
         )
 
-        cls.inst = cls.obj(cls.c_err, method="GaussianMeasurementErrorSampler")
+        cls.inst = cls.obj(
+            cls.c_err,
+            method="Gaussian",
+            frame=coord.ICRS(),
+            representation_type=coord.SphericalRepresentation,
+        )
 
     # /def
 
@@ -63,30 +88,48 @@ class Test_MeasurementErrorSampler(
                 pass
 
             assert not hasattr(SubClass1, "_key")
-            assert "SubClass1" in measurement.MEASURE_REGISTRY
+            assert "subclass1" in measurement._MEASURE_REGISTRY  # lower case!
         except Exception:
             pass
         finally:  # cleanup
-            measurement.MEASURE_REGISTRY.pop("SubClass1", None)
+            measurement._MEASURE_REGISTRY.pop("subclass1", None)
+
+        # -------------------------------
+        # registered by key
+
+        try:
+            # registered by name
+            class SubClass2(self.obj, key="SubClass2"):
+                pass
+
+            assert not hasattr(SubClass2, "_key")
+            assert "SubClass2" in measurement._MEASURE_REGISTRY
+        except Exception:
+            pass
+        finally:  # cleanup
+            measurement._MEASURE_REGISTRY.pop("SubClass2", None)
 
         # -------------------------------
         # error when already in registry
 
         try:
             # registered by name
-            class SubClass1(self.obj):
+            class SubClass3(self.obj):
                 pass
+
+            assert issubclass(SubClass3, self.obj)
+            # it's stupid, but need to use the class to avoid flake8 error
 
             # doing it again raises error
             with pytest.raises(KeyError):
 
-                class SubClass1(self.obj):
+                class SubClass3(self.obj):
                     pass
 
         except Exception:
             pass
         finally:  # cleanup
-            measurement.MEASURE_REGISTRY.pop("SubClass1", None)
+            measurement._MEASURE_REGISTRY.pop("subclass3", None)
 
     # /def
 
@@ -107,10 +150,10 @@ class Test_MeasurementErrorSampler(
 
         # The GaussianMeasurementErrorSampler is already registered, so can
         # test for that.
-        assert "GaussianMeasurementErrorSampler" in self.obj._registry
+        assert "Gaussian" in self.obj._registry
         assert (
-            self.obj._registry["GaussianMeasurementErrorSampler"]
-            is measurement.GaussianMeasurementErrorSampler
+            self.obj._registry["Gaussian"]
+            is measurement.GaussianMeasurementError
         )
 
     # /def
@@ -124,10 +167,7 @@ class Test_MeasurementErrorSampler(
 
         # -------------------------------
         # test a specific item in the registry
-        assert (
-            self.obj["GaussianMeasurementErrorSampler"]
-            is measurement.GaussianMeasurementErrorSampler
-        )
+        assert self.obj["Gaussian"] is measurement.GaussianMeasurementError
 
     # /def
 
@@ -236,7 +276,271 @@ class Test_MeasurementErrorSampler(
         super().test___init__()
 
         # --------------------------
-        pass  # for subclasses. The setup_class actually tests this for here.
+        if self.obj is measurement.MeasurementErrorSampler:
+
+            # default
+            self.obj(self.c_err, method="Gaussian")
+
+            # explicitly None
+            obj = self.obj(
+                self.c_err,
+                method="Gaussian",
+                frame=None,
+                representation_type=None,
+            )
+            assert obj.frame is None
+            assert obj.representation_type is None
+            assert "method" not in obj.params
+            assert "return_specific_class" not in obj.params
+
+            for frame, rep_type in (
+                # instance
+                (
+                    coord.Galactocentric(),
+                    coord.CartesianRepresentation((1, 2, 3)),
+                ),
+                # class
+                (coord.Galactocentric, coord.CartesianRepresentation),
+                # str
+                ("galactocentric", "cartesian"),
+            ):
+
+                obj = self.obj(
+                    self.c_err,
+                    method="Gaussian",
+                    frame=frame,
+                    representation_type=rep_type,
+                )
+                assert obj.frame == coord.Galactocentric(), frame
+                assert (
+                    obj.representation_type == coord.CartesianRepresentation
+                ), rep_type
+                assert "method" not in obj.params
+                assert "return_specific_class" not in obj.params
+
+        # --------------------------
+        else:  # for subclasses. The setup_class actually tests this for here.
+            assert False
+
+    # /def
+
+    # -------------------------------
+
+    def test__resolve_frame(self):
+        """Test method ``_resolve_frame``."""
+        # ----------------------
+        # frame is not None
+
+        frame = self.inst._resolve_frame(coord.Galactocentric(), None)
+        assert frame == coord.Galactocentric()
+
+        frame = self.inst._resolve_frame(coord.Galactocentric, None)
+        assert frame == coord.Galactocentric()
+
+        frame = self.inst._resolve_frame("galactocentric", None)
+        assert frame == coord.Galactocentric()
+
+        # ----------------------
+        # frame is None, self frame is not
+
+        assert self.inst.frame is not None
+        frame = self.inst._resolve_frame(None, None)
+        assert frame == coord.ICRS()
+
+        # ----------------------
+        # frame is None, self frame is None, so it's c frame
+
+        old_frame = self.inst.frame
+        self.inst.frame = None
+        assert self.inst.frame is None
+
+        frame = self.inst._resolve_frame(None, self.c)
+        assert frame == coord.ICRS()
+        assert self.inst.frame is None
+
+        self.inst.frame = old_frame
+        assert self.inst.frame is old_frame
+
+    # /def
+
+    # -------------------------------
+
+    def test__resolve_representation_type(self):
+        """Test method ``_resolve_representation_type``."""
+        # ----------------------
+        # rep is not None
+
+        rep = self.inst._resolve_representation_type(
+            coord.CartesianRepresentation((1, 2, 3)),
+            None,
+        )
+        assert rep == coord.CartesianRepresentation
+
+        rep = self.inst._resolve_representation_type(
+            coord.CartesianRepresentation,
+            None,
+        )
+        assert rep == coord.CartesianRepresentation
+
+        rep = self.inst._resolve_representation_type("cartesian", None)
+        assert rep == coord.CartesianRepresentation
+
+        # ----------------------
+        # rep is None, self rep is not
+
+        assert self.inst.representation_type is not None
+        rep = self.inst._resolve_representation_type(None, None)
+        assert rep == coord.SphericalRepresentation
+
+        # ----------------------
+        # rep is None, self rep is None, so it's c rep
+
+        old_rep = self.inst.representation_type
+        self.inst.representation_type = None
+        assert self.inst.representation_type is None
+
+        rep = self.inst._resolve_representation_type(None, self.c)
+        assert rep == coord.SphericalRepresentation
+        assert self.inst.representation_type is None
+
+        self.inst.representation_type = old_rep
+        assert self.inst.representation_type is old_rep
+
+    # /def
+
+    # -------------------------------
+
+    def test__fix_branch_cuts(self):
+        """Test method ``_fix_branch_cuts``.
+
+        .. todo::
+
+            graphical proof via mpl_test that the point hasn't moved.
+
+        """
+        # -------------------------------
+        # no angular units
+
+        rep = coord.CartesianRepresentation(
+            x=[1, 2] * u.kpc,
+            y=[3, 4] * u.kpc,
+            z=[5, 6] * u.kpc,
+        )
+        array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
+        got = self.inst._fix_branch_cuts(array, rep.__class__, rep._units)
+
+        assert got is array
+
+        # -------------------------------
+        # UnitSphericalRepresentation
+
+        # 1) all good
+        rep = coord.UnitSphericalRepresentation(
+            lon=[1, 2] * u.deg,
+            lat=[3, 4] * u.deg,
+        )
+        array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(got, array)
+
+        # 2) needs correction
+        array = np.array([[-360, 0, 360], [-91, 0, 91]])
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(got, np.array([[-180, 0, 540], [-89, 0, 89]]))
+
+        # -------------------------------
+        # SphericalRepresentation
+
+        # 1) all good
+        rep = coord.SphericalRepresentation(
+            lon=[1, 2] * u.deg,
+            lat=[3, 4] * u.deg,
+            distance=[5, 6] * u.kpc,
+        )
+        array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(got, array)
+
+        # 2) needs correction
+        array = np.array([[-360, 0, 360], [-91, 0, 91], [5, 6, 7]])
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(
+            got,
+            np.array([[-180, 0, 540], [-89, 0, 89], [5, 6, 7]]),
+        )
+
+        # 3) needs correction
+        array = np.array([[-360, 0, 360], [-91, 0, 91], [-5, 6, -7]])
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(
+            got,
+            np.array([[0, 0, 720], [89, 0, -89], [5, 6, 7]]),
+        )
+
+        # -------------------------------
+        # CylindricalRepresentation
+
+        # 1) all good
+        rep = coord.CylindricalRepresentation(
+            rho=[5, 6] * u.kpc,
+            phi=[1, 2] * u.deg,
+            z=[3, 4] * u.parsec,
+        )
+        array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(got, array)
+
+        # 2) needs correction
+        array = np.array([[-5, 6, -7], [-180, 0, 180], [-4, 4, 4]])
+        got = self.inst._fix_branch_cuts(
+            array.copy(),
+            rep.__class__,
+            rep._units,
+        )
+        assert np.allclose(got, np.array([[5, 6, 7], [0, 0, 360], [-4, 4, 4]]))
+
+        # -------------------------------
+        # NotImplementedError
+
+        with pytest.raises(NotImplementedError):
+
+            rep = coord.PhysicsSphericalRepresentation(
+                phi=[1, 2] * u.deg,
+                theta=[3, 4] * u.deg,
+                r=[5, 6] * u.kpc,
+            )
+            array = (
+                rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
+            )
+            self.inst._fix_branch_cuts(
+                array.copy(),
+                coord.PhysicsSphericalRepresentation,
+                rep._units,
+            )
 
     # /def
 
@@ -259,7 +563,13 @@ class Test_MeasurementErrorSampler(
         # --------------------------
         # with c_err and all bells and whistles
 
-        self.inst(self.c, self.c_err, random=0)
+        self.inst(
+            self.c,
+            self.c_err,
+            random=0,
+            frame=coord.Galactic(),
+            representation_type=coord.CylindricalRepresentation,
+        )
 
         # ---------------
         # without c_err, using from instantiation
@@ -283,13 +593,16 @@ class Test_MeasurementErrorSampler(
             ie, follow the expected distribution
 
         """
+        if self.obj is not measurement.MeasurementErrorSampler:
+            assert False  # should never be here b/c subclasses override
+
         # ---------------
         # c_err = None
 
         res = self.inst.resample(self.c, random=0)
         assert res.shape == self.c.shape
-        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
-        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
+        assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
         # TODO! more tests
 
         # ---------------
@@ -298,8 +611,8 @@ class Test_MeasurementErrorSampler(
         res2 = self.inst.resample(self.c, random=1)
         for c in res2.representation_component_names.keys():
             assert not np.allclose(getattr(res, c), getattr(res2, c))
-        assert np.allclose(res2.ra.value, np.array([1.03455842, 1.73936855]))
-        assert np.allclose(res2.dec.value, np.array([2.16432363, 3.27160676]))
+        assert np.allclose(res2.ra.value, np.array([1.16243454, 181.78540628]))
+        assert np.allclose(res2.dec.value, np.array([1.87764872, -3.25962229]))
         # TODO! more tests
 
         # ---------------
@@ -309,8 +622,8 @@ class Test_MeasurementErrorSampler(
 
         res = self.inst.resample(self.c, self.c_err, random=0)
         assert res.shape == self.c.shape
-        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
-        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
+        assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
         # TODO! more tests
 
         # ---------------
@@ -322,11 +635,11 @@ class Test_MeasurementErrorSampler(
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+            np.array([[1.17640523, 1.44817864], [2.17640523, 2.44817864]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+            np.array([[2.08003144, 2.5602674], [3.08003144, 3.5602674]]),
         )
 
         # ---------------
@@ -352,11 +665,11 @@ class Test_MeasurementErrorSampler(
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+            np.array([[1.17640523, 1.44817864], [2.17640523, 2.44817864]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+            np.array([[2.08003144, 2.5602674], [3.08003144, 3.5602674]]),
         )
 
         # ---------------
@@ -366,11 +679,11 @@ class Test_MeasurementErrorSampler(
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.0012573, 1.001049], [2.0025146, 2.002098]]),
+            np.array([[1.01764052, 1.02240893], [2.03528105, 2.04481786]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[1.9973579, 1.98928661], [2.99603685, 2.98392992]]),
+            np.array([[2.00800314, 2.03735116], [3.01200472, 3.05602674]]),
         )
 
         # ---------------
@@ -380,6 +693,10 @@ class Test_MeasurementErrorSampler(
             self.inst.resample(self.c, NotImplementedError())
 
         assert "not yet supported." in str(e.value)
+
+        # ---------------
+
+        assert False, "Need to do frame and representation_type tests"
 
     # /def
 
@@ -491,7 +808,11 @@ class Test_GaussianMeasurementErrorSampler(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.inst = cls.obj(c_err=cls.c_err)
+        cls.inst = cls.obj(
+            c_err=cls.c_err,
+            frame=coord.ICRS(),
+            representation_type=coord.SphericalRepresentation,
+        )
 
     # /def
 
@@ -613,6 +934,121 @@ class Test_GaussianMeasurementErrorSampler(
         with pytest.raises(NotImplementedError):
 
             self.inst(self.c, c_err=Exception(), random=0)
+
+    # /def
+
+    def test_resample(self):
+        """Test method ``resample``.
+
+        When Test_MeasurementErrorSampler this calls on the wrapped instance,
+        which is GaussianMeasurementErrorSampler.
+
+        Subclasses should do real tests on the output. This only tests
+        that we can even call the method.
+
+        .. todo::
+
+            Tests in the subclasses that the results make sense.
+            ie, follow the expected distribution
+
+        """
+        # ---------------
+        # c_err = None
+
+        res = self.inst.resample(self.c, random=0)
+        assert res.shape == self.c.shape
+        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
+        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        # TODO! more tests
+
+        # ---------------
+        # random
+
+        res2 = self.inst.resample(self.c, random=1)
+        for c in res2.representation_component_names.keys():
+            assert not np.allclose(getattr(res, c), getattr(res2, c))
+        assert np.allclose(res2.ra.value, np.array([1.03455842, 1.73936855]))
+        assert np.allclose(res2.dec.value, np.array([2.16432363, 3.27160676]))
+        # TODO! more tests
+
+        # ---------------
+        # len(c.shape) == 1
+
+        assert len(self.c.shape) == 1
+
+        res = self.inst.resample(self.c, self.c_err, random=0)
+        assert res.shape == self.c.shape
+        assert np.allclose(res.ra.value, np.array([1.01257302, 2.02098002]))
+        assert np.allclose(res.dec.value, np.array([1.97357903, 2.83929919]))
+        # TODO! more tests
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter = 1
+
+        c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
+
+        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+        )
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter != niter
+
+        c_err = coord.concatenate(
+            [self.c_err, self.c_err, self.c_err],
+        ).reshape(len(self.c), -1)
+
+        with pytest.raises(ValueError) as e:
+            self.inst.resample(c, c_err)
+
+        assert "c & c_err shape mismatch" in str(e.value)
+
+        # ---------------
+        # 2D array, SkyCoord, nerriter = niter
+
+        c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
+            len(self.c),
+            -1,
+        )
+        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.01257302, 1.02098002], [2.01257302, 2.02098002]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.97357903, 1.83929919], [2.97357903, 2.83929919]]),
+        )
+
+        # ---------------
+        # 2D array, (Mapping, scalar, callable, %-unit)
+
+        res = self.inst.resample(c, c_err=1 * u.percent, random=0)
+        assert res.shape == c.shape
+        assert np.allclose(
+            res.ra.value,
+            np.array([[1.0012573, 1.001049], [2.0025146, 2.002098]]),
+        )
+        assert np.allclose(
+            res.dec.value,
+            np.array([[1.9973579, 1.98928661], [2.99603685, 2.98392992]]),
+        )
+
+        # ---------------
+        # 2D array, other
+
+        with pytest.raises(NotImplementedError) as e:
+            self.inst.resample(self.c, NotImplementedError())
+
+        assert "not yet supported." in str(e.value)
 
     # /def
 

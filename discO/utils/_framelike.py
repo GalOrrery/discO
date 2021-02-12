@@ -19,17 +19,17 @@ import typing as T
 # THIRD PARTY
 from astropy.coordinates import (
     BaseCoordinateFrame,
+    BaseRepresentation,
     SkyCoord,
     sky_coordinate_parsers,
-    BaseRepresentation,
 )
 from astropy.coordinates.representation import (
     REPRESENTATION_CLASSES as _REP_CLSs,
 )
 
 # PROJECT-SPECIFIC
-from discO.config import conf
 import discO.type_hints as TH
+from discO.config import conf
 
 ##############################################################################
 # CODE
@@ -113,7 +113,8 @@ def resolve_representationlike(
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(
-        representation, BaseRepresentation
+        representation,
+        BaseRepresentation,
     ):
         pass
 

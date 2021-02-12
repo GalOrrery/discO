@@ -51,12 +51,12 @@ from astropy.utils.decorators import deprecated
 import discO.type_hints as TH
 from .core import CommonBase
 from .sample import Random_Like  # TODO move to type-hints
-from discO.utils import resolve_framelike
+from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
 
-MEASURE_REGISTRY: T.Dict[str, CommonBase] = dict()  # key : measurer
+_MEASURE_REGISTRY: T.Dict[str, CommonBase] = dict()  # key : measurer
 
 CERR_Type = T.Union[
     T.Callable,
@@ -123,9 +123,9 @@ class MeasurementErrorSampler(CommonBase):
     #################################################################
     # On the class
 
-    _registry = MappingProxyType(MEASURE_REGISTRY)
+    _registry = MappingProxyType(_MEASURE_REGISTRY)
 
-    def __init_subclass__(cls, key=None) -> None:
+    def __init_subclass__(cls, method=None) -> None:
         """Initialize subclass, adding to registry by class name.
 
         This method applies to all subclasses, not matter the
@@ -134,11 +134,12 @@ class MeasurementErrorSampler(CommonBase):
         """
         super().__init_subclass__(key=None)  # let's do it ourselves
 
-        key = cls.__name__.lower() if key is None else key
-        if key in cls._registry:
-            raise KeyError(f"`{key}` sampler already in registry.")
+        method = cls.__name__.lower() if method is None else method
+        if method in cls._registry:
+            raise KeyError(f"`{method}` sampler already in registry.")
 
-        MEASURE_REGISTRY[key] = cls
+        _MEASURE_REGISTRY[method] = cls
+        cls._key = method
 
         # TODO? insist that subclasses define a __call__ method
         # this "abstractifies" the base-class even though it can be used
@@ -200,15 +201,20 @@ class MeasurementErrorSampler(CommonBase):
         c_err: T.Optional[CERR_Type] = None,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        representation_type: T.Union[TH.RepresentationLikeType, None] = None,
         **kwargs,
     ) -> None:
         # kwargs are ignored
         super().__init__()
         self.c_err = c_err
 
-        self.frame = frame
-        self.representation_type = representation_type
+        # store frame. If not None, resolve it.
+        self.frame = resolve_framelike(frame) if frame is not None else None
+        self.representation_type = (
+            resolve_representationlike(representation_type)
+            if representation_type is not None
+            else None
+        )
 
         # params (+ pop from ``__new__``)
         self.params = kwargs
@@ -218,7 +224,9 @@ class MeasurementErrorSampler(CommonBase):
     # /def
 
     def _resolve_frame(
-        self, c: TH.SkyCoordType, frame: T.Optional[TH.RepresentationType],
+        self,
+        frame: T.Optional[TH.RepresentationType],
+        c: TH.SkyCoordType,
     ) -> TH.FrameType:
         """Resolve, given coordinate and passed value.
 
@@ -250,8 +258,8 @@ class MeasurementErrorSampler(CommonBase):
 
     def _resolve_representation_type(
         self,
+        representation_type: T.Optional[TH.RepresentationLikeType],
         c: TH.SkyCoordType,
-        representation_type: T.Optional[TH.RepresentationType],
     ) -> TH.RepresentationType:
         """Resolve, given coordinate and passed value.
 
@@ -266,12 +274,16 @@ class MeasurementErrorSampler(CommonBase):
 
         """
         # prefer representation_type, if not None
-        rep_type = representation_type or self.representation_type
+        rep_type = (
+            representation_type
+            if representation_type is not None
+            else self.representation_type
+        )
 
         # prefer representation_type, if not None
-        rep_type = rep_type or c.representation_type
+        rep_type = rep_type if rep_type is not None else c.representation_type
 
-        return rep_type
+        return resolve_representationlike(rep_type)
 
     # /def
 
@@ -290,7 +302,7 @@ class MeasurementErrorSampler(CommonBase):
         Parameters
         ----------
         array : (3, N) array |Quantity|
-        representation_type : |Representation|
+        representation_type : |Representation| class
         units : dict
 
         Returns
@@ -311,7 +323,7 @@ class MeasurementErrorSampler(CommonBase):
 
             # mirror the bad lats about the pole
             # and rotate the lons by 180 degrees
-            array[1, bad_lat_i] = np.mod(bad_lat + bound, 2 * bound) - bound
+            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
             array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
                 units["lon"],
             )
@@ -325,7 +337,7 @@ class MeasurementErrorSampler(CommonBase):
 
             # mirror the bad lats about the pole
             # and rotate the lons by 180 degrees
-            array[1, bad_lat_i] = np.mod(bad_lat + bound, 2 * bound) - bound
+            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
             array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
                 units["lon"],
             )
@@ -487,7 +499,8 @@ class MeasurementErrorSampler(CommonBase):
 
             # need to determine how c_err should be distributed.
             if isinstance(
-                c_err, (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
+                c_err,
+                (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
             ):
                 Nerr, *nerriter = c_err.shape
                 nerriter = nerriter or 1  # [] -> 1
@@ -528,7 +541,9 @@ class MeasurementErrorSampler(CommonBase):
     # /def
 
     def _parse_c_err(
-        self, c_err: T.Optional[CERR_Type], c: TH.CoordinateType,
+        self,
+        c_err: T.Optional[CERR_Type],
+        c: TH.CoordinateType,
     ) -> np.ndarray:
         """Parse ``c_err``, given ``c``.
 
@@ -589,7 +604,7 @@ class MeasurementErrorSampler(CommonBase):
 # -------------------------------------------------------------------
 
 
-class RVS_Continuous(MeasurementErrorSampler, key="rvs"):
+class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
     """Draw a realization given a :class:`scipy.stats.rv_continuous`.
 
     Parameters
@@ -783,12 +798,13 @@ class RVS_Continuous(MeasurementErrorSampler, key="rvs"):
         ps.update(**params)
 
         # get "c" into the correct frame
-        frame = self._resolve_frame(c, frame)
+        frame = self._resolve_frame(frame, c)
         cc = c.transform_to(frame)
 
         # get "cc" into the correct representation type
         representation_type = self._resolve_representation_type(
-            cc, representation_type,
+            representation_type,
+            cc,
         )
         rep = cc.data.represent_as(representation_type)
 
@@ -803,7 +819,8 @@ class RVS_Continuous(MeasurementErrorSampler, key="rvs"):
 
         # loc, must be ndarray
         pos = rep._values.view(dtype=np.float64).reshape(
-            rep.shape[0], -1,
+            rep.shape[0],
+            -1,
         )  # shape=Nx3
         # scale, from `c_err`
         scale = self._parse_c_err(c_err, cc)
@@ -838,7 +855,8 @@ class RVS_Continuous(MeasurementErrorSampler, key="rvs"):
 
         # make SkyCoord from new realization, preserving original shape
         new_c = SkyCoord(
-            new_cc.transform_to(c.frame).reshape(c.shape), copy=False,
+            new_cc.transform_to(c.frame).reshape(c.shape),
+            copy=False,
         )
 
         # need to transfer metadata.
@@ -856,7 +874,7 @@ class RVS_Continuous(MeasurementErrorSampler, key="rvs"):
 # -------------------------------------------------------------------
 
 
-class GaussianMeasurementError(RVS_Continuous, key="Gaussian"):
+class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
     """Draw a realization given Gaussian measurement errors.
 
     Parameters
@@ -934,7 +952,8 @@ class GaussianMeasurementError(RVS_Continuous, key="Gaussian"):
 
 
 class TruncatedGaussianMeasurementError(
-    GaussianMeasurementError, key="trunc-norm"
+    GaussianMeasurementError,
+    method="trunc-norm",
 ):
     """Draw a realization given Gaussian measurement errors.
 
@@ -1074,7 +1093,8 @@ class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
 
         # get "c" into the correct representation type
         representation_type = self._resolve_representation_type(
-            c, representation_type,
+            representation_type,
+            c,
         )
         rep = c.data.represent_as(representation_type)
         cc = c.realize_frame(rep)

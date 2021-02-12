@@ -103,7 +103,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``MeasurementErrorSampler`` is a registry wrapper class and can be used
       in-place of any of its subclasses.
     + Add method ``resample`` for ND array samples from ``PotentialSampler`` [#38]
-      
+
 - ``RVS_Continuous`` : scipy rv_continuous distribution [#42]
 
   + Any scipy rv_continuous distribution
@@ -113,7 +113,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
   + should work for any normal distribution (if has "norm") in name.
 
 - ``TruncatedGaussianMeasurementError`` : truncated normal distribution
-    
+
   + allow for truncation with parameters "a", "b"
 
 - ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]

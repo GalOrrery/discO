@@ -44,7 +44,8 @@ from discO.tests.helper import TypeVarTests
 
 
 class Test_RepresentationOrDifferentialType(
-    TypeVarTests, obj=type_hints.RepresentationOrDifferentialType,
+    TypeVarTests,
+    obj=type_hints.RepresentationOrDifferentialType,
 ):
     @classmethod
     def setup_class(cls):
