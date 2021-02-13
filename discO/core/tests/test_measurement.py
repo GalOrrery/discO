@@ -1261,6 +1261,14 @@ class Test_GaussianMeasurementError(
             ), rep_type
             assert "method" not in obj.params
 
+        # --------------------------
+        # not normal
+
+        with pytest.raises(ValueError) as e:
+            self.obj(scipy.stats.betabinom)
+
+        assert "rvs must be a Normal type." in str(e.value)
+
     # /def
 
     # --------------------------------------------------------------
