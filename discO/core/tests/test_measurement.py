@@ -1265,7 +1265,7 @@ class Test_GaussianMeasurementError(
         # not normal
 
         with pytest.raises(ValueError) as e:
-            self.obj(scipy.stats.betabinom)
+            self.obj(scipy.stats.alpha)
 
         assert "rvs must be a Normal type." in str(e.value)
 
