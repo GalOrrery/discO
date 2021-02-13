@@ -15,8 +15,6 @@ __all__ = [
     # specific classes
     "RVS_Continuous",
     "GaussianMeasurementError",
-    "TruncatedGaussianMeasurementError",
-    "GaussianMeasurementErrorSampler",  # deprecated
     # utilities
     "xpercenterror_factory",
 ]
@@ -26,10 +24,10 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import abc
 import copy
 import inspect
 import typing as T
-import warnings
 from collections.abc import Mapping
 from functools import lru_cache
 from types import MappingProxyType
@@ -45,7 +43,7 @@ from astropy.coordinates import (
     SkyCoord,
     concatenate,
 )
-from astropy.utils.decorators import deprecated
+from astropy.utils.decorators import classproperty
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -73,7 +71,7 @@ CERR_Type = T.Union[
 ##############################################################################
 
 
-class MeasurementErrorSampler(CommonBase):
+class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     """Draw a realization given measurement errors.
 
     Parameters
@@ -98,11 +96,6 @@ class MeasurementErrorSampler(CommonBase):
     ----------------
     method : str or None (optional, keyword-only)
         The method to use for resampling given measurement error.
-        Only used if directly instantiating a MeasurementErrorSampler, not a
-        subclass.
-    return_specific_class : bool (optional, keyword-only)
-        Whether to return a `PotentialSampler` (if False, default) or
-        package-specific subclass (if True).
         Only used if directly instantiating a MeasurementErrorSampler, not a
         subclass.
 
@@ -147,6 +140,13 @@ class MeasurementErrorSampler(CommonBase):
 
     # /def
 
+    @classproperty
+    def _key(self):
+        """The key. Overwritten in subclasses."""
+        return None
+
+    # /def
+
     #################################################################
     # On the instance
 
@@ -155,11 +155,8 @@ class MeasurementErrorSampler(CommonBase):
         c_err: T.Optional[CERR_Type] = None,
         *,
         method: T.Optional[str] = None,
-        return_specific_class: bool = False,
         **kwargs,
     ):
-        self = super().__new__(cls)
-
         # The class MeasurementErrorSampler is a wrapper for anything in its
         # registry If directly instantiating a MeasurementErrorSampler (not
         # subclass) we must also instantiate the appropriate subclass. Error
@@ -167,21 +164,14 @@ class MeasurementErrorSampler(CommonBase):
         if cls is MeasurementErrorSampler:
 
             # a cleaner error than KeyError on the actual registry
-            if method is None or method not in cls._registry:
+            if method is None or not cls._in_registry(method):
                 raise ValueError(
                     "MeasurementErrorSampler has no registered "
                     f"measurement resampler '{method}'",
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[method](c_err=c_err)
-
-            # Whether to return class or subclass
-            # else continue, storing instance
-            if return_specific_class:
-                return instance
-
-            self._instance = instance
+            return super().__new__(cls[method])
 
         elif method is not None:
             raise ValueError(
@@ -189,10 +179,7 @@ class MeasurementErrorSampler(CommonBase):
                 " only on MeasurementErrorSampler.",
             )
 
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
-
-        return self
+        return super().__new__(cls)
 
     # /def
 
@@ -219,7 +206,6 @@ class MeasurementErrorSampler(CommonBase):
         # params (+ pop from ``__new__``)
         self.params = kwargs
         self.params.pop("method", None)
-        self.params.pop("return_specific_class", None)
 
     # /def
 
@@ -374,6 +360,7 @@ class MeasurementErrorSampler(CommonBase):
     #################################################################
     # Sampling
 
+    @abc.abstractmethod
     def __call__(
         self,
         c: TH.CoordinateType,
@@ -417,17 +404,7 @@ class MeasurementErrorSampler(CommonBase):
         wrapped instance (see 'method' argument on initialization).
 
         """
-        if c_err is None:
-            c_err = self.c_err
-        # call on instance
-        return self._instance(
-            c,
-            c_err,
-            frame=frame,
-            representation_type=representation_type,
-            random=random,
-            **kwargs,
-        )
+        raise NotImplementedError()
 
     # /def
 
@@ -503,7 +480,7 @@ class MeasurementErrorSampler(CommonBase):
                 (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
             ):
                 Nerr, *nerriter = c_err.shape
-                nerriter = nerriter or 1  # [] -> 1
+                nerriter = (nerriter or [1])[0]  # [] -> 1
 
                 if nerriter == 1:
                     c_err = [c_err] * niter
@@ -531,7 +508,14 @@ class MeasurementErrorSampler(CommonBase):
 
             samples = []
             for samp, err in zip(c.T, c_err):
-                result = self(samp, c_err=err, random=random, **kwargs)
+                result = self(
+                    samp,
+                    c_err=err,
+                    frame=frame,
+                    representation_type=representation_type,
+                    random=random,
+                    **kwargs,
+                )
                 samples.append(result)
 
             sample = concatenate(samples).reshape(c.shape)
@@ -630,11 +614,6 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         The method to use for resampling given measurement error.
         Only used if directly instantiating a MeasurementErrorSampler, not a
         subclass.
-    return_specific_class : bool (optional, keyword-only)
-        Whether to return a `PotentialSampler` (if False, default) or
-        package-specific subclass (if True).
-        Only used if directly instantiating a MeasurementErrorSampler, not a
-        subclass.
 
     """
 
@@ -644,46 +623,32 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         c_err: T.Optional[CERR_Type] = None,
         *,
         method: T.Optional[str] = None,
-        return_specific_class: bool = False,
         **kwargs,
     ):
-        self = super().__new__(
-            cls,
-            c_err,
-            method=method,
-            return_specific_class=return_specific_class,
-            **kwargs,
-        )
-
         # The class RVS_Continuous is a wrapper for anything in its
         # registry If directly instantiating a RVS_Continuous (not
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
-        if cls is RVS_Continuous:
+        if cls is RVS_Continuous and method is not None:
 
             # a cleaner error than KeyError on the actual registry
-            if method is None or method not in cls._registry:
+            if not cls._in_registry(method):
                 raise ValueError(
                     "RVS_Continuous has no registered "
                     f"measurement resampler '{method}'",
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[method](c_err=c_err)
-
-            # Whether to return class or subclass
-            if return_specific_class:
-                return instance
+            return super().__new__(
+                cls[method], c_err=c_err, method=None, **kwargs
+            )
 
         elif method is not None:
             raise ValueError(
-                "Can't specify 'method' on RVS_Continuous subclasses.",
+                f"Can't specify 'method' on {cls}," " only on RVS_Continuous.",
             )
 
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
-
-        return self
+        return super().__new__(cls, c_err, method=None, **kwargs)
 
     # /def
 
@@ -693,13 +658,11 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         c_err: T.Optional[CERR_Type] = None,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
         **kwargs,
     ) -> None:
         super().__init__(
             c_err=c_err,
             frame=frame,
-            representation_type=representation_type,
             **kwargs,
         )
         self._rvs = rvs
@@ -738,9 +701,6 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         .. todo::
 
             - the velocities
-            - confirm that units work nicely
-            - figure out phase wrapping when draws over a wrap
-            - make calling the function easier when inputting coordinates
             - make work on a shaped SkyCoord
 
         Steps:
@@ -790,8 +750,12 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         # ----------------
         # Setup
 
+        # pop from params, and set as RandomState
         # see 'RandomState' docs for details
-        random = np.random.RandomState(random)
+        _random = self.params.pop("random", None)
+        random = _random if random is None else random
+        if not isinstance(random, np.random.RandomState):
+            random = np.random.RandomState(random)
 
         # the rvs parameters
         ps = copy.deepcopy(self.params)
@@ -807,8 +771,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
             cc,
         )
         rep = cc.data.represent_as(representation_type)
-
-        cc = cc.realize_frame(rep)
+        cc = cc.realize_frame(rep, representation_type=representation_type)
 
         # for re-building
         units = rep._units
@@ -851,7 +814,10 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         new_rep = new_rep.represent_as(c.representation_type)
 
         # make coordinate
-        new_cc = frame.realize_frame(new_rep)
+        new_cc = frame.realize_frame(
+            new_rep,
+            representation_type=c.representation_type,
+        )
 
         # make SkyCoord from new realization, preserving original shape
         new_c = SkyCoord(
@@ -907,16 +873,14 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         c_err: T.Optional[CERR_Type] = None,
         *,
         method: T.Optional[str] = None,
-        return_specific_class: bool = False,
         **kwargs,
     ):
         return super().__new__(
             cls,
-            rvs,  # distribution
+            rvs,
             c_err=c_err,
             method=method,
-            return_specific_class=return_specific_class,
-            **kwargs,
+            **kwargs,  # distribution
         )
 
     # /def
@@ -927,7 +891,6 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         c_err: T.Optional[CERR_Type] = None,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
         **params,
     ) -> None:
 
@@ -939,201 +902,8 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
             rvs,
             c_err=c_err,
             frame=frame,
-            representation_type=representation_type,
             **params,
         )
-
-    # /def
-
-
-# /class
-
-# -------------------------------------------------------------------
-
-
-class TruncatedGaussianMeasurementError(
-    GaussianMeasurementError,
-    method="trunc-norm",
-):
-    """Draw a realization given Gaussian measurement errors.
-
-    Parameters
-    ----------
-    c_err : float or callable or None (optional)
-        Callable with single mandatory positional argument -- coordinates
-        ("c") -- that returns the absolute error.
-
-    frame: frame-like or None (optional, keyword-only)
-       The frame of the observational errors, ie the frame in which
-        the error function should be applied along each dimension.
-    representation_type: |Representation| or None (optional, keyword-only)
-        The coordinate representation in which to resample along each
-        dimension.
-
-    **params
-        Stored as ``params``.
-
-    Other Parameters
-    ----------------
-    a, b : |Quantity|
-        The truncation boundaries. Stored in ``params`` as default for call
-        method.
-
-    Notes
-    -----
-    The standard form of this distribution is a standard normal truncated to
-    the range [a, b] --- notice that "a" and "b" are defined over the domain
-    of the standard normal.  To convert clip values for a specific mean and
-    standard deviation, use::
-
-        a, b = (myclip_a - my_mean) / my_std, (myclip_b - my_mean) / my_std
-
-    """
-
-    def __new__(
-        cls,
-        c_err: T.Optional[CERR_Type] = None,
-        *,
-        method: T.Optional[str] = None,
-        return_specific_class: bool = False,
-        **kwargs,
-    ):
-        return super().__new__(
-            cls,
-            scipy.stats.truncnorm,  # distribution
-            c_err=c_err,
-            method=method,
-            return_specific_class=return_specific_class,
-            **kwargs,
-        )
-
-    # /def
-
-    def __init__(
-        self,
-        c_err: T.Optional[CERR_Type] = None,
-        *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        **params,
-    ) -> None:
-        super().__init__(
-            scipy.stats.truncnorm,  # distribution
-            c_err=c_err,
-            frame=frame,
-            representation_type=representation_type,
-            **params,
-        )
-
-    # /def
-
-
-# /class
-
-# -------------------------------------------------------------------
-
-
-@deprecated("0.1.0")
-class GaussianMeasurementErrorSampler(MeasurementErrorSampler):
-    """Draw a realization given Gaussian measurement errors.
-
-    Parameters
-    ----------
-    c_err : float or callable or None (optional)
-        Callable with single mandatory positional argument -- coordinates
-        ("c") -- that returns the absolute error.
-
-    """
-
-    def __call__(
-        self,
-        c: TH.CoordinateType,
-        c_err: T.Optional[CERR_Type] = None,
-        *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Union[Random_Like] = None,
-    ) -> TH.SkyCoordType:
-        """Draw a realization given the errors.
-
-        .. todo::
-
-            - the velocities
-            - confirm that units work nicely
-            - figure out phase wrapping when draws over a wrap
-            - make calling the function easier when inputting coordinates
-            - ensure works on a shaped SkyCoord
-
-        Parameters
-        ----------
-        c : :class:`~astropy.coordinates.SkyCoord` instance
-            The coordinates at which to resample.
-        c_err : SkyCoord or None (optional)
-            The scale of the Gaussian errors.
-
-        Returns
-        -------
-        new_c : :class:`~astropy.coordinates.SkyCoord`
-            The resampled points.
-            Has the same frame, representation_type, and shape and framas `c`.
-
-        Other Parameters
-        ----------------
-        random : |RandomGenerator| or int or None (optional, keyword-only)
-            The random number generator or generator seed.
-        representation_type : |Representation| or None (optional, keyword-only)
-            The representation type in which to calculate the errors.
-
-        """
-        # ----------------
-        # Setup
-
-        # see 'default_rng' docs for details
-        random = np.random.default_rng(random)
-
-        # get "c" into the correct representation type
-        representation_type = self._resolve_representation_type(
-            representation_type,
-            c,
-        )
-        rep = c.data.represent_as(representation_type)
-        cc = c.realize_frame(rep)
-
-        # for re-building
-        units = rep._units
-        nd = rep.shape[0]  # the number of samples
-
-        # ----------------
-        # Resample
-
-        # loc & error scale
-        pos = rep._values.view(dtype=np.float64).reshape(nd, -1)  # shape=Nx3
-        d_pos = self._parse_c_err(c_err, cc)
-
-        # draw realization
-        # this will have no units. We will need to add those
-        new_pos = random.normal(loc=pos, scale=d_pos, size=pos.shape)
-
-        # deal with wrapping!
-        # TODO!
-
-        # re-build representation
-        new_rep = rep.__class__(
-            **{n: p * unit for p, (n, unit) in zip(new_pos.T, units.items())}
-        )
-
-        # make SkyCoord from new realization, preserving shape
-        new_c = SkyCoord(c.realize_frame(new_rep).reshape(c.shape))
-
-        # ----------------
-        # Cleanup
-
-        # need to transfer metadata.
-        # TODO! more generally, probably need different method for new_c
-        new_c.potential = getattr(c, "potential", None)
-        new_c.mass = getattr(c, "mass", None)
-
-        return new_c
 
     # /def
 

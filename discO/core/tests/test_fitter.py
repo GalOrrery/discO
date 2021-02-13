@@ -146,8 +146,9 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
         # ------------------------
         # register a new
-        try:
 
+        try:
+            # make registered subclass
             class SubClass1(self.obj, key="pytest"):
                 pass
 

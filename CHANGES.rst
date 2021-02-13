@@ -113,12 +113,6 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
   + should work for any normal distribution (if has "norm") in name.
 
-- ``TruncatedGaussianMeasurementError`` : truncated normal distribution
-
-  + allow for truncation with parameters "a", "b"
-
-- ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]
-
 - ``xpercenterror_factory`` : to build ``xpercenterror`` function. [#36]
   Convenience function for construct errors with X% error in each dimension.
 
