@@ -67,18 +67,36 @@ class Test_CommonBase(ObjectTest, obj=core.CommonBase):
 
     # -------------------------------
 
+    def test__in_registry(self):
+        """Test method ``_in_registry``."""
+        assert self.obj._in_registry("not in registry") is False
+        assert self.obj._in_registry(["not", "in", "registry"]) is False
+
+        if self.obj.registry is not None:
+            for key in self.obj.registry.keys():
+                assert self.obj._in_registry(key) is True
+
+    # /def
+
     @abstractmethod
     def test__registry(self):
         """Test method ``_registry``."""
-        pass
+        if self.obj is core.CommonBase:
+            assert isinstance(self.obj._registry, property)
+
+        else:
+            assert isinstance(self.obj._registry, Mapping)
 
     # /def
 
     def test_registry(self):
         # This doesn't run on `Test_CommonBase`, but should
         # run on all registry subclasses.
-        if isinstance(self.obj._registry, Mapping):
+        if not isinstance(self.obj._registry, property):
             assert isinstance(self.obj.registry, MappingProxyType)
+
+            for key, klass in self.obj.registry.items():
+                assert issubclass(klass, self.obj), key
 
     # -------------------------------
 
@@ -93,14 +111,14 @@ class Test_CommonBase(ObjectTest, obj=core.CommonBase):
 
         # This doesn't run on `Test_CommonBase`, but should
         # run on all registry subclasses.
-        if isinstance(self.obj._registry, Mapping):
+        if isinstance(self.obj.registry, Mapping):
             # a very basic equality test
-            for k in self.obj._registry:
+            for k in self.obj.registry:
                 # str
-                assert self.obj[k] is self.obj._registry[k]
+                assert self.obj[k] is self.obj.registry[k]
 
                 # iterable of len = 1
-                assert self.obj[[k]] is self.obj._registry[k]
+                assert self.obj[[k]] is self.obj.registry[k]
 
                 # multi-length iterable that fails
                 with pytest.raises(KeyError):

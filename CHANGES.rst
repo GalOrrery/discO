@@ -16,6 +16,7 @@ discO.type_hints
     + UnitType : the type of Astropy's ``UnitBase`` and ``FunctionUnitBasse``
     + RepresentationOrDifferentialType : the type of Astropy's ``BaseRepresentationOrDifferential`` [#34]
     + RepresentationType : the type of Astropy's ``BaseRepresentation`` [#34]
+    + RepresentationLikeType : RepresentationType or str [#42]
     + DifferentialType : the type of Astropy's ``BaseDifferential`` [#34]
     + FrameType : the type of Astropy's ``BaseCoordinateFrame``
     + SkyCoordType : the type of Astropy's ``SkyCoord``
@@ -104,7 +105,13 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       in-place of any of its subclasses.
     + Add method ``resample`` for ND array samples from ``PotentialSampler`` [#38]
 
-- ``GaussianMeasurementErrorSampler`` : uncorrelated Gaussian errors [#17]
+- ``RVS_Continuous`` : scipy rv_continuous distribution [#42]
+
+  + Any scipy rv_continuous distribution
+
+- ``GaussianMeasurementError`` : Gaussian rvs distribution [#42]
+
+  + should work for any normal distribution (if has "norm") in name.
 
 - ``xpercenterror_factory`` : to build ``xpercenterror`` function. [#36]
   Convenience function for construct errors with X% error in each dimension.
@@ -208,7 +215,12 @@ discO.utils
 - ``resolve_framelike`` [#17]
 
     Determine the frame and return a blank instance for anything that can be
-    used in ``frame=`` in  ``Skycoord(...,frame=)``
+    used in ``frame=`` in  ``Skycoord(...,frame=)``.
+    None resolves to the configured default frame.
+
+- ``resolve_representationlike`` [#42]
+
+    Determine the representation type given a class, instance, or string name.
 
 - vector fields [#35]
 

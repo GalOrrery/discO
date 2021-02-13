@@ -28,6 +28,7 @@ __all__ = [
     # coordinates
     "RepresentationOrDifferentialType",
     "RepresentationType",
+    "RepresentationLikeType",
     "DifferentialType",
     "FrameType",
     "SkyCoordType",
@@ -83,6 +84,9 @@ RepresentationType = T.TypeVar(
     bound=coord.BaseRepresentation,
 )
 """|Representation|"""
+
+RepresentationLikeType = T.Union[RepresentationType, str]
+"""|Representation| or `str`"""
 
 DifferentialType = T.TypeVar("BaseDifferential", bound=coord.BaseDifferential)
 """|Differential|"""

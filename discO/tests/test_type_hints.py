@@ -71,6 +71,17 @@ class Test_RepresentationType(TypeVarTests, obj=type_hints.RepresentationType):
 
 # /class
 
+
+# -------------------------------------------------------------------
+
+
+@pytest.mark.skip("TODO")
+class Test_RepresentationLikeType:
+    """Test RepresentationLikeType."""
+
+
+# /class
+
 # -------------------------------------------------------------------
 
 

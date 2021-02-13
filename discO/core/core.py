@@ -624,20 +624,33 @@ class CommonBase(metaclass=ABCMeta):
 
     def __class_getitem__(cls, key: T.Union[str, T.Sequence]) -> object:
         if isinstance(key, str):
-            item = cls._registry[key]
+            item = cls.registry[key]
         elif len(key) == 1:
-            item = cls._registry[key[0]]
+            item = cls.registry[key[0]]
         else:
-            item = cls._registry[key[0]][key[1:]]
+            item = cls.registry[key[0]][key[1:]]
 
         return item
 
     # /def
 
-    @classproperty
-    def registry(self) -> T.Mapping:
-        """The class registry."""
-        return MappingProxyType(self._registry)
+    @classmethod
+    def _in_registry(cls, key: T.Union[str, T.Tuple[str]]):
+        """Is it in the registry?"""
+        # make iterable
+        if isinstance(key, str):
+            key = [key]
+
+        # start with the whole shebang
+        registry = cls.registry
+        # iterate through registry
+        for k in key:
+            if (registry is None) or (k not in registry):
+                return False
+            # update what we call the registry
+            registry = cls.registry[k].registry
+
+        return True
 
     # /def
 
@@ -645,6 +658,22 @@ class CommonBase(metaclass=ABCMeta):
     @abstractmethod
     def _registry(self):
         """The class registry. Need to override."""
+
+    # /def
+
+    @classproperty
+    def registry(cls) -> T.Mapping:
+        """The class registry."""
+        if isinstance(cls._registry, property):
+            return None
+
+        return MappingProxyType(
+            {
+                k: v
+                for k, v in cls._registry.items()
+                if issubclass(v, cls) and v is not cls
+            },
+        )
 
     # /def
 
