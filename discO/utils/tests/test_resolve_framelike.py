@@ -128,13 +128,15 @@ class Test_resolve_representationlike:
         )
         assert (
             resolve_representationlike(
-                representation=coord.CartesianRepresentation(),
+                representation=coord.CartesianRepresentation(x=(1, 2, 3)),
             )
             == coord.CartesianRepresentation
         )
 
         # replicates without data
-        c = coord.SphericalRepresentation(lon=1 * u.deg, lat=2 * u.deg)
+        c = coord.SphericalRepresentation(
+            lon=1 * u.deg, lat=2 * u.deg, distance=3 * u.kpc
+        )
         assert (
             resolve_representationlike(representation=c)
             == coord.SphericalRepresentation
