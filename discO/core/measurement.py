@@ -48,7 +48,7 @@ from astropy.utils.decorators import classproperty
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .core import CommonBase
-from .sample import Random_Like  # TODO move to type-hints
+from .sample import RandomLike  # TODO move to type-hints
 from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
@@ -209,154 +209,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     # /def
 
-    def _resolve_frame(
-        self,
-        frame: T.Optional[TH.RepresentationType],
-        c: TH.SkyCoordType,
-    ) -> TH.FrameType:
-        """Resolve, given coordinate and passed value.
-
-        .. todo::
-
-            rename ``_preferred_frame_resolve``
-
-        Uses :fun:`~discO.utils.resolve_framelike` for strings.
-
-        Priority:
-        1. frame, if not None
-        2. frame set at initialization, if not None
-        3. c.frame
-
-        Returns
-        -------
-        |CoordinateFrame|
-
-        """
-        # prefer frame, if not None
-        frame = frame if frame is not None else self.frame
-
-        # prefer frame, if not None
-        frame = frame if frame is not None else c.frame
-
-        return resolve_framelike(frame)
-
-    # /def
-
-    def _resolve_representation_type(
-        self,
-        representation_type: T.Optional[TH.RepresentationLikeType],
-        c: TH.SkyCoordType,
-    ) -> TH.RepresentationType:
-        """Resolve, given coordinate and passed value.
-
-        Priority:
-        1. representation_type, if not None
-        2. representation_type set at initialization, if not None
-        3. c.representation_type
-
-        Returns
-        -------
-        :class:`~astropy.coordinates.Representation` class
-
-        """
-        # prefer representation_type, if not None
-        rep_type = (
-            representation_type
-            if representation_type is not None
-            else self.representation_type
-        )
-
-        # prefer representation_type, if not None
-        rep_type = rep_type if rep_type is not None else c.representation_type
-
-        return resolve_representationlike(rep_type)
-
-    # /def
-
-    @staticmethod
-    def _fix_branch_cuts(
-        array: TH.QuantityType,
-        representation_type: TH.RepresentationType,
-        units: T.Dict[str, TH.UnitType],
-    ) -> TH.QuantityType:
-        """Fix Branch Cuts.
-
-        .. todo::
-
-            In general w/out if statement for each rep type
-
-        Parameters
-        ----------
-        array : (3, N) array |Quantity|
-        representation_type : |Representation| class
-        units : dict
-
-        Returns
-        -------
-        array : |Quantity|
-
-        """
-        # First check if any of the components are angular
-        if not any([v.physical_type == "angle" for v in units.values()]):
-            return array
-
-        elif representation_type is coord.UnitSphericalRepresentation:
-            # longitude is not a problem, but latitude is restricted
-            # to be between -90 and 90 degrees
-            bound = 90 * u.deg.to(units["lat"])  # convert deg to X
-            bad_lat_i = (array[1] < -bound) | (bound < array[1])
-            bad_lat = array[1, bad_lat_i]
-
-            # mirror the bad lats about the pole
-            # and rotate the lons by 180 degrees
-            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
-            array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
-                units["lon"],
-            )
-
-        elif representation_type is coord.SphericalRepresentation:
-            # longitude is not a problem, but latitude is restricted
-            # to be between -90 and 90 degrees
-            bound = 90 * u.deg.to(units["lat"])  # convert deg to X
-            bad_lat_i = (array[1] < -bound) | (bound < array[1])
-            bad_lat = array[1, bad_lat_i]
-
-            # mirror the bad lats about the pole
-            # and rotate the lons by 180 degrees
-            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
-            array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
-                units["lon"],
-            )
-
-            # the distance can also be problematic if less than 0
-            # lat -> -lat,
-            bad_d_i = array[2] < 0
-
-            array[2, bad_d_i] = -array[2, bad_d_i]  # positive
-            array[0, bad_d_i] = array[0, bad_d_i] + 180 * u.deg.to(
-                units["lon"],  # + 180
-            )
-            array[1, bad_d_i] = -array[1, bad_d_i]  # flip
-
-        elif representation_type is coord.CylindricalRepresentation:
-            # the distance can also be problematic if less than 0
-            # phi -> -phi,
-            bad_rho_ind = array[0] < 0  # rho
-
-            array[0, bad_rho_ind] = -array[0, bad_rho_ind]  # positive
-            array[1, bad_rho_ind] = array[1, bad_rho_ind] + 180 * u.deg.to(
-                units["phi"],
-            )
-
-        else:
-            raise NotImplementedError(
-                f"{representation_type} is not yet supported.",
-            )
-
-        return array
-
-    # /def
-
     #################################################################
     # Sampling
 
@@ -368,7 +220,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Draw a realization given Measurement error.
@@ -415,7 +267,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Draw a realization given measurement error.
@@ -582,6 +434,154 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     # /def
 
+    def _resolve_frame(
+        self,
+        frame: T.Optional[TH.RepresentationType],
+        c: TH.SkyCoordType,
+    ) -> TH.FrameType:
+        """Resolve, given coordinate and passed value.
+
+        .. todo::
+
+            rename ``_preferred_frame_resolve``
+
+        Uses :fun:`~discO.utils.resolve_framelike` for strings.
+
+        Priority:
+        1. frame, if not None
+        2. frame set at initialization, if not None
+        3. c.frame
+
+        Returns
+        -------
+        |CoordinateFrame|
+
+        """
+        # prefer frame, if not None
+        frame = frame if frame is not None else self.frame
+
+        # prefer frame, if not None
+        frame = frame if frame is not None else c.frame
+
+        return resolve_framelike(frame)
+
+    # /def
+
+    def _resolve_representation_type(
+        self,
+        representation_type: T.Optional[TH.RepresentationLikeType],
+        c: TH.SkyCoordType,
+    ) -> TH.RepresentationType:
+        """Resolve, given coordinate and passed value.
+
+        Priority:
+        1. representation_type, if not None
+        2. representation_type set at initialization, if not None
+        3. c.representation_type
+
+        Returns
+        -------
+        :class:`~astropy.coordinates.Representation` class
+
+        """
+        # prefer representation_type, if not None
+        rep_type = (
+            representation_type
+            if representation_type is not None
+            else self.representation_type
+        )
+
+        # prefer representation_type, if not None
+        rep_type = rep_type if rep_type is not None else c.representation_type
+
+        return resolve_representationlike(rep_type)
+
+    # /def
+
+    @staticmethod
+    def _fix_branch_cuts(
+        array: TH.QuantityType,
+        representation_type: TH.RepresentationType,
+        units: T.Dict[str, TH.UnitType],
+    ) -> TH.QuantityType:
+        """Fix Branch Cuts.
+
+        .. todo::
+
+            In general w/out if statement for each rep type
+
+        Parameters
+        ----------
+        array : (3, N) array |Quantity|
+        representation_type : |Representation| class
+        units : dict
+
+        Returns
+        -------
+        array : |Quantity|
+
+        """
+        # First check if any of the components are angular
+        if not any([v.physical_type == "angle" for v in units.values()]):
+            return array
+
+        elif representation_type is coord.UnitSphericalRepresentation:
+            # longitude is not a problem, but latitude is restricted
+            # to be between -90 and 90 degrees
+            bound = 90 * u.deg.to(units["lat"])  # convert deg to X
+            bad_lat_i = (array[1] < -bound) | (bound < array[1])
+            bad_lat = array[1, bad_lat_i]
+
+            # mirror the bad lats about the pole
+            # and rotate the lons by 180 degrees
+            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
+            array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
+                units["lon"],
+            )
+
+        elif representation_type is coord.SphericalRepresentation:
+            # longitude is not a problem, but latitude is restricted
+            # to be between -90 and 90 degrees
+            bound = 90 * u.deg.to(units["lat"])  # convert deg to X
+            bad_lat_i = (array[1] < -bound) | (bound < array[1])
+            bad_lat = array[1, bad_lat_i]
+
+            # mirror the bad lats about the pole
+            # and rotate the lons by 180 degrees
+            array[1, bad_lat_i] = bound - np.mod(bad_lat + bound, 2 * bound)
+            array[0, bad_lat_i] = array[0, bad_lat_i] + 180 * u.deg.to(
+                units["lon"],
+            )
+
+            # the distance can also be problematic if less than 0
+            # lat -> -lat,
+            bad_d_i = array[2] < 0
+
+            array[2, bad_d_i] = -array[2, bad_d_i]  # positive
+            array[0, bad_d_i] = array[0, bad_d_i] + 180 * u.deg.to(
+                units["lon"],  # + 180
+            )
+            array[1, bad_d_i] = -array[1, bad_d_i]  # flip
+
+        elif representation_type is coord.CylindricalRepresentation:
+            # the distance can also be problematic if less than 0
+            # phi -> -phi,
+            bad_rho_ind = array[0] < 0  # rho
+
+            array[0, bad_rho_ind] = -array[0, bad_rho_ind]  # positive
+            array[1, bad_rho_ind] = array[1, bad_rho_ind] + 180 * u.deg.to(
+                units["phi"],
+            )
+
+        else:
+            raise NotImplementedError(
+                f"{representation_type} is not yet supported.",
+            )
+
+        return array
+
+    # /def
+
 
 # /class
 
@@ -693,7 +693,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         **params,
     ) -> TH.SkyCoordType:
         """Draw a realization given the errors.

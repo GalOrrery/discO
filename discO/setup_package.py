@@ -22,6 +22,10 @@ except ImportError:
 else:
     HAS_AGAMA = True
 
+    agama.setUnits(mass=1, length=1, velocity=1)  # FIXME! bad
+
+# /try
+
 # -------------------------------------
 
 try:
@@ -38,6 +42,8 @@ else:
 
     __config__.set("astropy", "astropy-units", "True")
     __config__.set("astropy", "astropy-coords", "True")
+
+# /try
 
 
 ##############################################################################

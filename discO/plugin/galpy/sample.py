@@ -14,11 +14,13 @@ __all__ = [
 import typing as T
 
 # THIRD PARTY
+import astropy.coordinates as coord
 import numpy as np
 
 # PROJECT-SPECIFIC
+import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
-from discO.type_hints import FrameLikeType
+from discO.utils.random import RandomLike
 
 ##############################################################################
 # CODE
@@ -42,15 +44,28 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
     """
 
     def __init__(
-        self, df, *, frame: T.Optional[FrameLikeType] = None, **kwargs
+        self,
+        df,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        **kwargs
     ):
         # TODO support potential -> df
-        super().__init__(df, frame=frame, **kwargs)
+        super().__init__(
+            df, frame=frame, representation_type=representation_type, **kwargs
+        )
 
     # /def
 
     def __call__(
-        self, n: int = 1, frame: T.Optional[FrameLikeType] = None, **kwargs
+        self,
+        n: int = 1,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        random: RandomLike = None,
+        **kwargs
     ):
         """Sample.
 
@@ -65,27 +80,47 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         Returns
         -------
-        `SkyCoord`
+        :class:`~astropy.coordinates.SkyCoord`
 
         """
         # Get preferred frames
-        frame = self._preferred_frame_resolve(frame)
+        frame = self._infer_frame(frame)
+        representation_type = self._infer_representation(representation_type)
 
-        # can't pass a random seed. TODO set in with statement.s
-        orbits = self._sampler.sample(
-            R=None,
-            z=None,
-            phi=None,
-            n=n,
-            return_orbit=True,
+        # can't pass a random seed, set in context
+        with self._random_context(random):
+            orbits = self._sampler.sample(
+                R=None,
+                z=None,
+                phi=None,
+                n=n,
+                return_orbit=True,
+            )
+
+        t = orbits.time()
+        dif = coord.CartesianDifferential(
+            d_x=orbits.vx(t, use_physical=True),
+            d_y=orbits.vy(t, use_physical=True),
+            d_z=orbits.vz(t, use_physical=True),
+        )
+        rep = coord.CartesianRepresentation(
+            x=orbits.x(t, use_physical=True),
+            y=orbits.y(t, use_physical=True),
+            z=orbits.z(t, use_physical=True),
+            differentials=dict(s=dif),
         )
 
-        # TODO make sure transformation is correct
-        # and better storage of these properties, so stay when transform.
-        samples = orbits.SkyCoord().transform_to(frame)
+        if representation_type is None:
+            representation_type = rep.__class__
+        samples = coord.SkyCoord(
+            frame.realize_frame(rep, representation_type=representation_type),
+            copy=False,
+        )
+
+        # TODO! better storage of these properties, so stay when transform.
         samples.potential = self._sampler
         samples.mass = (  # AGAMA compatibility
-            np.ones(n) * 2 * self._sampler._pot.mass(np.inf) / n
+            np.ones(n) * self._sampler._pot.mass(np.inf) / n
         )
 
         return samples

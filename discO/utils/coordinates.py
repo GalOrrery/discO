@@ -6,6 +6,8 @@
 __all__ = [
     "resolve_framelike",
     "resolve_representationlike",
+    #
+    "UnFrame",
 ]
 
 
@@ -33,6 +35,16 @@ from discO.config import conf
 
 ##############################################################################
 # CODE
+##############################################################################
+
+
+class UnFrame(BaseCoordinateFrame):
+    """Unconnected Coordinate Frame. Does not support transformations."""
+
+
+# /class
+
+
 ##############################################################################
 
 

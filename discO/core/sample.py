@@ -37,29 +37,25 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import itertools
+import abc
+import contextlib
 import typing as T
-import warnings
-from contextlib import nullcontext
 from types import ModuleType
 
 # THIRD PARTY
+import astropy.coordinates as coord
 import numpy as np
-from astropy.coordinates import SkyCoord, concatenate
-from astropy.utils.misc import NumpyRNGContext
 
 # PROJECT-SPECIFIC
+import discO.type_hints as TH
 from .core import CommonBase
-from discO.type_hints import FrameLikeType, SkyCoordType
-from discO.utils import resolve_framelike
+from discO.utils import UnFrame, resolve_framelike, resolve_representationlike
+from discO.utils.random import NumpyRNGContext, RandomLike
 
 ##############################################################################
 # PARAMETERS
 
 SAMPLER_REGISTRY = dict()  # key : sampler
-
-Random_Like = T.Union[int, np.random.Generator, np.random.RandomState, None]
-
 
 ##############################################################################
 # CODE
@@ -73,23 +69,22 @@ class PotentialSampler(CommonBase):
     ----------
     potential
         The potential object.
-    frame : frame-like or None (optional, keyword-only)
-        The preferred frame in which to sample.
+
+    frame: frame-like or None (optional, keyword-only)
+       The frame in which to sample.
+    representation_type: |Representation| or None (optional, keyword-only)
+        The coordinate representation.
 
     Returns
     -------
     `PotentialSampler` or subclass
-        If `return_specific_class` is True, returns subclass.
+        If `key` is not None, returns subclass.
 
     Other Parameters
     ----------------
     key : `~types.ModuleType` or str or None (optional, keyword-only)
         The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
-    return_specific_class : bool (optional, keyword-only)
-        Whether to return a `PotentialSampler` or package-specific subclass.
-        This only applies if instantiating a `PotentialSampler`.
-        Default False.
 
     Raises
     ------
@@ -130,18 +125,17 @@ class PotentialSampler(CommonBase):
         cls,
         potential: T.Any,
         *,
-        frame: T.Optional[FrameLikeType] = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
         key: T.Union[ModuleType, str, None] = None,
-        return_specific_class: bool = False,
+        **kwargs,
     ):
-        self = super().__new__(cls)
-
         # The class PotentialSampler is a wrapper for anything in its registry
         # If directly instantiating a PotentialSampler (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
             # infer the key, to add to registry
-            key = self._infer_package(potential, key).__name__
+            key = cls._infer_package(potential, key).__name__
 
             if key not in cls._registry:
                 raise ValueError(
@@ -150,167 +144,118 @@ class PotentialSampler(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls[key](potential)
-
-            # Whether to return class or subclass
-            # else continue, storing instance
-            if return_specific_class:
-                return instance
-
-            self._instance = instance
+            return super().__new__(cls[key])
 
         elif key is not None:
             raise ValueError(
                 "Can't specify 'key' on PotentialSampler subclasses.",
             )
 
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
-
-        return self
+        return super().__new__(cls)
 
     # /def
 
     # ---------------------------------------------------------------
 
     def __init__(
-        self, potential, *, frame: T.Optional[FrameLikeType] = None, **kwargs
-    ):
+        self,
+        potential: T.Any,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        **kwargs,
+    ) -> None:
         super().__init__()
         self._sampler = potential
-        self._frame = resolve_framelike(frame)
+
+        # frame and representation type
+        # None stays as None
+        self._frame: T.Optional[TH.FrameType] = None
+        self._representation_type: T.Optional[TH.RepresentationType] = None
+        self._frame = self._infer_frame(frame)
+        self._representation_type = self._infer_representation(
+            representation_type,
+        )
 
     # /def
 
     # ---------------------------------------------------------------
 
     @property
-    def frame(self):
+    def frame(self) -> T.Optional[TH.FrameType]:
+        """The frame of the data. Can be None."""
         return self._frame
 
     # /def
 
-    @frame.setter
-    def _(self, value: FrameLikeType):  # TODO type hint and validate
-        # parse str, etc -> empty frame instance
-        newframe = resolve_framelike(value)
-        # set here
-        self._frame = newframe
-        # and might need to set on wrapped stuff
-        if hasattr(self, "_instance"):
-            self._instance.frame = newframe
+    @property
+    def representation_type(self) -> T.Optional[TH.RepresentationType]:
+        """The representation type of the data. Can be None."""
+        return self._representation_type
 
     # /def
 
     #################################################################
     # Sampling
 
+    @abc.abstractmethod
     def __call__(
         self,
         n: int = 1,
         *,
-        frame: T.Optional[FrameLikeType] = None,
-        random: Random_Like = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        random: RandomLike = None,
         **kwargs,
-    ) -> SkyCoordType:
+    ) -> TH.SkyCoordType:
         """Sample.
 
         Parameters
         ----------
         n : int (optional)
             number of samples
-        frame : frame-like or None (optional, keyword-only)
-            output frame of samples
+
+        frame: frame-like or None (optional, keyword-only)
+           The frame of the samples.
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+
         random : int or |RandomGenerator| or None (optional, keyword-only)
+            Random state.
         **kwargs
             passed to underlying instance
 
         Returns
         -------
-        `SkyCoord`
+        :class:`~astropy.coordinates.SkyCoord`
 
         """
-        # call on instance
-        # with NumpyRNGContext(random):
-        if isinstance(random, int):
-            ctx = NumpyRNGContext(random)
-        else:  # None or Generator
-            ctx = nullcontext()
-
-        # Get preferred frame
-        frame = self._preferred_frame_resolve(frame)
-
-        with ctx:
-            return self._instance(n=n, frame=frame, random=random, **kwargs)
+        raise NotImplementedError("Implemented in subclass.")
 
     # /def
 
     # ---------------------------------------------------------------
-
-    def sample_iter(
-        self,
-        niter: int,
-        n: T.Union[int, T.Sequence] = 1,
-        *,
-        frame: T.Optional[FrameLikeType] = None,
-        sample_axis: int = -1,
-        random: Random_Like = None,
-        **kwargs,
-    ):
-        """Draw many samples from the potential.
-
-        Parameters
-        ----------
-        niter : int
-            Number of iterations
-        n : int (optional)
-            number of sample points.
-        frame : frame-like or None (optional, keyword-only)
-            output frame of samples
-        sample_axis : int (optional, keyword-only)
-            allowed values : 0, 1, -1 (default)
-        random : int or |RandomGenerator| or None (optional, keyword-only)
-        **kwargs
-            passed to underlying instance
-
-        Yields
-        ------
-        :class:`~astropy.coordinates.SkyCoord`
-            sample
-
-        """
-        iterniter = range(0, niter)
-        if np.isscalar(n):
-            itersamp = (n,)
-        else:
-            itersamp = n
-
-        values = (iterniter, itersamp)
-        values = (values, values[::-1])[sample_axis]
-
-        for i, j in itertools.product(*values):
-            N = (j, i)[sample_axis]  # todo more efficiently
-            yield self(n=N, frame=frame, random=random, **kwargs)
-
-    # /def
 
     def sample(
         self,
         n: T.Union[int, T.Sequence[int]] = 1,
         niter: int = 1,
         *,
-        frame: T.Optional[FrameLikeType] = None,
-        random: Random_Like = None,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        random: RandomLike = None,
         **kwargs,
-    ):
+    ) -> T.Union[TH.SkyCoordType, T.Sequence[TH.SkyCoordType]]:
         """Sample the potential.
 
         .. todo::
 
-            Subclass SkyCoord and have metadata mass and potential that
+            - Subclass SkyCoord and have metadata mass and potential that
             carry-over. Or embed a SkyCoord in a table with the other
             attributes. or something so that doesn't need continual
             reassignment
+
+            - manage random here?
 
         Parameters
         ----------
@@ -319,11 +264,16 @@ class PotentialSampler(CommonBase):
             Can be a sequence of number of sample points
         niter : int (optional)
             Number of iterations. Must be > 0.
-        frame : frame-like or None (optional, keyword-only)
-            output frame of samples
+
+        frame: frame-like or None (optional, keyword-only)
+           The frame of the samples.
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+
         random : int or |RandomGenerator| or None (optional, keyword-only)
+            Random state or seed.
         **kwargs
-            passed to underlying instance
+            Passed to underlying instance
 
         Returns
         -------
@@ -335,7 +285,7 @@ class PotentialSampler(CommonBase):
         Raises
         ------
         ValueError
-            if number if iterations not greater than 0.
+            If number if iterations not greater than 0.
 
         """
         # -----------
@@ -352,27 +302,41 @@ class PotentialSampler(CommonBase):
         # -----------
         # resampling
 
-        samples = np.empty(len(itersamp), dtype=SkyCoord)
+        # premake array
+        samples = np.empty(len(itersamp), dtype=coord.SkyCoord)
 
+        # iterate thru number of samples
         for i, N in enumerate(itersamp):
             samps = [None] * niter  # premake array
             mass = [None] * niter  # premake array
 
-            for j in range(0, niter):
-                samp = self(n=N, frame=frame, random=random, **kwargs)
+            for j in range(0, niter):  # thru iterations
+                # call sampler
+                samp = self(
+                    n=N,
+                    frame=frame,
+                    representation_type=representation_type,
+                    random=random,
+                    **kwargs,
+                )
+                # store samples & mass
                 samps[j] = samp
                 mass[j] = samp.mass
 
+            # Now need to concatenate iterations
             if j == 0:  # 0-dimensional doesn't need concat
                 sample = samps[0]
             else:
-                sample = concatenate(samps).reshape((N, niter))
+                sample = coord.concatenate(samps).reshape((N, niter))
                 sample.mass = np.vstack(mass).T
                 sample.potential = samp.potential  # all the same
 
+            # concat iters stored in nsamp array
             samples[i] = sample
 
-        if np.isscalar(n):
+        # -----------
+
+        if np.isscalar(n):  # nsamp scalar -> scalar
             return samples[0]
         else:
             return samples
@@ -382,12 +346,15 @@ class PotentialSampler(CommonBase):
     #################################################################
     # utils
 
-    def _preferred_frame_resolve(self, frame: T.Optional[FrameLikeType]):
+    def _infer_frame(
+        self,
+        frame: T.Optional[TH.FrameLikeType],
+    ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
         For frame is None ``resolve_framelike`` returns the default
         frame from the config file. Instead, we want the default
-        frame of the potential.
+        frame of the potential. If that's None, return that.
 
         Parameters
         ----------
@@ -399,10 +366,57 @@ class PotentialSampler(CommonBase):
             Has no data.
 
         """
-        if frame is None:
+        if frame is None:  # get default
             frame = self._frame
 
+        if frame is None:  # still None
+            return UnFrame()  # TODO? move to resolve_framelike
+
         return resolve_framelike(frame)
+
+    # /def
+
+    def _infer_representation(
+        self,
+        representation_type: T.Optional[TH.RepresentationLikeType],
+    ) -> T.Optional[TH.RepresentationType]:
+        """Call `resolve_representation_typelike`, but default to preferred.
+
+        Parameters
+        ----------
+        representation_type : representation-like or None
+
+        Returns
+        -------
+        `~astropy.coordinates.BaseReprentation` subclass
+            Has no data.
+
+        """
+        if representation_type is None:  # get default
+            representation_type = self._representation_type
+
+        if representation_type is None:  # still None
+            return representation_type
+
+        return resolve_representationlike(representation_type)
+
+    # /def
+
+    @staticmethod
+    def _random_context(
+        random: RandomLike,
+    ) -> T.Union[NumpyRNGContext, contextlib.nullcontext]:
+        """Get a random-state context manager.
+
+        This is used to supplement samplers that do not have a random seed.
+
+        """
+        if isinstance(random, int):
+            context = NumpyRNGContext(random)
+        else:  # None or Generator
+            context = contextlib.nullcontext()
+
+        return context
 
     # /def
 

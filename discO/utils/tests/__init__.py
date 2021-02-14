@@ -5,7 +5,8 @@
 
 __all__ = [
     # modules
-    "resolve_framelike_tests",
+    "coordinates_tests",
+    "vectorfield_tests",
 ]
 
 
@@ -13,7 +14,8 @@ __all__ = [
 # IMPORTS
 
 # PROJECT-SPECIFIC
-from . import test_resolve_framelike as resolve_framelike_tests
+from . import test_coordinates as coordinates_tests
+from . import test_vectorfield as vectorfield_tests
 
 ##############################################################################
 # END

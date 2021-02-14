@@ -11,7 +11,6 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import itertools
 from abc import abstractmethod
 
 # THIRD PARTY
@@ -37,9 +36,20 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
-            def __call__(self, n, *, frame=None, random=None, **kwargs):
+            def __call__(
+                self,
+                n,
+                *,
+                frame=None,
+                representation_type=None,
+                random=None,
+                **kwargs
+            ):
                 # Get preferred frames
-                frame = self._preferred_frame_resolve(frame)
+                frame = self._infer_frame(frame)
+                representation_type = self._infer_representation(
+                    representation_type,
+                )
 
                 if random is None:
                     random = np.random
@@ -47,18 +57,27 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     random = np.random.default_rng(random)
 
                 # return
+                rep = coord.UnitSphericalRepresentation(
+                    lon=random.uniform(size=n) * u.deg,
+                    lat=2 * random.uniform(size=n) * u.deg,
+                )
+
+                if representation_type is None:
+                    representation_type = rep.__class__
                 sample = coord.SkyCoord(
-                    coord.ICRS(
-                        ra=random.uniform(size=n) * u.deg,
-                        dec=2 * random.uniform(size=n) * u.deg,
+                    frame.realize_frame(
+                        rep,
+                        representation_type=representation_type,
                     ),
-                ).transform_to(frame)
+                    copy=False,
+                )
                 sample.mass = np.ones(n)
                 sample.potential = cls.potential
 
                 return sample
 
         cls.SubClassUnitTest = SubClassUnitTest
+        # /class
 
         # make instance. It depends.
         if cls.obj is sample.PotentialSampler:
@@ -193,34 +212,11 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
             key, klass = tuple(self.obj._registry.items())[0]
 
-            msamp = self.obj(
-                self.potential,
-                key=key,
-                return_specific_class=True,
-            )
+            msamp = self.obj(self.potential, key=key)
 
             # test class type
             assert isinstance(msamp, klass)
             assert isinstance(msamp, self.obj)
-
-            # test inputs
-            assert msamp._sampler == self.potential
-
-            # ---------------
-            # as wrapper class
-
-            key, klass = tuple(self.obj._registry.items())[0]
-
-            msamp = self.obj(
-                self.potential,
-                key=key,
-                return_specific_class=False,
-            )
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
 
             # test inputs
             assert msamp._sampler == self.potential
@@ -235,16 +231,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 self.obj(self.potential, key="not None")
 
             assert "Can't specify 'key'" in str(e.value)
-
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    self.potential,
-                    key=None,
-                    return_specific_class=True,
-                )
 
             # ---------------
             # AOK
@@ -274,6 +260,22 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     # -------------------------------
 
+    def test_frame(self):
+        """Test method ``frame``."""
+        assert self.inst.frame is self.inst._frame
+
+    # /def
+
+    # -------------------------------
+
+    def test_representation_type(self):
+        """Test method ``representation_type``."""
+        assert self.inst.representation_type is self.inst._representation_type
+
+    # /def
+
+    # -------------------------------
+
     def test___call__(self):
         """Test method ``__call__``.
 
@@ -285,6 +287,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """
         # run tests on super
         super().test___call__()
+
+        # raises error if called
+        if self.obj is sample.PotentialSampler:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst)
+
+            assert "Implemented in subclass." in str(e.value)
 
     # /def
 
@@ -306,76 +316,28 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     # -------------------------------
 
     @pytest.mark.parametrize(
-        "niter, n, frame, sample_axis, random, kwargs",
+        "n, niter, frame, representation, random, kwargs",
         [
-            (1, 2, None, -1, None, {}),  # basic
-            (1, 2, "FK5", -1, None, {}),  # specifying frame
-            (1, 2, None, 0, None, {}),  # sample axis
-            (1, 2, None, 1, None, {}),  # sample axis
-            (1, 2, None, -1, 0, {}),  # random
-            (1, 2, None, -1, np.random.default_rng(0), {}),  # random
-            (1, 2, None, -1, 0, dict(a=1, b=2)),  # adding kwargs
-            (10, 2, None, -1, None, {}),  # larger niters
-            (1, (1, 2), None, -1, None, {}),  # array of n
-            (2, (1, 2), None, -1, None, {}),  # niters and array of n
+            (2, 1, None, None, None, {}),  # basic
+            (2, 1, "FK5", None, None, {}),  # specifying frame
+            (2, 1, None, None, None, {}),  # sample axis
+            (2, 1, None, None, np.random.default_rng(0), {}),  # random
+            (2, 1, None, None, None, dict(a=1, b=2)),  # adding kwargs
+            (2, 10, None, None, None, {}),  # larger niters
+            ((1, 2), 1, None, None, None, {}),  # array of n
+            ((1, 2), 2, None, None, None, {}),  # niters and array of n
         ],
     )
-    def test_sample_iter(self, niter, n, frame, sample_axis, random, kwargs):
-        """Test method ``sample_iter``."""
-        sample_iter = self.inst.sample_iter(
-            niter,
-            n,
+    def test_sample(self, n, niter, frame, representation, random, kwargs):
+        """Test method ``resample``."""
+        # print(n, niter, frame, representation, random, kwargs)
+        samples = self.inst.sample(
+            n=n,
+            niter=niter,
             frame=frame,
-            sample_axis=sample_axis,
+            representation_type=representation,
             random=random,
             **kwargs
-        )
-
-        # ------------
-
-        resolve_frame = self.inst._preferred_frame_resolve
-
-        iterniter = range(0, niter)
-        if np.isscalar(n):
-            itersamp = (n,)
-        else:
-            itersamp = n
-        values = (iterniter, itersamp)
-        values = (values, values[::-1])[sample_axis]
-        Ns = [(j, i)[sample_axis] for i, j in itertools.product(*values)]
-
-        for i, samp in enumerate(sample_iter):
-            assert len(samp) == Ns[i]
-            assert samp.frame.__class__() == resolve_frame(frame)
-
-        # only test the last one b/c want overall len.
-        assert (i + 1) == niter * len(itersamp)
-
-    # /def
-
-    # TODO! need to test the iteration order, and stuff in sample_iter
-
-    # -------------------------------
-
-    @pytest.mark.parametrize(
-        "n, niter, frame, random, kwargs",
-        [
-            (2, 1, None, None, {}),  # basic
-            (2, 1, "FK5", None, {}),  # specifying frame
-            (2, 1, None, None, {}),  # sample axis
-            (2, 1, None, None, {}),  # sample axis
-            (2, 1, None, None, {}),  # random
-            (2, 1, None, np.random.default_rng(0), {}),  # random
-            (2, 1, None, None, dict(a=1, b=2)),  # adding kwargs
-            (2, 10, None, None, {}),  # larger niters
-            ((1, 2), 1, None, None, {}),  # array of n
-            ((1, 2), 2, None, None, {}),  # niters and array of n
-        ],
-    )
-    def test_sample(self, n, niter, frame, random, kwargs):
-        """Test method ``resample``."""
-        samples = self.inst.sample(
-            n=n, niter=niter, frame=frame, random=random, **kwargs
         )
         if isinstance(samples, np.ndarray):
             for s, n_ in zip(samples, n):
@@ -400,19 +362,57 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     # -------------------------------
 
-    def test__preferred_frame_resolve(self):
-        """Test method ``_preferred_frame_resolve``."""
+    def test__infer_frame(self):
+        """Test method ``_infer_frame``."""
         # None -> own frame
-        assert self.inst._preferred_frame_resolve(None) == self.inst._frame
+        assert self.inst._infer_frame(None) == self.inst._frame
 
         # own frame is passed through
-        assert (
-            self.inst._preferred_frame_resolve(self.inst._frame)
-            == self.inst._frame
-        )
+        assert self.inst._infer_frame(self.inst._frame) == self.inst._frame
 
         # "icrs"
-        assert self.inst._preferred_frame_resolve("icrs") == self.inst._frame
+        assert self.inst._infer_frame("icrs") == coord.ICRS()
+
+    # /def
+
+    # -------------------------------
+
+    def test__infer_representation(self):
+        """Test method ``_infer_representation``."""
+        # ----------------
+        # None -> own frame
+
+        assert (
+            self.inst._infer_representation(None)
+            == self.inst._representation_type
+        )
+
+        # ----------------
+        # still None
+
+        old_representation_type = self.inst._representation_type
+        self.inst._representation_type = None
+        assert self.inst._infer_representation(None) is None
+        self.inst._representation_type = old_representation_type
+
+        # ----------------
+
+        assert (
+            self.inst._infer_representation(coord.CartesianRepresentation)
+            is coord.CartesianRepresentation
+        )
+
+        assert (
+            self.inst._infer_representation(
+                coord.CartesianRepresentation((1, 2, 3)),
+            )
+            == coord.CartesianRepresentation
+        )
+
+        assert (
+            self.inst._infer_representation("cartesian")
+            == coord.CartesianRepresentation
+        )
 
     # /def
 

@@ -18,7 +18,10 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.config import conf
-from discO.utils import resolve_framelike, resolve_representationlike
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # TESTS
