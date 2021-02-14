@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""**DOCSTRING**.
-
-Description.
-
-"""
+"""Random Number Generators."""
 
 __all__ = [
     "NumpyRNGContext",
@@ -23,7 +19,6 @@ import numpy as np
 
 ##############################################################################
 # PARAMETERS
-
 
 RandomLike = T.Union[int, np.random.RandomState, None]
 

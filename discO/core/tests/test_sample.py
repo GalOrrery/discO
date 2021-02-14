@@ -67,8 +67,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     representation_type = rep.__class__
                 sample = coord.SkyCoord(
                     frame.realize_frame(
-                        rep,
-                        representation_type=representation_type,
+                        rep, representation_type=representation_type,
                     ),
                     copy=False,
                 )
@@ -261,6 +260,22 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     # -------------------------------
 
+    def test_frame(self):
+        """Test method ``frame``."""
+        assert self.inst.frame is self.inst._frame
+
+    # /def
+
+    # -------------------------------
+
+    def test_representation_type(self):
+        """Test method ``representation_type``."""
+        assert self.inst.representation_type is self.inst._representation_type
+
+    # /def
+
+    # -------------------------------
+
     def test___call__(self):
         """Test method ``__call__``.
 
@@ -272,6 +287,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """
         # run tests on super
         super().test___call__()
+
+        # raises error if called
+        if self.obj is sample.PotentialSampler:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst)
+
+            assert "Implemented in subclass." in str(e.value)
 
     # /def
 
