@@ -38,18 +38,18 @@ __all__ = [
 
 # BUILT-IN
 import abc
-import typing as T
 import contextlib
+import typing as T
 from types import ModuleType
 
 # THIRD PARTY
-import numpy as np
 import astropy.coordinates as coord
+import numpy as np
 
 # PROJECT-SPECIFIC
-from .core import CommonBase
 import discO.type_hints as TH
-from discO.utils import resolve_framelike, resolve_representationlike, UnFrame
+from .core import CommonBase
+from discO.utils import UnFrame, resolve_framelike, resolve_representationlike
 from discO.utils.random import NumpyRNGContext, RandomLike
 
 ##############################################################################
@@ -174,7 +174,7 @@ class PotentialSampler(CommonBase):
         self._representation_type: T.Optional[TH.RepresentationType] = None
         self._frame = self._infer_frame(frame)
         self._representation_type = self._infer_representation(
-            representation_type
+            representation_type,
         )
 
     # /def
@@ -347,7 +347,8 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_frame(
-        self, frame: T.Optional[TH.FrameLikeType]
+        self,
+        frame: T.Optional[TH.FrameLikeType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -376,7 +377,8 @@ class PotentialSampler(CommonBase):
     # /def
 
     def _infer_representation(
-        self, representation_type: T.Optional[TH.RepresentationLikeType]
+        self,
+        representation_type: T.Optional[TH.RepresentationLikeType],
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 

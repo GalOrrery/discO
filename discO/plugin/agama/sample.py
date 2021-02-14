@@ -80,7 +80,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
         if np.shape(pos)[1] == 6:
             pos, vel = pos[:, :3], pos[:, 3:]  # TODO: vel
             differentials = dict(
-                s=coord.CartesianDifferential(*vel.T * u.km / u.s)
+                s=coord.CartesianDifferential(*vel.T * u.km / u.s),
             )
         else:
             differentials = None

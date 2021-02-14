@@ -18,7 +18,7 @@ __all__ = [
 
 # PROJECT-SPECIFIC
 from . import vectorfield
-from .coordinates import resolve_framelike, resolve_representationlike, UnFrame
+from .coordinates import UnFrame, resolve_framelike, resolve_representationlike
 from .random import NumpyRNGContext
 from .vectorfield import *  # noqa: F401, F403
 

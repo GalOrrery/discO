@@ -125,7 +125,8 @@ def resolve_representationlike(
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(
-        representation, BaseRepresentation,
+        representation,
+        BaseRepresentation,
     ):
         pass
 

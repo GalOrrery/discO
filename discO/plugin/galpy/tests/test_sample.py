@@ -28,7 +28,8 @@ from discO.plugin.galpy import sample
 
 
 class Test_GalpyPotentialSampler(
-    Test_PotentialSampler, obj=sample.GalpyPotentialSampler,
+    Test_PotentialSampler,
+    obj=sample.GalpyPotentialSampler,
 ):
     @classmethod
     def setup_class(cls):

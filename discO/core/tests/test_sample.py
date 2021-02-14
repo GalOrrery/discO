@@ -49,7 +49,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 # Get preferred frames
                 frame = self._infer_frame(frame)
                 representation_type = self._infer_representation(
-                    representation_type
+                    representation_type,
                 )
 
                 if random is None:
@@ -67,7 +67,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     representation_type = rep.__class__
                 sample = coord.SkyCoord(
                     frame.realize_frame(
-                        rep, representation_type=representation_type
+                        rep,
+                        representation_type=representation_type,
                     ),
                     copy=False,
                 )
@@ -212,7 +213,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
             key, klass = tuple(self.obj._registry.items())[0]
 
-            msamp = self.obj(self.potential, key=key,)
+            msamp = self.obj(self.potential, key=key)
 
             # test class type
             assert isinstance(msamp, klass)
@@ -380,7 +381,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         assert (
             self.inst._infer_representation(
-                coord.CartesianRepresentation((1, 2, 3))
+                coord.CartesianRepresentation((1, 2, 3)),
             )
             == coord.CartesianRepresentation
         )

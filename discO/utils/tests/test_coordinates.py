@@ -138,7 +138,9 @@ class Test_resolve_representationlike:
 
         # replicates without data
         c = coord.SphericalRepresentation(
-            lon=1 * u.deg, lat=2 * u.deg, distance=3 * u.kpc,
+            lon=1 * u.deg,
+            lat=2 * u.deg,
+            distance=3 * u.kpc,
         )
         assert (
             resolve_representationlike(representation=c)
