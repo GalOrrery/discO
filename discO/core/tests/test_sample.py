@@ -11,7 +11,6 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import itertools
 from abc import abstractmethod
 
 # THIRD PARTY
@@ -67,7 +66,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     representation_type = rep.__class__
                 sample = coord.SkyCoord(
                     frame.realize_frame(
-                        rep, representation_type=representation_type,
+                        rep,
+                        representation_type=representation_type,
                     ),
                     copy=False,
                 )

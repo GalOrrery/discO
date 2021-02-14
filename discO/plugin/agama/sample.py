@@ -12,7 +12,6 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
-from contextlib import nullcontext
 
 # THIRD PARTY
 import astropy.coordinates as coord

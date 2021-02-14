@@ -88,10 +88,10 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + Takes a ``potential`` and a ``frame`` (astropy CoordinateFrame). The
       potential is used for sampling, but the resulting points are not located
       in any reference frame, which we assign with ``frame``.
+    + Can also specify representation type [#43]
     + ``__call__`` and ``sample`` are used to sample the potential
     + ``sample`` samples the potential many times. This
       can be done for many iterations and different sample number points.
-    + ``sample_iter`` samples the potential many times as a generator.
 
 
 **discO.core.measurement**
@@ -222,10 +222,16 @@ discO.utils
 
     Determine the representation type given a class, instance, or string name.
 
+- ``UnFrame`` : unconnected generic coordinate frame [#43]
+
+  + For use when no reference frame is specified.
+
 - vector fields [#35]
 
     For transforming vector fields between coordinate systems (eg Cartesian to spherical).
     Built on top of Astropy's Representation machinery.
+
+- ``NumpyRNGContext`` : astropy's, extended to ``RandomState`` s [#43]
 
 
 API Changes

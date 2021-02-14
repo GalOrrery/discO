@@ -72,7 +72,7 @@ class Test_NumpyRNGContext(ObjectTest, obj=random.NumpyRNGContext):
             assert np.allclose(
                 ns,
                 np.array(
-                    [0.4359949, 0.02592623, 0.54966248, 0.43532239, 0.4203678]
+                    [0.4359949, 0.02592623, 0.54966248, 0.43532239, 0.4203678],
                 ),
             )
 
@@ -82,7 +82,13 @@ class Test_NumpyRNGContext(ObjectTest, obj=random.NumpyRNGContext):
             assert np.allclose(
                 ns,
                 np.array(
-                    [0.5507979, 0.70814782, 0.29090474, 0.51082761, 0.89294695]
+                    [
+                        0.5507979,
+                        0.70814782,
+                        0.29090474,
+                        0.51082761,
+                        0.89294695,
+                    ],
                 ),
             )
 
