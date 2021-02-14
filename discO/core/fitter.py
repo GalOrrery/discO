@@ -66,8 +66,7 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls,
-        key: T.Union[str, ModuleType, None] = None,
+        cls, key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -96,7 +95,6 @@ class PotentialFitter(CommonBase):
         potential_cls: T.Any,
         *,
         key: T.Union[ModuleType, str, None] = None,
-        return_specific_class: bool = False,
         **kwargs,  # includes frame
     ):
         self = super().__new__(cls)
@@ -115,27 +113,12 @@ class PotentialFitter(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            # some subclasses accept the potential_cls as an argument,
-            # others do not.
-            subcls = cls._registry[key]
-            sig = inspect.signature(subcls)
-            ba = sig.bind_partial(potential_cls=potential_cls, **kwargs)
-            ba.apply_defaults()
-
-            instance = cls._registry[key](*ba.args, **ba.kwargs)
-
-            if return_specific_class:
-                return instance
-
-            self._instance = instance
+            return cls._registry[key]
 
         elif key is not None:
             raise ValueError(
                 "Can't specify 'key' on PotentialFitter subclasses.",
             )
-
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
 
         return self
 
@@ -146,13 +129,14 @@ class PotentialFitter(CommonBase):
         potential_cls: T.Any,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
         **kwargs,
     ):
         self._fitter: T.Any = potential_cls
         self._frame: T.Optional[TH.FrameLikeType] = frame
+        self._representation_type = representation_type
 
-        if not hasattr(self, "_instance"):
-            self._kwargs: T.Dict[str, T.Any] = kwargs
+        self._kwargs: T.Dict[str, T.Any] = kwargs
 
     # /def
 
@@ -170,24 +154,24 @@ class PotentialFitter(CommonBase):
 
     @property
     def potential_kwargs(self):
-        if hasattr(self, "_instance"):
-            kwargs = self._instance.potential_kwargs
-        else:
-            kwargs = MappingProxyType(self._kwargs)
-
-        return kwargs
+        return MappingProxyType(self._kwargs)
 
     # /def
 
     #######################################################
     # Fitting
 
-    def __call__(self, sample: TH.CoordinateType, **kwargs) -> object:
+    def __call__(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
+    ) -> object:
         """Fit a potential given the data.
 
         Parameters
         ----------
-        sample : :class:`~astropy.coordinates.SkyCoord` instance
+        c : :class:`~astropy.coordinates.SkyCoord` instance
         **kwargs
             passed to underlying instance
 
@@ -196,22 +180,21 @@ class PotentialFitter(CommonBase):
         Potential : object
 
         """
-        # call on instance
-        potential = self._instance(
-            sample,
-            # c_err=c_err,
-            **kwargs,
-        )
-
-        return (
-            PotentialWrapper(potential, frame=self.frame)
-            if not isinstance(potential, PotentialWrapper)
-            else potential
-        )
+        # return (
+        #     PotentialWrapper(potential, frame=self.frame)
+        #     if not isinstance(potential, PotentialWrapper)
+        #     else potential
+        # )
+        raise NotImplementedError()
 
     # /def
 
-    def fit(self, sample: TH.CoordinateType, **kwargs) -> object:
+    def fit(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
+    ) -> object:
         """Fit.
 
         .. todo::
@@ -245,12 +228,12 @@ class PotentialFitter(CommonBase):
         # (niter, nsamp) -> iter on niter
         for i, (samp, mass) in enumerate(zip(sample.T, sample.mass.T)):
             samp.mass, samp.potential = mass, sample.potential
-            fits[i] = self(samp, **kwargs)
+            fits[i] = self(samp, mass=mass, **kwargs)
 
         if niter == 1:
             return fits[0]
-        else:
-            return fits
+        # else:
+        return fits
 
     # /def
 

@@ -272,7 +272,7 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=core.PotentialWrapperMeta):
                 representation_type=TypeError,
             )
 
-        assert "<Representation, str, or None>" in str(e.value)
+        assert "Input representation must be" in str(e.value)
 
         # ---------------
         # frame is None and points is Representation

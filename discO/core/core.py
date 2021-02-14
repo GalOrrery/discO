@@ -31,7 +31,7 @@ from astropy.utils.misc import indent
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from discO.utils import resolve_framelike
+from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
@@ -105,18 +105,8 @@ class PotentialWrapperMeta(ABCMeta):
 
         if representation_type is None:
             rep_type = from_rep
-        elif inspect.isclass(representation_type) and issubclass(
-            representation_type,
-            coord.BaseRepresentation,
-        ):
-            rep_type = representation_type
-        elif isinstance(representation_type, str):
-            rep_type = _REP_CLSs[representation_type]
         else:
-            raise TypeError(
-                f"representation_type is <{type(representation_type)}> not "
-                "<Representation, str, or None>.",
-            )
+            rep_type = resolve_representationlike(representation_type)
 
         # -----------
         # to frame
@@ -361,7 +351,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         # the "intrinsic" frame of the potential.
         # keep None as None, resolve else-wise.
         # TODO the UnFrame
-        self._frame = resolve_framelike(frame) if frame is not None else frame
+        self._frame = resolve_framelike(frame) if frame is not None else None
 
     # /def
 
@@ -665,9 +655,11 @@ class CommonBase(metaclass=ABCMeta):
     @classproperty
     def registry(cls) -> T.Mapping:
         """The class registry."""
+        # registry is a property on own class
         if isinstance(cls._registry, property):
             return None
 
+        # else, filter registry by subclass
         return MappingProxyType(
             {
                 k: v

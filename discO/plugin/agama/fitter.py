@@ -47,11 +47,7 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # On the instance
 
     def __new__(
-        cls,
-        *,
-        pot_type: T.Optional[str] = None,
-        return_specific_class: bool = False,
-        **kwargs,
+        cls, potential_cls: T.Optional[str] = None, **kwargs,
     ):
         self = super().__new__(cls, agama.Potential)
 
@@ -61,27 +57,19 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         # if can't find.
         if cls is AGAMAPotentialFitter:
 
-            if pot_type not in cls._registry:
+            if potential_cls not in cls._registry:
                 raise ValueError(
-                    "PotentialFitter has no registered fitter for `pot_type`: "
-                    f"{pot_type}",
+                    "PotentialFitter has no registered fitter for "
+                    f"`potential_cls`: {potential_cls}",
                 )
 
             # from registry. Registered in __init_subclass__
-            instance = cls._registry[pot_type](**kwargs)
+            return cls._registry[potential_cls]
 
-            if return_specific_class:
-                return instance
-
-            self._instance = instance
-
-        elif pot_type is not None:
+        elif potential_cls is not None:
             raise ValueError(
-                "Can't specify 'pot_type' on PotentialFitter subclasses.",
+                "Can't specify 'potential_cls' on PotentialFitter subclasses.",
             )
-
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
 
         return self
 
@@ -89,21 +77,27 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
     def __init__(
         self,
-        pot_type: T.Optional[str] = None,
+        potential_cls: T.Optional[str] = None,
+        *,
         frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
         symmetry: str = "a",
         **kwargs,
     ) -> None:
-        super().__init__(agama.Potential, frame=frame)
+        super().__init__(
+            agama.Potential,
+            frame=frame,
+            representation_type=representation_type,
+        )
 
-        if pot_type is None:
-            raise ValueError("must specify a `pot_type`")
+        if potential_cls is None:
+            raise ValueError("must specify a `potential_cls`")
 
         if self.__class__ is AGAMAPotentialFitter:
             self._kwargs = MappingProxyType(self._instance._kwargs)
         else:
             self._kwargs = {
-                "type": pot_type,
+                "type": potential_cls,
                 "symmetry": symmetry,
                 **kwargs,
             }
@@ -114,13 +108,13 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # Fitting
 
     def __call__(
-        self, c: TH.CoordinateType, **kwargs
+        self, sample: TH.CoordinateType, mass: T.Optional[TH.QuantityType] = None, **kwargs
     ) -> AGAMAPotentialWrapper:
         """Fit Potential given particles.
 
         Parameters
         ----------
-        c : coord-like
+        sample : coord-like
 
         Returns
         -------
@@ -128,9 +122,10 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
         """
 
-        position = c.represent_as(coord.CartesianRepresentation).xyz.T
+        position = sample.represent_as(coord.CartesianRepresentation).xyz.T
         # TODO! velocities
-        mass = c.mass  # TODO! what if don't have? have as parameter?
+        if mass is None:
+            mass = sample.mass  # TODO! what if don't have? have as parameter?
 
         particles = (position, mass)
 
@@ -140,7 +135,11 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
         potential = self._fitter(particles=particles, **kw)
 
-        return AGAMAPotentialWrapper(potential, frame=self.frame)
+        return AGAMAPotentialWrapper(
+            potential,
+            frame=self.frame,
+            representation_type=self.representation_type,
+        )
 
     # /def
 
@@ -166,7 +165,9 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
 
     def __init__(
         self,
+        *,
         frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
         symmetry: str = "a",
         gridsizeR: int = 20,
         lmax: int = 2,
@@ -175,6 +176,7 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
         kwargs.pop("pot_type", None)  # clear from kwargs
         super().__init__(
             frame=frame,
+            representation_type=representation_type,
             pot_type="Multipole",
             symmetry=symmetry,
             gridsizeR=gridsizeR,
