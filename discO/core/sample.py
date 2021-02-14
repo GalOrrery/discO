@@ -355,7 +355,8 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_frame(
-        self, frame: T.Optional[TH.FrameLikeType],
+        self,
+        frame: T.Optional[TH.FrameLikeType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -384,7 +385,8 @@ class PotentialSampler(CommonBase):
     # /def
 
     def _infer_representation(
-        self, representation_type: T.Optional[TH.RepresentationLikeType],
+        self,
+        representation_type: T.Optional[TH.RepresentationLikeType],
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 

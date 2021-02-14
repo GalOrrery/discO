@@ -60,7 +60,10 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # On the instance
 
     def __new__(
-        cls, *, potential_cls: T.Optional[str] = None, **kwargs,
+        cls,
+        *,
+        potential_cls: T.Optional[str] = None,
+        **kwargs,
     ):
         # The class AGAMAPotentialFitter is a wrapper for anything in its
         # registry If directly instantiating a AGAMAPotentialFitter (not

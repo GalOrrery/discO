@@ -71,7 +71,8 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -140,9 +141,9 @@ class PotentialFitter(CommonBase):
         **kwargs,
     ):
         self._fitter: T.Any = potential_cls
-        self._frame: T.Optional[
-            TH.FrameLikeType
-        ] = None if frame is None else resolve_framelike(frame)
+        self._frame: T.Optional[TH.FrameLikeType] = (
+            None if frame is None else resolve_framelike(frame)
+        )
         self._representation_type: T.Optional[TH.RepresentationLikeType] = (
             resolve_representationlike(representation_type)
             if representation_type is not None

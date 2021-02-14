@@ -48,7 +48,7 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
     ----------------
     key : str or None
 
-    
+
 
     """
 

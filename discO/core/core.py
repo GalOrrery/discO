@@ -21,9 +21,6 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import astropy.coordinates as coord
 import typing_extensions as TE
-from astropy.coordinates.representation import (
-    REPRESENTATION_CLASSES as _REP_CLSs,
-)
 from astropy.utils import sharedmethod
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
