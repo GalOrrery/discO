@@ -256,31 +256,11 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             msamp = self.obj(
                 self.potential,
                 key="unittest",
-                return_specific_class=True,
             )
 
             # test class type
             assert isinstance(msamp, klass)
             assert isinstance(msamp, self.obj)
-
-            # test inputs
-            assert msamp._fitter == self.potential
-
-            # ---------------
-            # as wrapper class
-
-            klass = self.obj._registry["unittest"]
-
-            msamp = self.obj(
-                self.potential,
-                key="unittest",
-                return_specific_class=False,
-            )
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
 
             # test inputs
             assert msamp._fitter == self.potential
@@ -301,16 +281,6 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
                 self.obj(*ba.args, **ba.kwargs)
 
             assert "Can't specify 'key'" in str(e.value)
-
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    self.potential,
-                    key=None,
-                    return_specific_class=True,
-                )
 
             # ---------------
             # AOK

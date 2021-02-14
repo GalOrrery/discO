@@ -144,7 +144,15 @@ class PotentialSampler(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            return super().__new__(cls[key])
+            kls = cls[key]
+            return kls.__new__(
+                kls,
+                potential,
+                key=None,
+                frame=frame,
+                representation_type=representation_type,
+                **kwargs,
+            )
 
         elif key is not None:
             raise ValueError(
@@ -347,8 +355,7 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_frame(
-        self,
-        frame: T.Optional[TH.FrameLikeType],
+        self, frame: T.Optional[TH.FrameLikeType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -377,8 +384,7 @@ class PotentialSampler(CommonBase):
     # /def
 
     def _infer_representation(
-        self,
-        representation_type: T.Optional[TH.RepresentationLikeType],
+        self, representation_type: T.Optional[TH.RepresentationLikeType],
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 

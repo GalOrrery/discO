@@ -13,7 +13,6 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
-import warnings
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -36,7 +35,21 @@ AGAMA_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
 
 
 class AGAMAPotentialFitter(PotentialFitter, key="agama"):
-    """Fit a set of particles"""
+    """Fit a set of particles with an AGAMA potential.
+
+    Parameters
+    ----------
+    potential_cls : str or None
+
+    frame: frame-like or None (optional, keyword-only)
+       The frame of the observational errors, ie the frame in which
+        the error function should be applied along each dimension.
+    representation_type: |Representation| or None (optional, keyword-only)
+        The coordinate representation in which to resample along each
+        dimension.
+
+
+    """
 
     #######################################################
     # On the class
@@ -47,10 +60,8 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # On the instance
 
     def __new__(
-        cls, potential_cls: T.Optional[str] = None, **kwargs,
+        cls, *, potential_cls: T.Optional[str] = None, **kwargs,
     ):
-        self = super().__new__(cls, agama.Potential)
-
         # The class AGAMAPotentialFitter is a wrapper for anything in its
         # registry If directly instantiating a AGAMAPotentialFitter (not
         # subclass) we must also instantiate the appropriate subclass. Error
@@ -64,21 +75,22 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
                 )
 
             # from registry. Registered in __init_subclass__
-            return cls._registry[potential_cls]
+            kls = cls._registry[potential_cls]
+            return kls.__new__(kls, potential_cls=None, **kwargs)
 
         elif potential_cls is not None:
             raise ValueError(
-                "Can't specify 'potential_cls' on PotentialFitter subclasses.",
+                f"Can't specify 'potential_cls' on {cls.__name__}.",
             )
 
-        return self
+        return super().__new__(cls, agama.Potential, **kwargs)
 
     # /def
 
     def __init__(
         self,
-        potential_cls: T.Optional[str] = None,
         *,
+        potential_cls: str,
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
         symmetry: str = "a",
@@ -108,7 +120,10 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # Fitting
 
     def __call__(
-        self, sample: TH.CoordinateType, mass: T.Optional[TH.QuantityType] = None, **kwargs
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
     ) -> AGAMAPotentialWrapper:
         """Fit Potential given particles.
 
@@ -155,9 +170,19 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
 
     Parameters
     ----------
-    symmetry : str
+    frame: frame-like or None (optional, keyword-only)
+       The frame of the observational errors, ie the frame in which
+        the error function should be applied along each dimension.
+    representation_type: |Representation| or None (optional, keyword-only)
+        The coordinate representation in which to resample along each
+        dimension.
+
+    symmetry : str (optional)
+        The symmetry of the potential. See AGAMA reference.
     gridsizeR : int (optional)
+        See AGAMA reference.
     lmax : int (optional)
+        See AGAMA reference.
     **kwargs
         Passed to :class:`~agama.Potential`
 
@@ -170,14 +195,17 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
         representation_type: T.Optional[TH.RepresentationType] = None,
         symmetry: str = "a",
         gridsizeR: int = 20,
-        lmax: int = 2,
+        lmax: int = 10,
         **kwargs,
     ) -> None:
-        kwargs.pop("pot_type", None)  # clear from kwargs
+        # pop what we shouldn't pass
+        kwargs.pop("potential_cls", None)
+        kwargs.pop("key", None)
+        # initialize
         super().__init__(
+            potential_cls="Multipole",
             frame=frame,
             representation_type=representation_type,
-            pot_type="Multipole",
             symmetry=symmetry,
             gridsizeR=gridsizeR,
             lmax=lmax,

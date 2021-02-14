@@ -18,9 +18,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import inspect
 import typing as T
-import warnings
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
@@ -28,7 +26,11 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .core import CommonBase, PotentialWrapper
+from .core import CommonBase
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # PARAMETERS
@@ -48,15 +50,18 @@ class PotentialFitter(CommonBase):
     potential_cls
         The type of potential with which to fit the data.
 
+    frame: frame-like or None (optional, keyword-only)
+       The frame of the observational errors, ie the frame in which
+        the error function should be applied along each dimension.
+    representation_type: |Representation| or None (optional, keyword-only)
+        The coordinate representation in which to resample along each
+        dimension.
+
     Other Parameters
     ----------------
     key : `~types.ModuleType` or str or None (optional, keyword-only)
         The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
-    return_specific_class : bool (optional, keyword-only)
-        Whether to return a `PotentialSampler` or key-specific subclass.
-        This only applies if instantiating a `PotentialSampler`.
-        Default False.
 
     """
 
@@ -97,14 +102,12 @@ class PotentialFitter(CommonBase):
         key: T.Union[ModuleType, str, None] = None,
         **kwargs,  # includes frame
     ):
-        self = super().__new__(cls)
-
         # The class PotentialFitter is a wrapper for anything in its registry
         # If directly instantiating a PotentialFitter (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialFitter:
             # infer the key, to add to registry
-            key: str = self._infer_package(potential_cls, key).__name__
+            key: str = cls._infer_package(potential_cls, key).__name__
 
             if key not in cls._registry:
                 raise ValueError(
@@ -113,14 +116,18 @@ class PotentialFitter(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            return cls._registry[key]
+            kls = cls._registry[key]
+            kwargs.pop("key", None)  # it's already used.
+            return kls.__new__(
+                kls, potential_cls=potential_cls, key=None, **kwargs
+            )
 
         elif key is not None:
             raise ValueError(
                 "Can't specify 'key' on PotentialFitter subclasses.",
             )
 
-        return self
+        return super().__new__(cls)
 
     # /def
 
@@ -133,9 +140,19 @@ class PotentialFitter(CommonBase):
         **kwargs,
     ):
         self._fitter: T.Any = potential_cls
-        self._frame: T.Optional[TH.FrameLikeType] = frame
-        self._representation_type = representation_type
+        self._frame: T.Optional[
+            TH.FrameLikeType
+        ] = None if frame is None else resolve_framelike(frame)
+        self._representation_type: T.Optional[TH.RepresentationLikeType] = (
+            resolve_representationlike(representation_type)
+            if representation_type is not None
+            else None
+        )
 
+        # ----------------
+        # kwargs
+        # start by jettisoning baggage
+        kwargs.pop("key", None)
         self._kwargs: T.Dict[str, T.Any] = kwargs
 
     # /def
@@ -149,6 +166,13 @@ class PotentialFitter(CommonBase):
     def frame(self) -> T.Optional[TH.FrameLikeType]:
         """The frame of the potential"""
         return self._frame
+
+    # /def
+
+    @property
+    def representation_type(self) -> T.Optional[TH.RepresentationType]:
+        """The representation type of the potential."""
+        return self._representation_type
 
     # /def
 

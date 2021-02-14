@@ -171,7 +171,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
                 )
 
             # from registry. Registered in __init_subclass__
-            return super().__new__(cls[method])
+            kls = cls[method]
+            return kls.__new__(kls)
 
         elif method is not None:
             raise ValueError(
@@ -328,8 +329,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
             # need to determine how c_err should be distributed.
             if isinstance(
-                c_err,
-                (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
+                c_err, (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
             ):
                 Nerr, *nerriter = c_err.shape
                 nerriter = (nerriter or [1])[0]  # [] -> 1
@@ -377,9 +377,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     # /def
 
     def _parse_c_err(
-        self,
-        c_err: T.Optional[CERR_Type],
-        c: TH.CoordinateType,
+        self, c_err: T.Optional[CERR_Type], c: TH.CoordinateType,
     ) -> np.ndarray:
         """Parse ``c_err``, given ``c``.
 
@@ -435,9 +433,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     # /def
 
     def _resolve_frame(
-        self,
-        frame: T.Optional[TH.RepresentationType],
-        c: TH.SkyCoordType,
+        self, frame: T.Optional[TH.RepresentationType], c: TH.SkyCoordType,
     ) -> TH.FrameType:
         """Resolve, given coordinate and passed value.
 
@@ -661,9 +657,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         **kwargs,
     ) -> None:
         super().__init__(
-            c_err=c_err,
-            frame=frame,
-            **kwargs,
+            c_err=c_err, frame=frame, **kwargs,
         )
         self._rvs = rvs
         self._rvs_sig = inspect.signature(rvs.rvs)
@@ -767,8 +761,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # get "cc" into the correct representation type
         representation_type = self._resolve_representation_type(
-            representation_type,
-            cc,
+            representation_type, cc,
         )
         rep = cc.data.represent_as(representation_type)
         cc = cc.realize_frame(rep, representation_type=representation_type)
@@ -782,8 +775,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # loc, must be ndarray
         pos = rep._values.view(dtype=np.float64).reshape(
-            rep.shape[0],
-            -1,
+            rep.shape[0], -1,
         )  # shape=Nx3
         # scale, from `c_err`
         scale = self._parse_c_err(c_err, cc)
@@ -815,14 +807,12 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # make coordinate
         new_cc = frame.realize_frame(
-            new_rep,
-            representation_type=c.representation_type,
+            new_rep, representation_type=c.representation_type,
         )
 
         # make SkyCoord from new realization, preserving original shape
         new_c = SkyCoord(
-            new_cc.transform_to(c.frame).reshape(c.shape),
-            copy=False,
+            new_cc.transform_to(c.frame).reshape(c.shape), copy=False,
         )
 
         # need to transfer metadata.
@@ -876,11 +866,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         **kwargs,
     ):
         return super().__new__(
-            cls,
-            rvs,
-            c_err=c_err,
-            method=method,
-            **kwargs,  # distribution
+            cls, rvs, c_err=c_err, method=method, **kwargs,  # distribution
         )
 
     # /def
@@ -899,10 +885,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
             raise ValueError("rvs must be a Normal type.")
 
         super().__init__(
-            rvs,
-            c_err=c_err,
-            frame=frame,
-            **params,
+            rvs, c_err=c_err, frame=frame, **params,
         )
 
     # /def

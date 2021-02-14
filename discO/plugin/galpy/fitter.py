@@ -37,7 +37,20 @@ GALPY_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
 
 
 class GalpyPotentialFitter(PotentialFitter, key="galpy"):
-    """Fit a set of particles"""
+    """Fit a set of particles with Galpy.
+
+    Parameters
+    ----------
+    potential_cls : object or str or None
+
+
+    Other Parameters
+    ----------------
+    key : str or None
+
+    
+
+    """
 
     #######################################################
     # On the class
@@ -48,15 +61,20 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
     # On the instance
 
     def __new__(
-        cls, potential_cls: T.Any, *, key: T.Optional[str] = None, **kwargs,
+        cls,
+        *,
+        potential_cls: T.Any = None,
+        key: T.Optional[str] = None,
+        **kwargs,
     ):
-        self = super().__new__(cls, potential_cls, key=None, **kwargs)
-
         # The class GalpyPotentialFitter is a wrapper for anything in its
         # registry If directly instantiating a GalpyPotentialFitter (not
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
         if cls is GalpyPotentialFitter:
+
+            # potential_cls overrides key
+            key = potential_cls if isinstance(potential_cls, str) else key
 
             if key not in cls._registry:
                 raise ValueError(
@@ -65,14 +83,19 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
                 )
 
             # from registry. Registered in __init_subclass__
-            return cls._registry[key]
+            kls = cls._registry[key]
+            return kls.__new__(
+                kls, potential_cls=potential_cls, key=None, **kwargs
+            )
 
         elif key is not None:
             raise ValueError(
                 "Can't specify 'key' on GalpyPotentialFitter subclasses.",
             )
 
-        return self
+        return super().__new__(
+            cls, potential_cls=potential_cls, key=None, **kwargs
+        )
 
     # /def
 
@@ -128,7 +151,11 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
     """
 
     def __new__(cls, **kwargs):
-        return super().__new__(cls, SCFPotential, key=None, **kwargs)
+        kwargs.pop("potential_cls", None)
+        kwargs.pop("key", None)
+        return super().__new__(
+            cls, potential_cls=SCFPotential, key=None, **kwargs
+        )
 
     # /def
 
@@ -138,8 +165,11 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         representation_type: T.Optional[TH.RepresentationType] = None,
         **kwargs,
     ) -> None:
+        kwargs.pop("potential_cls", None)
+        kwargs.pop("key", None)
         super().__init__(
             potential_cls=SCFPotential,
+            key=None,
             frame=frame,
             representation_type=representation_type,
             **kwargs,
@@ -213,9 +243,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
 
         return GalpyPotentialWrapper(
-            self._fitter(
-                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor
-            ),
+            self._fitter(amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor),
             frame=self.frame,
             representation_type=self.representation_type,
         )
