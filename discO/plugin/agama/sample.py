@@ -12,6 +12,7 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
+from contextlib import nullcontext
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -20,8 +21,9 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 
 # PROJECT-SPECIFIC
+import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
-from discO.type_hints import FrameLikeType, SkyCoordType
+from discO.utils.random import RandomLike
 
 ##############################################################################
 # CODE
@@ -42,8 +44,13 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
     """
 
     def __call__(
-        self, n: int = 1, frame: T.Optional[FrameLikeType] = None, **kwargs
-    ) -> SkyCoordType:
+        self,
+        n: int = 1,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        random: RandomLike = None,
+        **kwargs
+    ) -> TH.SkyCoordType:
         """Sample.
 
         Parameters
@@ -60,25 +67,34 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
         SkyCoord
 
         """
-        # Get preferred frame
-        frame = self._preferred_frame_resolve(frame)
+        # Get preferred frame and representation
+        frame = self._infer_frame(frame)
+        representation_type = self._infer_representation(representation_type)
 
         # TODO accepts a potential parameter. what does this do?
-        # TODO the random seed
-        pos, masses = self._sampler.sample(n=n)  # potential=None
+        # TODO confirm random seed.
+        with self._random_context(random):
+            pos, masses = self._sampler.sample(n=n)  # potential=None
 
+        # process the position and mass
         if np.shape(pos)[1] == 6:
-            pos, _ = pos[:, :3], pos[:, 3:]  # TODO: vel
+            pos, vel = pos[:, :3], pos[:, 3:]  # TODO: vel
+            differentials = dict(
+                s=coord.CartesianDifferential(*vel.T * u.km / u.s)
+            )
         else:
-            # vel = None  # TODO!
-            pass
+            differentials = None
+        rep = coord.CartesianRepresentation(
+            *pos.T * u.kpc, differentials=differentials
+        )
 
-        # TODO get agama units !
-        masses = masses * u.solMass
-        rep = coord.CartesianRepresentation(*pos.T * u.kpc)
-
-        samples = SkyCoord(rep, frame=frame)
-        samples.mass = masses
+        if representation_type is None:
+            representation_type = rep.__class__
+        samples = SkyCoord(
+            frame.realize_frame(rep, representation_type=representation_type),
+            copy=False,
+        )
+        samples.mass = masses * u.solMass
         samples.potential = self._sampler
 
         return samples

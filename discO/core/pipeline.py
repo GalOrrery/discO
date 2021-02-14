@@ -20,7 +20,7 @@ import weakref
 import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
-from .sample import PotentialSampler, Random_Like
+from .sample import PotentialSampler, RandomLike
 
 ##############################################################################
 # CODE
@@ -87,7 +87,7 @@ class Pipeline:
         n: int,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         c_err: T.Optional[CERR_Type] = None,
         original_pot: T.Optional[object] = None,
         observable: T.Optional[str] = None,
@@ -129,7 +129,7 @@ class Pipeline:
         niter: int = 1,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         c_err: T.Optional[CERR_Type] = None,
         original_pot: T.Optional[object] = None,
         observable: T.Optional[str] = None,

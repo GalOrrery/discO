@@ -4,8 +4,12 @@
 """Utilities."""
 
 __all__ = [
+    # coordinates
     "resolve_framelike",
     "resolve_representationlike",
+    "UnFrame",
+    # random
+    "NumpyRNGContext",
 ]
 
 
@@ -14,7 +18,8 @@ __all__ = [
 
 # PROJECT-SPECIFIC
 from . import vectorfield
-from ._framelike import resolve_framelike, resolve_representationlike
+from .coordinates import resolve_framelike, resolve_representationlike, UnFrame
+from .random import NumpyRNGContext
 from .vectorfield import *  # noqa: F401, F403
 
 __all__ += vectorfield.__all__

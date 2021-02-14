@@ -28,8 +28,7 @@ from discO.plugin.galpy import sample
 
 
 class Test_GalpyPotentialSampler(
-    Test_PotentialSampler,
-    obj=sample.GalpyPotentialSampler,
+    Test_PotentialSampler, obj=sample.GalpyPotentialSampler,
 ):
     @classmethod
     def setup_class(cls):
@@ -38,7 +37,7 @@ class Test_GalpyPotentialSampler(
 
         # make potential
         cls.mass = 1e12 * u.solMass
-        hernquist_pot = HernquistPotential(amp=cls.mass)
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
         hernquist_pot.turn_physical_on()  # force units
         cls.potential = isotropicHernquistdf(hernquist_pot)
         cls.potential.turn_physical_on()
@@ -60,16 +59,18 @@ class Test_GalpyPotentialSampler(
     # /def
 
     @pytest.mark.parametrize(
-        "n,frame,kwargs",
+        "n, frame, representation, random, kwargs",
         [
-            (10, None, {}),  # just "n"
-            (10, "FK5", {}),  # specifying frame
-            (10, "FK5", dict(a=1, b=2)),  # adding kwargs
+            (10, None, None, None, {}),  # just "n"
+            (10, "FK5", None, None, {}),  # specifying frame
+            (10, "FK5", None, None, dict(a=1, b=2)),  # adding kwargs
         ],
     )
-    def test_call_parametrize(self, n, frame, kwargs):
+    def test_call_parametrize(self, n, frame, representation, random, kwargs):
         """Parametrized call tests."""
-        res = self.inst(n, frame=frame, **kwargs)
+        res = self.inst(
+            n, frame=frame, representation_type=representation, **kwargs
+        )
         assert res.__class__ == coord.SkyCoord
 
         assert res.potential == self.potential

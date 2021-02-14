@@ -124,7 +124,7 @@ class PotentialWrapperMeta(ABCMeta):
         # potential doesn't have a frame
         if frame is None:
             p = points
-        elif from_frame is None:  # but frame is not
+        elif from_frame is None:  # but frame is not None
             p = resolve_framelike(frame).realize_frame(
                 points,
                 representation_type=rep_type,
@@ -360,6 +360,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
         # the "intrinsic" frame of the potential.
         # keep None as None, resolve else-wise.
+        # TODO the UnFrame
         self._frame = resolve_framelike(frame) if frame is not None else frame
 
     # /def

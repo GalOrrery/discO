@@ -11,7 +11,7 @@ __all__ = []
 # flatten structure
 
 # PROJECT-SPECIFIC
-from . import fitter, pipeline, sample
+from . import fitter, measurement, pipeline, sample
 from .fitter import *  # noqa: F401, F403
 from .measurement import *  # noqa: F403
 from .pipeline import *  # noqa: F401, F403

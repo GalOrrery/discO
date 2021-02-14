@@ -18,7 +18,10 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.config import conf
-from discO.utils import resolve_framelike, resolve_representationlike
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # TESTS
@@ -135,9 +138,7 @@ class Test_resolve_representationlike:
 
         # replicates without data
         c = coord.SphericalRepresentation(
-            lon=1 * u.deg,
-            lat=2 * u.deg,
-            distance=3 * u.kpc,
+            lon=1 * u.deg, lat=2 * u.deg, distance=3 * u.kpc,
         )
         assert (
             resolve_representationlike(representation=c)

@@ -48,7 +48,7 @@ from astropy.coordinates.representation import (
 from erfa import ufunc as erfa_ufunc
 
 # PROJECT-SPECIFIC
-from ._framelike import resolve_framelike
+from .coordinates import resolve_framelike
 from discO.type_hints import (
     FrameLikeType,
     FrameType,

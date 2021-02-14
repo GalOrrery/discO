@@ -48,7 +48,7 @@ from astropy.utils.decorators import classproperty
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .core import CommonBase
-from .sample import Random_Like  # TODO move to type-hints
+from .sample import RandomLike  # TODO move to type-hints
 from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
@@ -209,10 +209,230 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     # /def
 
-    def _resolve_frame(
+    #################################################################
+    # Sampling
+
+    @abc.abstractmethod
+    def __call__(
         self,
-        frame: T.Optional[TH.RepresentationType],
+        c: TH.CoordinateType,
+        c_err: T.Optional[CERR_Type] = None,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        random: T.Optional[RandomLike] = None,
+        **kwargs,
+    ) -> TH.SkyCoordType:
+        """Draw a realization given Measurement error.
+
+        Parameters
+        ----------
+        c : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : coord-like or callable or |Quantity| or None (optional)
+
+        frame: frame-like or None (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+
+        **kwargs
+            passed to underlying instance
+
+        Returns
+        -------
+        :class:`~astropy.coordinates.SkyCoord`
+
+        Other Parameters
+        ----------------
+        random : `~numpy.random.RandomState` or int (optional, keyword-only)
+            The random number generator or generator seed.
+            Unfortunately, scipy does not yet support `~numpy.random.Generator`
+
+        Notes
+        -----
+        If this is `MeasurementErrorSampler` then arguments are passed to the
+        wrapped instance (see 'method' argument on initialization).
+
+        """
+        raise NotImplementedError()
+
+    # /def
+
+    def resample(
+        self,
         c: TH.SkyCoordType,
+        c_err: TH.CoordinateType = None,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
+        random: T.Optional[RandomLike] = None,
+        **kwargs,
+    ) -> TH.SkyCoordType:
+        """Draw a realization given measurement error.
+
+        .. todo::
+
+            resolve `random` here
+
+        Parameters
+        ----------
+        c : :class:`~astropy.coordinates.SkyCoord` instance
+        c_err : :class:`~astropy.coordinates.SkyCoord` instance
+
+        frame: frame-like or None (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+
+        **kwargs
+            passed to ``__call__``
+
+        Returns
+        -------
+        :class:`~astropy.coordinates.SkyCoord`
+
+        Other Parameters
+        ----------------
+        random : `~numpy.random.RandomState` or int (optional, keyword-only)
+            The random number generator or generator seed.
+            Unfortunately, scipy does not yet support `~numpy.random.Generator`
+
+        Notes
+        -----
+        If this is `MeasurementErrorSampler` then arguments are passed to the
+        wrapped instance (see 'method' argument on initialization).
+
+        """
+        if c_err is None:
+            c_err = self.c_err
+
+        # depends on the shape of "c": (Nsamples,) or (Nsamples, Niter)?
+        if len(c.shape) == 1:  # (Nsamples, )
+            # TODO validate c_err shape etc.
+            sample = self(
+                c,
+                c_err=c_err,
+                frame=frame,
+                representation_type=representation_type,
+                random=random,
+                **kwargs,
+            )
+
+        else:  # (Nsamples, Niter)
+
+            N, niter = c.shape
+
+            # need to determine how c_err should be distributed.
+            if isinstance(
+                c_err, (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
+            ):
+                Nerr, *nerriter = c_err.shape
+                nerriter = (nerriter or [1])[0]  # [] -> 1
+
+                if nerriter == 1:
+                    c_err = [c_err] * niter
+                elif nerriter != niter:
+                    raise ValueError("c & c_err shape mismatch")
+                else:
+                    c_err = c_err.T  # get in correct shape for iteration
+
+            # mapping, or number, or callable
+            # special case if has units of percent
+            # all other units stuff will hit the error
+            elif (
+                isinstance(c_err, Mapping)
+                or np.isscalar(c_err)
+                or callable(c_err)
+                or (getattr(c_err, "unit", u.m) == u.percent)
+            ):
+                c_err = [c_err] * niter  # distribute over `niter`
+
+            # IDK what was passed
+            else:
+                raise NotImplementedError(f"{c_err} is not yet supported.")
+
+            # /if
+
+            samples = []
+            for samp, err in zip(c.T, c_err):
+                result = self(
+                    samp,
+                    c_err=err,
+                    frame=frame,
+                    representation_type=representation_type,
+                    random=random,
+                    **kwargs,
+                )
+                samples.append(result)
+
+            sample = concatenate(samples).reshape(c.shape)
+
+        return sample
+
+    # /def
+
+    def _parse_c_err(
+        self, c_err: T.Optional[CERR_Type], c: TH.CoordinateType,
+    ) -> np.ndarray:
+        """Parse ``c_err``, given ``c``.
+
+        Parameters
+        ----------
+        c_err : coord-like or callable or |Quantity| or None (optional)
+        c : |CoordinateFrame| or |SkyCoord|
+
+        Returns
+        -------
+        :class:`~numpy.ndarray`
+
+        """
+        nd = c.data.shape[0]
+        if c_err is None:
+            c_err = self.c_err
+
+        if isinstance(c_err, (BaseCoordinateFrame, SkyCoord)):
+            if c_err.representation_type != c.representation_type:
+                raise TypeError(
+                    "`c` & `c_err` must have matching `representation_type`.",
+                )
+            # calling ``represent_as`` fixes problems with missing components,
+            # even when the representation types match, that happens when
+            # something is eg Spherical, but has no distance.
+            d_pos = (
+                c_err.represent_as(c_err.representation_type)
+                ._values.view(dtype=np.float64)
+                .reshape(nd, -1)
+            )
+        elif isinstance(c_err, BaseRepresentation):
+            if not isinstance(c_err, c.representation_type):
+                raise TypeError(
+                    "`c_err` must be the same Representation type as in `c`.",
+                )
+            d_pos = c_err._values.view(dtype=np.float64).reshape(nd, -1)
+        elif isinstance(c_err, Mapping):
+            raise NotImplementedError("TODO")
+        # special case if has units of percent
+        elif getattr(c_err, "unit", u.m) == u.percent:
+            d_pos = xpercenterror_factory(c_err)(c)
+        # just a number
+        elif np.isscalar(c_err):
+            d_pos = c_err
+        # produce from callable
+        elif callable(c_err):
+            d_pos = c_err(c)
+        else:
+            raise NotImplementedError(f"{c_err} is not yet supported.")
+
+        return d_pos
+
+    # /def
+
+    def _resolve_frame(
+        self, frame: T.Optional[TH.RepresentationType], c: TH.SkyCoordType,
     ) -> TH.FrameType:
         """Resolve, given coordinate and passed value.
 
@@ -357,231 +577,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     # /def
 
-    #################################################################
-    # Sampling
-
-    @abc.abstractmethod
-    def __call__(
-        self,
-        c: TH.CoordinateType,
-        c_err: T.Optional[CERR_Type] = None,
-        *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
-        **kwargs,
-    ) -> TH.SkyCoordType:
-        """Draw a realization given Measurement error.
-
-        Parameters
-        ----------
-        c : :class:`~astropy.coordinates.SkyCoord` instance
-        c_err : coord-like or callable or |Quantity| or None (optional)
-
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-        representation_type: |Representation| or None (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-
-        **kwargs
-            passed to underlying instance
-
-        Returns
-        -------
-        :class:`~astropy.coordinates.SkyCoord`
-
-        Other Parameters
-        ----------------
-        random : `~numpy.random.RandomState` or int (optional, keyword-only)
-            The random number generator or generator seed.
-            Unfortunately, scipy does not yet support `~numpy.random.Generator`
-
-        Notes
-        -----
-        If this is `MeasurementErrorSampler` then arguments are passed to the
-        wrapped instance (see 'method' argument on initialization).
-
-        """
-        raise NotImplementedError()
-
-    # /def
-
-    def resample(
-        self,
-        c: TH.SkyCoordType,
-        c_err: TH.CoordinateType = None,
-        *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
-        **kwargs,
-    ) -> TH.SkyCoordType:
-        """Draw a realization given measurement error.
-
-        .. todo::
-
-            resolve `random` here
-
-        Parameters
-        ----------
-        c : :class:`~astropy.coordinates.SkyCoord` instance
-        c_err : :class:`~astropy.coordinates.SkyCoord` instance
-
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-        representation_type: |Representation| or None (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-
-        **kwargs
-            passed to ``__call__``
-
-        Returns
-        -------
-        :class:`~astropy.coordinates.SkyCoord`
-
-        Other Parameters
-        ----------------
-        random : `~numpy.random.RandomState` or int (optional, keyword-only)
-            The random number generator or generator seed.
-            Unfortunately, scipy does not yet support `~numpy.random.Generator`
-
-        Notes
-        -----
-        If this is `MeasurementErrorSampler` then arguments are passed to the
-        wrapped instance (see 'method' argument on initialization).
-
-        """
-        if c_err is None:
-            c_err = self.c_err
-
-        # depends on the shape of "c": (Nsamples,) or (Nsamples, Niter)?
-        if len(c.shape) == 1:  # (Nsamples, )
-            # TODO validate c_err shape etc.
-            sample = self(
-                c,
-                c_err=c_err,
-                frame=frame,
-                representation_type=representation_type,
-                random=random,
-                **kwargs,
-            )
-
-        else:  # (Nsamples, Niter)
-
-            N, niter = c.shape
-
-            # need to determine how c_err should be distributed.
-            if isinstance(
-                c_err,
-                (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
-            ):
-                Nerr, *nerriter = c_err.shape
-                nerriter = (nerriter or [1])[0]  # [] -> 1
-
-                if nerriter == 1:
-                    c_err = [c_err] * niter
-                elif nerriter != niter:
-                    raise ValueError("c & c_err shape mismatch")
-                else:
-                    c_err = c_err.T  # get in correct shape for iteration
-
-            # mapping, or number, or callable
-            # special case if has units of percent
-            # all other units stuff will hit the error
-            elif (
-                isinstance(c_err, Mapping)
-                or np.isscalar(c_err)
-                or callable(c_err)
-                or (getattr(c_err, "unit", u.m) == u.percent)
-            ):
-                c_err = [c_err] * niter  # distribute over `niter`
-
-            # IDK what was passed
-            else:
-                raise NotImplementedError(f"{c_err} is not yet supported.")
-
-            # /if
-
-            samples = []
-            for samp, err in zip(c.T, c_err):
-                result = self(
-                    samp,
-                    c_err=err,
-                    frame=frame,
-                    representation_type=representation_type,
-                    random=random,
-                    **kwargs,
-                )
-                samples.append(result)
-
-            sample = concatenate(samples).reshape(c.shape)
-
-        return sample
-
-    # /def
-
-    def _parse_c_err(
-        self,
-        c_err: T.Optional[CERR_Type],
-        c: TH.CoordinateType,
-    ) -> np.ndarray:
-        """Parse ``c_err``, given ``c``.
-
-        Parameters
-        ----------
-        c_err : coord-like or callable or |Quantity| or None (optional)
-        c : |CoordinateFrame| or |SkyCoord|
-
-        Returns
-        -------
-        :class:`~numpy.ndarray`
-
-        """
-        nd = c.data.shape[0]
-        if c_err is None:
-            c_err = self.c_err
-
-        if isinstance(c_err, (BaseCoordinateFrame, SkyCoord)):
-            if c_err.representation_type != c.representation_type:
-                raise TypeError(
-                    "`c` & `c_err` must have matching `representation_type`.",
-                )
-            # calling ``represent_as`` fixes problems with missing components,
-            # even when the representation types match, that happens when
-            # something is eg Spherical, but has no distance.
-            d_pos = (
-                c_err.represent_as(c_err.representation_type)
-                ._values.view(dtype=np.float64)
-                .reshape(nd, -1)
-            )
-        elif isinstance(c_err, BaseRepresentation):
-            if not isinstance(c_err, c.representation_type):
-                raise TypeError(
-                    "`c_err` must be the same Representation type as in `c`.",
-                )
-            d_pos = c_err._values.view(dtype=np.float64).reshape(nd, -1)
-        elif isinstance(c_err, Mapping):
-            raise NotImplementedError("TODO")
-        # special case if has units of percent
-        elif getattr(c_err, "unit", u.m) == u.percent:
-            d_pos = xpercenterror_factory(c_err)(c)
-        # just a number
-        elif np.isscalar(c_err):
-            d_pos = c_err
-        # produce from callable
-        elif callable(c_err):
-            d_pos = c_err(c)
-        else:
-            raise NotImplementedError(f"{c_err} is not yet supported.")
-
-        return d_pos
-
-    # /def
-
 
 # /class
 
@@ -661,9 +656,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         **kwargs,
     ) -> None:
         super().__init__(
-            c_err=c_err,
-            frame=frame,
-            **kwargs,
+            c_err=c_err, frame=frame, **kwargs,
         )
         self._rvs = rvs
         self._rvs_sig = inspect.signature(rvs.rvs)
@@ -693,7 +686,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
-        random: T.Optional[Random_Like] = None,
+        random: T.Optional[RandomLike] = None,
         **params,
     ) -> TH.SkyCoordType:
         """Draw a realization given the errors.
@@ -767,8 +760,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # get "cc" into the correct representation type
         representation_type = self._resolve_representation_type(
-            representation_type,
-            cc,
+            representation_type, cc,
         )
         rep = cc.data.represent_as(representation_type)
         cc = cc.realize_frame(rep, representation_type=representation_type)
@@ -782,8 +774,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # loc, must be ndarray
         pos = rep._values.view(dtype=np.float64).reshape(
-            rep.shape[0],
-            -1,
+            rep.shape[0], -1,
         )  # shape=Nx3
         # scale, from `c_err`
         scale = self._parse_c_err(c_err, cc)
@@ -815,14 +806,12 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # make coordinate
         new_cc = frame.realize_frame(
-            new_rep,
-            representation_type=c.representation_type,
+            new_rep, representation_type=c.representation_type,
         )
 
         # make SkyCoord from new realization, preserving original shape
         new_c = SkyCoord(
-            new_cc.transform_to(c.frame).reshape(c.shape),
-            copy=False,
+            new_cc.transform_to(c.frame).reshape(c.shape), copy=False,
         )
 
         # need to transfer metadata.
@@ -876,11 +865,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         **kwargs,
     ):
         return super().__new__(
-            cls,
-            rvs,
-            c_err=c_err,
-            method=method,
-            **kwargs,  # distribution
+            cls, rvs, c_err=c_err, method=method, **kwargs,  # distribution
         )
 
     # /def
@@ -899,10 +884,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
             raise ValueError("rvs must be a Normal type.")
 
         super().__init__(
-            rvs,
-            c_err=c_err,
-            frame=frame,
-            **params,
+            rvs, c_err=c_err, frame=frame, **params,
         )
 
     # /def

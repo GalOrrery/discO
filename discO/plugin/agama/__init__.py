@@ -20,9 +20,6 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# THIRD PARTY
-import agama
-
 # PROJECT-SPECIFIC
 from . import fitter, sample
 from .fitter import *  # noqa: F401, F403
@@ -32,12 +29,6 @@ from .wrapper import AGAMAPotentialWrapper
 # __all__
 __all__ += sample.__all__
 __all__ += fitter.__all__
-
-
-##############################################################################
-# Parameters
-
-agama.setUnits(mass=1, length=1, velocity=1)  # FIXME! bad
 
 ##############################################################################
 # END

@@ -6,6 +6,8 @@
 __all__ = [
     "resolve_framelike",
     "resolve_representationlike",
+    #
+    "UnFrame",
 ]
 
 
@@ -33,6 +35,16 @@ from discO.config import conf
 
 ##############################################################################
 # CODE
+##############################################################################
+
+
+class UnFrame(BaseCoordinateFrame):
+    """Unconnected Coordinate Frame. Does not support transformations."""
+
+
+# /class
+
+
 ##############################################################################
 
 
@@ -113,8 +125,7 @@ def resolve_representationlike(
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(
-        representation,
-        BaseRepresentation,
+        representation, BaseRepresentation,
     ):
         pass
 
