@@ -11,7 +11,6 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import inspect
 from abc import abstractmethod
 from types import MappingProxyType
 
@@ -253,11 +252,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(
-                self.potential,
-                key="unittest",
-                return_specific_class=True,
-            )
+            msamp = self.obj(self.potential, key="unittest")
 
             # test class type
             assert isinstance(msamp, klass)
@@ -267,50 +262,19 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             assert msamp._fitter == self.potential
 
             # ---------------
-            # as wrapper class
-
-            klass = self.obj._registry["unittest"]
-
-            msamp = self.obj(
-                self.potential,
-                key="unittest",
-                return_specific_class=False,
-            )
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
-
-            # test inputs
-            assert msamp._fitter == self.potential
-
-        # --------------------------
-        else:  # never hit in Test_PotentialSampler, only in subs
-
-            # ---------------
             # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                sig = inspect.signature(self.obj)
-                ba = sig.bind_partial(
-                    potential_cls=self.potential,
+                self.obj.__new__(
+                    self.SubClassUnitTest,
+                    potential_cls=None,
                     key="not None",
                 )
-                ba.apply_defaults()
-                self.obj(*ba.args, **ba.kwargs)
 
             assert "Can't specify 'key'" in str(e.value)
 
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    self.potential,
-                    key=None,
-                    return_specific_class=True,
-                )
+        # --------------------------
+        else:  # never hit in Test_PotentialSampler, only in subs
 
             # ---------------
             # AOK
@@ -384,6 +348,13 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
         # run tests on super
         super().test___call__()
 
+        if self.obj is fitter.PotentialFitter:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst, None)
+
+            assert "Implement in subclass" in str(e.value)
+
     # /def
 
     # TODO! with hypothesis
@@ -436,7 +407,19 @@ class Test_PotentialFitter_SubClass(
     def setup_class(cls):
         """Setup fixtures for testing."""
         super().setup_class()
-        cls.inst = cls.obj(cls.potential)
+        cls.inst = cls.obj(cls.potential, frame="galactocentric")
+
+    # /def
+
+    # -------------------------------
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        fit = self.inst(crd)
+
+        assert isinstance(fit, PotentialWrapper)
+        assert isinstance(fit.__wrapped__, object)
+        assert fit.frame is None
 
     # /def
 

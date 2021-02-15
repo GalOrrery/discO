@@ -18,9 +18,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import inspect
 import typing as T
-import warnings
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
@@ -28,7 +26,11 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .core import CommonBase, PotentialWrapper
+from .core import CommonBase
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # PARAMETERS
@@ -48,15 +50,17 @@ class PotentialFitter(CommonBase):
     potential_cls
         The type of potential with which to fit the data.
 
+    frame: frame-like or None (optional, keyword-only)
+       The frame of the fit potential. Care should be taken that this
+       matches the frame of the sampling potential.
+    representation_type: |Representation| or None (optional, keyword-only)
+        The coordinate representation.
+
     Other Parameters
     ----------------
     key : `~types.ModuleType` or str or None (optional, keyword-only)
         The key to which the `potential` belongs.
         If not provided (None, default) tries to infer from `potential`.
-    return_specific_class : bool (optional, keyword-only)
-        Whether to return a `PotentialSampler` or key-specific subclass.
-        This only applies if instantiating a `PotentialSampler`.
-        Default False.
 
     """
 
@@ -96,17 +100,14 @@ class PotentialFitter(CommonBase):
         potential_cls: T.Any,
         *,
         key: T.Union[ModuleType, str, None] = None,
-        return_specific_class: bool = False,
         **kwargs,  # includes frame
     ):
-        self = super().__new__(cls)
-
         # The class PotentialFitter is a wrapper for anything in its registry
         # If directly instantiating a PotentialFitter (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialFitter:
             # infer the key, to add to registry
-            key: str = self._infer_package(potential_cls, key).__name__
+            key: str = cls._infer_package(potential_cls, key).__name__
 
             if key not in cls._registry:
                 raise ValueError(
@@ -115,29 +116,18 @@ class PotentialFitter(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            # some subclasses accept the potential_cls as an argument,
-            # others do not.
-            subcls = cls._registry[key]
-            sig = inspect.signature(subcls)
-            ba = sig.bind_partial(potential_cls=potential_cls, **kwargs)
-            ba.apply_defaults()
-
-            instance = cls._registry[key](*ba.args, **ba.kwargs)
-
-            if return_specific_class:
-                return instance
-
-            self._instance = instance
+            kls = cls._registry[key]
+            kwargs.pop("key", None)  # it's already used.
+            return kls.__new__(
+                kls, potential_cls=potential_cls, key=None, **kwargs
+            )
 
         elif key is not None:
             raise ValueError(
                 "Can't specify 'key' on PotentialFitter subclasses.",
             )
 
-        elif return_specific_class is not False:
-            warnings.warn("Ignoring argument `return_specific_class`")
-
-        return self
+        return super().__new__(cls)
 
     # /def
 
@@ -146,13 +136,24 @@ class PotentialFitter(CommonBase):
         potential_cls: T.Any,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
         **kwargs,
     ):
         self._fitter: T.Any = potential_cls
-        self._frame: T.Optional[TH.FrameLikeType] = frame
+        self._frame: T.Optional[TH.FrameLikeType] = (
+            None if frame is None else resolve_framelike(frame)
+        )
+        self._representation_type: T.Optional[TH.RepresentationLikeType] = (
+            resolve_representationlike(representation_type)
+            if representation_type is not None
+            else None
+        )
 
-        if not hasattr(self, "_instance"):
-            self._kwargs: T.Dict[str, T.Any] = kwargs
+        # ----------------
+        # kwargs
+        # start by jettisoning baggage
+        kwargs.pop("key", None)
+        self._kwargs: T.Dict[str, T.Any] = kwargs
 
     # /def
 
@@ -169,25 +170,32 @@ class PotentialFitter(CommonBase):
     # /def
 
     @property
-    def potential_kwargs(self):
-        if hasattr(self, "_instance"):
-            kwargs = self._instance.potential_kwargs
-        else:
-            kwargs = MappingProxyType(self._kwargs)
+    def representation_type(self) -> T.Optional[TH.RepresentationType]:
+        """The representation type of the potential."""
+        return self._representation_type
 
-        return kwargs
+    # /def
+
+    @property
+    def potential_kwargs(self):
+        return MappingProxyType(self._kwargs)
 
     # /def
 
     #######################################################
     # Fitting
 
-    def __call__(self, sample: TH.CoordinateType, **kwargs) -> object:
+    def __call__(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
+    ) -> object:
         """Fit a potential given the data.
 
         Parameters
         ----------
-        sample : :class:`~astropy.coordinates.SkyCoord` instance
+        c : :class:`~astropy.coordinates.SkyCoord` instance
         **kwargs
             passed to underlying instance
 
@@ -196,22 +204,21 @@ class PotentialFitter(CommonBase):
         Potential : object
 
         """
-        # call on instance
-        potential = self._instance(
-            sample,
-            # c_err=c_err,
-            **kwargs,
-        )
-
-        return (
-            PotentialWrapper(potential, frame=self.frame)
-            if not isinstance(potential, PotentialWrapper)
-            else potential
-        )
+        # return (
+        #     PotentialWrapper(potential, frame=self.frame)
+        #     if not isinstance(potential, PotentialWrapper)
+        #     else potential
+        # )
+        raise NotImplementedError("Implement in subclass.")
 
     # /def
 
-    def fit(self, sample: TH.CoordinateType, **kwargs) -> object:
+    def fit(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        **kwargs,
+    ) -> object:
         """Fit.
 
         .. todo::
@@ -245,12 +252,12 @@ class PotentialFitter(CommonBase):
         # (niter, nsamp) -> iter on niter
         for i, (samp, mass) in enumerate(zip(sample.T, sample.mass.T)):
             samp.mass, samp.potential = mass, sample.potential
-            fits[i] = self(samp, **kwargs)
+            fits[i] = self(samp, mass=mass, **kwargs)
 
         if niter == 1:
             return fits[0]
-        else:
-            return fits
+        # else:
+        return fits
 
     # /def
 

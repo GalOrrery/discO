@@ -11,7 +11,8 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-from abc import abstractmethod
+import abc
+import contextlib
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -22,6 +23,7 @@ import pytest
 # PROJECT-SPECIFIC
 from discO.core import sample
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
 # TESTS
@@ -247,7 +249,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     # -------------------------------
 
-    @abstractmethod
+    @abc.abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
         # run tests on super
@@ -255,6 +257,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # --------------------------
         pass  # for subclasses. The setup_class actually tests this for here.
+
+    # /def
+
+    # -------------------------------
+
+    def test_potential(self):
+        """Test method ``potential``."""
+        assert self.inst.potential is self.inst._sampler
 
     # /def
 
@@ -413,6 +423,33 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             self.inst._infer_representation("cartesian")
             == coord.CartesianRepresentation
         )
+
+    # /def
+
+    def test__random_context(self):
+        """Test method ``_random_context``.
+
+        contents are tested elsewhere, only need to test here that it returns
+        the expected stuff.
+
+        """
+        # ----------------
+        # int or randomState
+
+        ctx = self.inst._random_context(0)
+        assert isinstance(ctx, NumpyRNGContext)
+
+        ctx = self.inst._random_context(np.random.RandomState(0))
+        assert isinstance(ctx, NumpyRNGContext)
+
+        # ----------------
+        # else
+
+        ctx = self.inst._random_context(None)
+        assert isinstance(ctx, contextlib.nullcontext)
+
+        ctx = self.inst._random_context(np.random.default_rng(0))
+        assert isinstance(ctx, contextlib.nullcontext)
 
     # /def
 

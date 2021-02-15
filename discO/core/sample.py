@@ -144,7 +144,15 @@ class PotentialSampler(CommonBase):
                 )
 
             # from registry. Registered in __init_subclass__
-            return super().__new__(cls[key])
+            kls = cls[key]
+            return kls.__new__(
+                kls,
+                potential,
+                key=None,
+                frame=frame,
+                representation_type=representation_type,
+                **kwargs,
+            )
 
         elif key is not None:
             raise ValueError(
@@ -180,6 +188,12 @@ class PotentialSampler(CommonBase):
     # /def
 
     # ---------------------------------------------------------------
+
+    @property
+    def potential(self):
+        return self._sampler
+
+    # /def
 
     @property
     def frame(self) -> T.Optional[TH.FrameType]:
@@ -220,7 +234,7 @@ class PotentialSampler(CommonBase):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
-        random : int or |RandomGenerator| or None (optional, keyword-only)
+        random : int or |RandomState| or None (optional, keyword-only)
             Random state.
         **kwargs
             passed to underlying instance
@@ -270,7 +284,7 @@ class PotentialSampler(CommonBase):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
-        random : int or |RandomGenerator| or None (optional, keyword-only)
+        random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
         **kwargs
             Passed to underlying instance
@@ -411,7 +425,7 @@ class PotentialSampler(CommonBase):
         This is used to supplement samplers that do not have a random seed.
 
         """
-        if isinstance(random, int):
+        if isinstance(random, (int, np.random.RandomState)):
             context = NumpyRNGContext(random)
         else:  # None or Generator
             context = contextlib.nullcontext()

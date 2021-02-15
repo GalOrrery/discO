@@ -171,7 +171,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
                 )
 
             # from registry. Registered in __init_subclass__
-            return super().__new__(cls[method])
+            kls = cls[method]
+            return kls.__new__(kls)
 
         elif method is not None:
             raise ValueError(

@@ -21,9 +21,6 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import astropy.coordinates as coord
 import typing_extensions as TE
-from astropy.coordinates.representation import (
-    REPRESENTATION_CLASSES as _REP_CLSs,
-)
 from astropy.utils import sharedmethod
 from astropy.utils.decorators import classproperty
 from astropy.utils.introspection import resolve_name
@@ -31,7 +28,7 @@ from astropy.utils.misc import indent
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from discO.utils import resolve_framelike
+from discO.utils import resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
@@ -105,18 +102,8 @@ class PotentialWrapperMeta(ABCMeta):
 
         if representation_type is None:
             rep_type = from_rep
-        elif inspect.isclass(representation_type) and issubclass(
-            representation_type,
-            coord.BaseRepresentation,
-        ):
-            rep_type = representation_type
-        elif isinstance(representation_type, str):
-            rep_type = _REP_CLSs[representation_type]
         else:
-            raise TypeError(
-                f"representation_type is <{type(representation_type)}> not "
-                "<Representation, str, or None>.",
-            )
+            rep_type = resolve_representationlike(representation_type)
 
         # -----------
         # to frame
@@ -330,7 +317,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # /def
 
     def __new__(
-        cls, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+        cls,
+        potential: T.Any,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
     ):
         # PotentialWrapper can become any of it's registered subclasses.
         if cls is PotentialWrapper:
@@ -339,7 +330,15 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
             # if key in wrapper, return that class.
             if key in WRAPPER_REGISTRY:
-                return super().__new__(WRAPPER_REGISTRY[key])
+                kls = WRAPPER_REGISTRY[key]
+                return kls.__new__(
+                    kls,
+                    potential,
+                    frame=frame,
+                    representation_type=representation_type,
+                )
+
+        # /if
 
         return super().__new__(cls)
 
@@ -349,7 +348,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # On the instance
 
     def __init__(
-        self, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+        self,
+        potential: T.Any,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
     ):
         # if it's a wrapper, have to pop back
         if isinstance(potential, PotentialWrapper):
@@ -361,7 +364,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         # the "intrinsic" frame of the potential.
         # keep None as None, resolve else-wise.
         # TODO the UnFrame
-        self._frame = resolve_framelike(frame) if frame is not None else frame
+        self._frame = resolve_framelike(frame) if frame is not None else None
 
     # /def
 
@@ -665,9 +668,11 @@ class CommonBase(metaclass=ABCMeta):
     @classproperty
     def registry(cls) -> T.Mapping:
         """The class registry."""
+        # registry is a property on own class
         if isinstance(cls._registry, property):
             return None
 
+        # else, filter registry by subclass
         return MappingProxyType(
             {
                 k: v

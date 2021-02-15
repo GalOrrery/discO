@@ -12,6 +12,7 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
+import astropy.units as u
 import pytest
 from galpy import potential as gpot
 
@@ -43,7 +44,9 @@ class Test_GalpyPotentialFitter(
                 frame=None,
                 **kwargs,
             ):
-                super().__init__(potential_cls, frame=frame, **kwargs)
+                super().__init__(
+                    potential_cls=potential_cls, frame=frame, **kwargs
+                )
 
             # /defs
 
@@ -60,7 +63,11 @@ class Test_GalpyPotentialFitter(
 
         # make instance. It depends.
         if cls.obj is fitter.GalpyPotentialFitter:
-            cls.inst = cls.obj(cls.potential, key="unittest")
+            cls.inst = cls.obj(
+                potential_cls=cls.potential,
+                key="unittest",
+                frame="galactocentric",
+            )
 
     # /def
 
@@ -84,22 +91,18 @@ class Test_GalpyPotentialFitter(
             # for object not in registry
 
             with pytest.raises(ValueError) as e:
-                self.obj(None, key=None)
+                self.obj(potential_cls=None, key=None)
 
             assert (
                 "PotentialFitter has no registered fitter for key: None"
             ) in str(e.value)
 
             # ---------------
-            # with return_specific_class
+            # as wrapper
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(
-                gpot.Potential,
-                key="unittest",
-                return_specific_class=True,
-            )
+            msamp = self.obj(potential_cls=gpot.Potential, key="unittest")
 
             # test class type
             assert isinstance(msamp, klass)
@@ -109,45 +112,15 @@ class Test_GalpyPotentialFitter(
             assert msamp._fitter == self.potential
 
             # ---------------
-            # as wrapper class
-
-            klass = self.obj._registry["unittest"]
-
-            msamp = self.obj(
-                gpot.Potential,
-                key="unittest",
-                return_specific_class=False,
-            )
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
-
-            # test inputs
-            assert msamp._fitter == self.potential
-
-        # --------------------------
-        else:  # never hit in Test_PotentialSampler, only in subs
-
-            key = tuple(self.obj._registry.keys())[0]
-
-            # ---------------
-            # Can't have the "key" argument
+            # key is not None
 
             with pytest.raises(ValueError) as e:
-                self.obj(key=key)
+                self.obj.__new__(self.SubClassUnitTest, key="not None")
 
             assert "Can't specify 'key'" in str(e.value)
 
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    key=None,
-                    return_specific_class=True,
-                )
+        # --------------------------
+        else:  # never hit in Test_PotentialSampler, only in subs
 
             # ---------------
             # AOK
@@ -169,6 +142,13 @@ class Test_GalpyPotentialFitter(
         # run tests on super
         super().test___call__()
 
+        if self.obj is fitter.GalpyPotentialFitter:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst, None)
+
+            assert "Implement in subclass" in str(e.value)
+
         # TODO! actually run tests
 
     # /def
@@ -189,7 +169,7 @@ class Test_GalpySCFPotentialFitter(
         """Setup fixtures for testing."""
         super().setup_class()
         cls.potential = gpot.SCFPotential
-        cls.inst = cls.obj()
+        cls.inst = cls.obj(frame="galactocentric")
 
     # /def
 
@@ -199,6 +179,32 @@ class Test_GalpySCFPotentialFitter(
         """Test method ``__call__``."""
         # run tests on super
         super().test___call__()
+
+        # -------------------
+        # some errors
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, Nmax=0)
+
+        assert "Nmax & Lmax must be >0." in str(e.value)
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, Lmax=0)
+
+        assert "Nmax & Lmax must be >0." in str(e.value)
+
+        with pytest.raises(u.UnitsError) as e:
+            self.inst(None, scale_factor=2 * u.Hz)
+
+        assert (
+            "scale factor must have units of length or be dimensionless"
+            in str(e.value)
+        )
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, scale_factor=[1, 2] * u.km)
+
+        assert "scale factor must be a scalar." in str(e.value)
 
         # TODO! actually run tests
 
