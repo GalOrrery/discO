@@ -137,6 +137,13 @@ class Test_GalpyPotentialFitter(
         # run tests on super
         super().test___call__()
 
+        if self.obj is fitter.GalpyPotentialFitter:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst, None)
+
+            assert "Implement in subclass" in str(e.value)
+
         # TODO! actually run tests
 
     # /def
