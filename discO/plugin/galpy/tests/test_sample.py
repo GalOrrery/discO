@@ -47,6 +47,17 @@ class Test_GalpyPotentialSampler(
 
     # /def
 
+    #################################################################
+    # Method Tests
+
+    def test_potential(self):
+        """Test method ``potential``."""
+        assert self.inst.potential is self.inst._sampler._pot
+
+    # /def
+
+    # -------------------------------
+
     def test___call__(self):
         """Test method ``__call__``.
 

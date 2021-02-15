@@ -425,7 +425,7 @@ class PotentialSampler(CommonBase):
         This is used to supplement samplers that do not have a random seed.
 
         """
-        if isinstance(random, int):
+        if isinstance(random, (int, np.random.RandomState)):
             context = NumpyRNGContext(random)
         else:  # None or Generator
             context = contextlib.nullcontext()
