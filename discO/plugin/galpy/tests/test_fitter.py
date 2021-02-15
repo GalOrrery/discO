@@ -43,7 +43,9 @@ class Test_GalpyPotentialFitter(
                 frame=None,
                 **kwargs,
             ):
-                super().__init__(potential_cls, frame=frame, **kwargs)
+                super().__init__(
+                    potential_cls=potential_cls, frame=frame, **kwargs
+                )
 
             # /defs
 
@@ -60,7 +62,7 @@ class Test_GalpyPotentialFitter(
 
         # make instance. It depends.
         if cls.obj is fitter.GalpyPotentialFitter:
-            cls.inst = cls.obj(cls.potential, key="unittest")
+            cls.inst = cls.obj(potential_cls=cls.potential, key="unittest")
 
     # /def
 
@@ -84,7 +86,7 @@ class Test_GalpyPotentialFitter(
             # for object not in registry
 
             with pytest.raises(ValueError) as e:
-                self.obj(None, key=None)
+                self.obj(potential_cls=None, key=None)
 
             assert (
                 "PotentialFitter has no registered fitter for key: None"
@@ -96,7 +98,7 @@ class Test_GalpyPotentialFitter(
             klass = self.obj._registry["unittest"]
 
             msamp = self.obj(
-                gpot.Potential,
+                potential_cls=gpot.Potential,
                 key="unittest",
                 return_specific_class=True,
             )
@@ -108,46 +110,8 @@ class Test_GalpyPotentialFitter(
             # test inputs
             assert msamp._fitter == self.potential
 
-            # ---------------
-            # as wrapper class
-
-            klass = self.obj._registry["unittest"]
-
-            msamp = self.obj(
-                gpot.Potential,
-                key="unittest",
-                return_specific_class=False,
-            )
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
-
-            # test inputs
-            assert msamp._fitter == self.potential
-
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
-
-            key = tuple(self.obj._registry.keys())[0]
-
-            # ---------------
-            # Can't have the "key" argument
-
-            with pytest.raises(ValueError) as e:
-                self.obj(key=key)
-
-            assert "Can't specify 'key'" in str(e.value)
-
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    key=None,
-                    return_specific_class=True,
-                )
 
             # ---------------
             # AOK

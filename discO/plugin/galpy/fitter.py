@@ -89,9 +89,7 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
             )
 
         elif key is not None:
-            raise ValueError(
-                "Can't specify 'key' on GalpyPotentialFitter subclasses.",
-            )
+            raise ValueError(f"Can't specify 'key' on {cls.__name__}.")
 
         return super().__new__(
             cls, potential_cls=potential_cls, key=None, **kwargs

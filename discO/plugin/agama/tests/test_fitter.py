@@ -81,10 +81,10 @@ class Test_AGAMAPotentialFitter(
             # for object not in registry
 
             with pytest.raises(ValueError) as e:
-                self.obj(pot_type=None)
+                self.obj(potential_cls=None)
 
             assert (
-                "PotentialFitter has no registered fitter for `pot_type`: None"
+                "PotentialFitter has no registered fitter for `potential_cls`: None"
             ) in str(e.value)
 
             # ---------------
@@ -92,7 +92,9 @@ class Test_AGAMAPotentialFitter(
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(pot_type="unittest", return_specific_class=True)
+            msamp = self.obj(
+                potential_cls="unittest", return_specific_class=True
+            )
 
             # test class type
             assert isinstance(msamp, klass)
@@ -101,42 +103,18 @@ class Test_AGAMAPotentialFitter(
             # test inputs
             assert msamp._fitter == self.potential
 
-            # ---------------
-            # as wrapper class
-
-            klass = self.obj._registry["unittest"]
-
-            msamp = self.obj(pot_type="unittest", return_specific_class=False)
-
-            # test class type
-            assert not isinstance(msamp, klass)
-            assert isinstance(msamp, self.obj)
-            assert isinstance(msamp._instance, klass)
-
-            # test inputs
-            assert msamp._fitter == self.potential
-
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
 
-            pot_type = tuple(self.obj._registry.keys())[0]
+            potential_cls = tuple(self.obj._registry.keys())[0]
 
             # ---------------
             # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                self.obj(pot_type=pot_type, key="not None")
+                self.obj(potential_cls=potential_cls, key="not None")
 
-            assert "Can't specify 'pot_type'" in str(e.value)
-
-            # ---------------
-            # warning
-
-            with pytest.warns(UserWarning):
-                self.obj(
-                    key=None,
-                    return_specific_class=True,
-                )
+            assert "Can't specify 'potential_cls'" in str(e.value)
 
             # ---------------
             # AOK
