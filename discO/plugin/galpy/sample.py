@@ -19,9 +19,9 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
+from .type_hints import PotentialType
 from discO.core.sample import PotentialSampler
 from discO.utils.random import RandomLike
-from .type_hints import PotentialType
 
 ##############################################################################
 # CODE
@@ -103,7 +103,11 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         # can't pass a random seed, set in context
         with self._random_context(random):
             orbits = self._sampler.sample(
-                R=None, z=None, phi=None, n=n, return_orbit=True,
+                R=None,
+                z=None,
+                phi=None,
+                n=n,
+                return_orbit=True,
             )
 
         t = orbits.time()

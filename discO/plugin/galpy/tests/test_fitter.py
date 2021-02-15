@@ -62,7 +62,11 @@ class Test_GalpyPotentialFitter(
 
         # make instance. It depends.
         if cls.obj is fitter.GalpyPotentialFitter:
-            cls.inst = cls.obj(potential_cls=cls.potential, key="unittest", frame="galactocentric")
+            cls.inst = cls.obj(
+                potential_cls=cls.potential,
+                key="unittest",
+                frame="galactocentric",
+            )
 
     # /def
 

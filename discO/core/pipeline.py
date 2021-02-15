@@ -75,11 +75,11 @@ class Pipeline:
         if sampler is not None and fitter is not None:
             if fitter.frame != sampler.frame:
                 raise ValueError(
-                    "sampler and fitter must have the same frame."
+                    "sampler and fitter must have the same frame.",
                 )
             if fitter.representation_type != sampler.representation_type:
                 raise ValueError(
-                    "sampler and fitter must have the same representation."
+                    "sampler and fitter must have the same representation.",
                 )
 
         self._sampler = sampler
@@ -269,7 +269,7 @@ class Pipeline:
         # we forced the fit to be in the same frame & representation type
         # as the samples.
 
-        oi = self._fitter.fit(oi, **kwargs,)
+        oi = self._fitter.fit(oi, **kwargs)
         result._fit = oi
 
         # ----------

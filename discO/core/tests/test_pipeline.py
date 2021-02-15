@@ -12,10 +12,7 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
-import astropy.coordinates as coord
 import astropy.units as u
-import galpy.potential as gpot
-from galpy import df as gdf
 import numpy as np
 import pytest
 
@@ -38,12 +35,10 @@ class Test_Pipeline(object):
         cls.mass = 1e12 * u.solMass
         cls.r0 = 10 * u.kpc  # scale factor
 
-        hernquist_pot = gpot.HernquistPotential(amp=2 * cls.mass, a=cls.r0)
-
         # sampling a potential that lives in a galactocentric frame
         # and enforcing a Cartesian representation
         cls.sampler = PotentialSampler(
-            gdf.isotropicHernquistdf(hernquist_pot),
+            object(),  # TODO!
             frame="galactocentric",
             representation_type="cartesian",
         )

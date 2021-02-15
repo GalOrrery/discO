@@ -27,7 +27,8 @@ from discO.plugin.agama import fitter
 
 
 class Test_AGAMAPotentialFitter(
-    PotentialFitterTester, obj=fitter.AGAMAPotentialFitter,
+    PotentialFitterTester,
+    obj=fitter.AGAMAPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
@@ -37,7 +38,9 @@ class Test_AGAMAPotentialFitter(
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
             def __init__(
-                self, symmetry="a", **kwargs,
+                self,
+                symmetry="a",
+                **kwargs,
             ):
                 kwargs.pop("potential_cls", None)
                 super().__init__(
@@ -55,7 +58,9 @@ class Test_AGAMAPotentialFitter(
         # make instance. It depends.
         if cls.obj is fitter.AGAMAPotentialFitter:
             cls.inst = cls.obj(
-                potential_cls="unittest", symmetry="a", frame="galactocentric"
+                potential_cls="unittest",
+                symmetry="a",
+                frame="galactocentric",
             )
 
     # /def
@@ -92,7 +97,8 @@ class Test_AGAMAPotentialFitter(
             klass = self.obj._registry["unittest"]
 
             msamp = self.obj(
-                potential_cls="unittest", return_specific_class=True,
+                potential_cls="unittest",
+                return_specific_class=True,
             )
 
             # test class type
@@ -147,7 +153,8 @@ class Test_AGAMAPotentialFitter(
 
 
 class Test_AGAMAMultipolePotentialFitter(
-    Test_AGAMAPotentialFitter, obj=fitter.AGAMAMultipolePotentialFitter,
+    Test_AGAMAPotentialFitter,
+    obj=fitter.AGAMAMultipolePotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
