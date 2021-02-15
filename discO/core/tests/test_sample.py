@@ -11,7 +11,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-from abc import abstractmethod
+import abc
 import contextlib
 
 # THIRD PARTY
@@ -249,7 +249,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     # -------------------------------
 
-    @abstractmethod
+    @abc.abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
         # run tests on super
@@ -452,7 +452,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         assert isinstance(ctx, contextlib.nullcontext)
 
     # /def
-
 
     #################################################################
     # Usage Tests
