@@ -62,7 +62,8 @@ def setup_module(module):
                 representation_type = rep.__class__
             sample = coord.SkyCoord(
                 frame.realize_frame(
-                    rep, representation_type=representation_type,
+                    rep,
+                    representation_type=representation_type,
                 ),
                 copy=False,
             )
