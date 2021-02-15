@@ -93,15 +93,11 @@ class Test_GalpyPotentialFitter(
             ) in str(e.value)
 
             # ---------------
-            # with return_specific_class
+            # as wrapper
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(
-                potential_cls=gpot.Potential,
-                key="unittest",
-                return_specific_class=True,
-            )
+            msamp = self.obj(potential_cls=gpot.Potential, key="unittest")
 
             # test class type
             assert isinstance(msamp, klass)

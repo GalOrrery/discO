@@ -93,7 +93,8 @@ class Test_AGAMAPotentialFitter(
             klass = self.obj._registry["unittest"]
 
             msamp = self.obj(
-                potential_cls="unittest", return_specific_class=True
+                potential_cls="unittest",
+                return_specific_class=True,
             )
 
             # test class type
