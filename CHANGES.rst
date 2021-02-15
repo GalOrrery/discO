@@ -82,9 +82,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + registers subclasses. Each subclass is for sampling from potentials from
       a different package. Eg. ``GalpyPotentialSampler`` for sampling
       ``galpy`` potentials.
-    + PotentialSampler can be used to initialize & wrap any of its subclasses.
-      This is controlled by the argument ``return_specific_class``. If False,
-      it returns the subclass itself.
+    + PotentialSampler can be used to initialize any of its subclasses.
     + Takes a ``potential`` and a ``frame`` (astropy CoordinateFrame). The
       potential is used for sampling, but the resulting points are not located
       in any reference frame, which we assign with ``frame``.
@@ -122,15 +120,12 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 - ``PotentialFitter`` : base class for fitting potentials [#20]
 
     + registers subclasses.
-    + PotentialFitter can be used to initialize & wrap any of its subclasses.
-      This is controlled by the argument ``return_specific_class``. If False,
-      it returns the subclass itself.
+    + PotentialFitter can be used to initialize any of its subclasses. [#44]
     + Takes a ``potential_cls`` and ``key`` argument which are used to figure
       out the desired subclass, and how to fit the potential.
     + ``__call__`` and ``fit`` are used to fit the potential, with the latter
       working on N-D samples (multiple iterations).
     + returns a ``PotentialWrapper`` [#40]
-
 
 **discO.core.pipeline**
 
@@ -172,8 +167,7 @@ discO.plugin.agama
     + Fit ``agama`` potentials.
     + Subclass of ``PotentialFitter``
     + registers subclasses for different fit methods.
-    + AGAMAPotentialFitter can be used to initialize & wrap any of its
-      subclasses. This is controlled by the argument ``return_specific_class``. If False, it returns the subclass itself.
+    + AGAMAPotentialFitter can be used to initialize any of its subclasses.
     + Takes a ``pot_type`` argument which is used to figure
       out the desired subclass, and how to fit the potential.
     + returns a ``AGAMAPotentialWrapper`` [#40]

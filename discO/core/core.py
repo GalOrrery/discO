@@ -317,7 +317,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # /def
 
     def __new__(
-        cls, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+        cls,
+        potential: T.Any,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
     ):
         # PotentialWrapper can become any of it's registered subclasses.
         if cls is PotentialWrapper:
@@ -326,7 +330,15 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
             # if key in wrapper, return that class.
             if key in WRAPPER_REGISTRY:
-                return super().__new__(WRAPPER_REGISTRY[key])
+                kls = WRAPPER_REGISTRY[key]
+                return kls.__new__(
+                    kls,
+                    potential,
+                    frame=frame,
+                    representation_type=representation_type,
+                )
+
+        # /if
 
         return super().__new__(cls)
 
@@ -336,7 +348,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # On the instance
 
     def __init__(
-        self, potential: T.Any, *, frame: T.Optional[TH.FrameLikeType] = None
+        self,
+        potential: T.Any,
+        *,
+        frame: T.Optional[TH.FrameLikeType] = None,
+        representation_type: T.Optional[TH.RepresentationType] = None,
     ):
         # if it's a wrapper, have to pop back
         if isinstance(potential, PotentialWrapper):

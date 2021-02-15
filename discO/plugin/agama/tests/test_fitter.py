@@ -42,8 +42,9 @@ class Test_AGAMAPotentialFitter(
                 symmetry="a",
                 **kwargs,
             ):
+                kwargs.pop("potential_cls", None)
                 super().__init__(
-                    "Multipole",
+                    potential_cls="Multipole",
                     symmetry=symmetry,
                     gridsizeR=20,
                     lmax=2,
@@ -56,7 +57,7 @@ class Test_AGAMAPotentialFitter(
 
         # make instance. It depends.
         if cls.obj is fitter.AGAMAPotentialFitter:
-            cls.inst = cls.obj("unittest", symmetry="a")
+            cls.inst = cls.obj(potential_cls="unittest", symmetry="a")
 
     # /def
 
