@@ -62,7 +62,7 @@ class Test_GalpyPotentialFitter(
 
         # make instance. It depends.
         if cls.obj is fitter.GalpyPotentialFitter:
-            cls.inst = cls.obj(potential_cls=cls.potential, key="unittest")
+            cls.inst = cls.obj(potential_cls=cls.potential, key="unittest", frame="galactocentric")
 
     # /def
 
@@ -164,7 +164,7 @@ class Test_GalpySCFPotentialFitter(
         """Setup fixtures for testing."""
         super().setup_class()
         cls.potential = gpot.SCFPotential
-        cls.inst = cls.obj()
+        cls.inst = cls.obj(frame="galactocentric")
 
     # /def
 

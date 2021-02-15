@@ -222,9 +222,11 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         # --------------
 
-        position = sample.represent_as(coord.CartesianRepresentation).xyz
         if mass is None:
             mass = sample.mass
+
+        sample = sample.transform_to(self.frame)  # FIXME!
+        position = sample.represent_as(coord.CartesianRepresentation).xyz
 
         # kwargs
         kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType

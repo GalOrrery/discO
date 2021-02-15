@@ -139,11 +139,12 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         :class:`~astropy.coordinates.SkyCoord`
 
         """
+        if mass is None:
+            mass = sample.mass
 
+        sample = sample.transform_to(self.frame)  # FIXME!
         position = sample.represent_as(coord.CartesianRepresentation).xyz.T
         # TODO! velocities
-        if mass is None:
-            mass = sample.mass  # TODO! what if don't have? have as parameter?
 
         particles = (position, mass)
 

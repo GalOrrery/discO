@@ -407,7 +407,7 @@ class Test_PotentialFitter_SubClass(
     def setup_class(cls):
         """Setup fixtures for testing."""
         super().setup_class()
-        cls.inst = cls.obj(cls.potential)
+        cls.inst = cls.obj(cls.potential, frame="galactocentric")
 
     # /def
 

@@ -190,6 +190,12 @@ class PotentialSampler(CommonBase):
     # ---------------------------------------------------------------
 
     @property
+    def potential(self):
+        return self._sampler
+
+    # /def
+
+    @property
     def frame(self) -> T.Optional[TH.FrameType]:
         """The frame of the data. Can be None."""
         return self._frame
@@ -228,7 +234,7 @@ class PotentialSampler(CommonBase):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
-        random : int or |RandomGenerator| or None (optional, keyword-only)
+        random : int or |RandomState| or None (optional, keyword-only)
             Random state.
         **kwargs
             passed to underlying instance
@@ -278,7 +284,7 @@ class PotentialSampler(CommonBase):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
-        random : int or |RandomGenerator| or None (optional, keyword-only)
+        random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
         **kwargs
             Passed to underlying instance
@@ -355,8 +361,7 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_frame(
-        self,
-        frame: T.Optional[TH.FrameLikeType],
+        self, frame: T.Optional[TH.FrameLikeType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -385,8 +390,7 @@ class PotentialSampler(CommonBase):
     # /def
 
     def _infer_representation(
-        self,
-        representation_type: T.Optional[TH.RepresentationLikeType],
+        self, representation_type: T.Optional[TH.RepresentationLikeType],
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 

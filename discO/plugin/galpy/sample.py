@@ -21,6 +21,7 @@ import numpy as np
 import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
 from discO.utils.random import RandomLike
+from .type_hints import PotentialType
 
 ##############################################################################
 # CODE
@@ -33,7 +34,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
     Parameters
     ----------
     df : `~galpy.df.df.df.df`
-        Distribution Function.
+        Distribution Function holding the potential.
 
     frame : frame-like or None (optional, keyword-only)
         The preferred frame in which to sample.
@@ -57,6 +58,18 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         )
 
     # /def
+
+    # ---------------------------------------------------------------
+
+    @property
+    def potential(self) -> PotentialType:
+        """The potential."""
+        return self._sampler._pot  # get from DF
+
+    # /def
+
+    #################################################################
+    # Sampling
 
     def __call__(
         self,
@@ -90,11 +103,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         # can't pass a random seed, set in context
         with self._random_context(random):
             orbits = self._sampler.sample(
-                R=None,
-                z=None,
-                phi=None,
-                n=n,
-                return_orbit=True,
+                R=None, z=None, phi=None, n=n, return_orbit=True,
             )
 
         t = orbits.time()

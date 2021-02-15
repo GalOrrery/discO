@@ -33,21 +33,24 @@ class Pipeline:
     Parameters
     ----------
     sampler : `PotentialSampler`
-        Sample the potential.
+        The object for sampling the potential.
+        Can have a frame and representation type.
 
     measurer : `MeasurementErrorSampler` or None (optional)
+        The object for re-sampling, given observational errors.
 
     fitter : `PotentialFitter` or None  (optional)
 
     residualer : None (optional)
 
-    statisticer : None (optional)
+    statistic : None (optional)
 
 
     Raises
     ------
     ValueError
-        If give `residual` and not also `fitter`.
+        If can't set `residualer` without `fitter`.
+        If can't set `statistic` without `residualer`.
 
     """
 
@@ -57,25 +60,73 @@ class Pipeline:
         measurer: T.Optional[MeasurementErrorSampler] = None,
         fitter: T.Optional[PotentialFitter] = None,
         residualer: T.Optional[T.Callable] = None,
-        statisticer: T.Optional[T.Callable] = None,
+        statistic: T.Optional[T.Callable] = None,
     ):
-        # can set `fit` without `measure`
+        # CAN set `fitter` without `measurer`
         if fitter is not None and measurer is None:
             pass
-        # cannot set `residualer` without `fitter`
+        # can't set `residualer` without `fitter`
         if residualer is not None and fitter is None:
-            raise ValueError
-        # cannot set `statistic` without `residualer`
-        if statisticer is not None and residualer is None:
-            raise ValueError
+            raise ValueError("Can't set `residualer` without `fitter`.")
+        # can't set `statistic` without `residualer`
+        if statistic is not None and residualer is None:
+            raise ValueError("Can't set `statistic` without `residualer`")
+
+        if sampler is not None and fitter is not None:
+            if fitter.frame != sampler.frame:
+                raise ValueError(
+                    "sampler and fitter must have the same frame."
+                )
+            if fitter.representation_type != sampler.representation_type:
+                raise ValueError(
+                    "sampler and fitter must have the same representation."
+                )
 
         self._sampler = sampler
         self._measurer = measurer
         self._fitter = fitter
         self._residualer = residualer
-        self._statisticer = statisticer
+        self._statisticer = statistic
 
         self._result = None
+
+    # /def
+
+    # ---------------------------------------------------------------
+
+    @property
+    def potential(self):
+        """The potential from which we sample."""
+        return self.sampler.potential
+
+    # /def
+
+    @property
+    def potential_frame(self) -> T.Optional[TH.FrameType]:
+        """The frame in which the potential is sampled and fit."""
+        return self.sampler.frame
+
+    # /def
+
+    @property
+    def potential_representation_type(
+        self,
+    ) -> T.Optional[TH.RepresentationType]:
+        return self.sampler.representation_type
+
+    # /def
+
+    @property
+    def observer_frame(self) -> T.Optional[TH.FrameType]:
+        return self._measurer.frame
+
+    # /def
+
+    @property
+    def observer_representation_type(
+        self,
+    ) -> T.Optional[TH.RepresentationType]:
+        return self._measurer.representation_type
 
     # /def
 
@@ -86,37 +137,49 @@ class Pipeline:
         self,
         n: int,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
         random: T.Optional[RandomLike] = None,
+        # sampler
+        # frame: T.Optional[TH.FrameLikeType] = None,
+        # representation_type: T.Optional[TH.RepresentationType] = None,
+        # observer
         c_err: T.Optional[CERR_Type] = None,
-        original_pot: T.Optional[object] = None,
+        observer_frame: T.Optional[TH.FrameLikeType] = None,
+        observer_representation_type: T.Optional[TH.RepresentationType] = None,
+        # fitter
+        # residual
         observable: T.Optional[str] = None,
         **kwargs,
     ):
-        """Call.
+        """Run the pipeline.
 
         Parameters
         ----------
-        n
-        frame : frame-like or None (optional, keyword-only)
-        random : |RandomGenerator| or int or None (optional, keyword-only)
-        c_err : coord-like or callable or number (optional, keyword-only)
-        original_pot : object or None (optional, keyword-only)
+        n : int (optional)
+            number of sample points
+        niter : int (optional)
+            Number of iterations. Must be > 0.
+
         observable : str or None (optional, keyword-only)
+
         **kwargs
+            Passed to ``run``.
 
         Returns
         -------
-        object
+        :class:`PipelineResult`
 
         """
         return self.run(
             n,
             niter=1,
-            frame=frame,
             random=random,
+            # frame=frame,
+            # observer
             c_err=c_err,
-            original_pot=original_pot,
+            observer_frame=observer_frame,
+            observer_representation_type=observer_representation_type,
+            # fitter
+            # residual
             observable=observable,
             **kwargs,
         )
@@ -128,10 +191,16 @@ class Pipeline:
         n: T.Union[int, T.Sequence[int]],
         niter: int = 1,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
         random: T.Optional[RandomLike] = None,
+        # sampler
+        # frame: T.Optional[TH.FrameLikeType] = None,
+        # representation_type: T.Optional[TH.RepresentationType] = None,
+        # observer
         c_err: T.Optional[CERR_Type] = None,
-        original_pot: T.Optional[object] = None,
+        observer_frame: T.Optional[TH.FrameLikeType] = None,
+        observer_representation_type: T.Optional[TH.RepresentationType] = None,
+        # fitter
+        # residual
         observable: T.Optional[str] = None,
         **kwargs,
     ):
@@ -139,56 +208,85 @@ class Pipeline:
 
         Parameters
         ----------
-        *args
-        **kwargs
+        n : int (optional)
+            number of sample points
+        niter : int (optional)
+            Number of iterations. Must be > 0.
+
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+
+        observer_frame: frame-like or None (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+            None defaults to the value set at initialization.
+        observer_representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+            None defaults to the value set at initialization.
+
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
 
         Returns
         -------
-        object
+        :class:`PipelineResult`
 
         """
+        # We will make a pipeline result and then work thru it.
         result = PipelineResult(self)
         # Now evaluate, passing around the output -> input
 
         # ----------
-        # sample
+        # 1) sample
 
         oi = self._sampler.sample(
-            n, niter=niter, frame=frame, random=random, **kwargs
+            n,
+            niter=niter,
+            # frame=frame, representation_type=representation_type,
+            random=random,
+            **kwargs,
         )
         result._samples = oi
 
         # ----------
-        # measure
+        # 2) measure
 
         if self._measurer is not None:
 
             oi = self._measurer.resample(
-                oi, c_err=c_err, random=random, **kwargs
+                oi,
+                random=random,
+                # c_err=c_err,
+                frame=observer_frame,
+                representation_type=observer_representation_type,
+                **kwargs,
             )
             result._measured = oi
 
         # ----------
-        # fit
+        # 3) fit
+        # we forced the fit to be in the same frame & representation type
+        # as the samples.
 
-        oi = self._fitter.fit(oi, **kwargs)
+        oi = self._fitter.fit(oi, **kwargs,)
         result._fit = oi
 
         # ----------
-        # residual
+        # 4) residual
 
         if self._residualer is not None:
 
             oi = self._residualer.evaluate(
                 oi,
-                original_pot=original_pot,
+                original_pot=self.potential,
                 observable=observable,
                 **kwargs,
             )
             result._residual = oi
 
         # ----------
-        # statistic
+        # 5) statistic
 
         if self._statisticer is not None:
 
@@ -197,7 +295,7 @@ class Pipeline:
 
         # ----------
 
-        self._result = result  # link
+        self._result = result  # link to most recent result
         return result
 
     # /defs

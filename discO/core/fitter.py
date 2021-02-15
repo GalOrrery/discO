@@ -51,11 +51,10 @@ class PotentialFitter(CommonBase):
         The type of potential with which to fit the data.
 
     frame: frame-like or None (optional, keyword-only)
-       The frame of the observational errors, ie the frame in which
-        the error function should be applied along each dimension.
+       The frame of the fit potential. Care should be taken that this
+       matches the frame of the sampling potential.
     representation_type: |Representation| or None (optional, keyword-only)
-        The coordinate representation in which to resample along each
-        dimension.
+        The coordinate representation.
 
     Other Parameters
     ----------------

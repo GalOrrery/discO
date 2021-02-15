@@ -12,11 +12,18 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
+import astropy.coordinates as coord
+import astropy.units as u
+import galpy.potential as gpot
+from galpy import df as gdf
 import numpy as np
 import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import pipeline
+from discO.core.fitter import PotentialFitter
+from discO.core.measurement import MeasurementErrorSampler
+from discO.core.sample import PotentialSampler
 
 ##############################################################################
 # TESTS
@@ -26,13 +33,119 @@ from discO.core import pipeline
 class Test_Pipeline(object):
     """docstring for Test_Pipeline"""
 
+    def setup_class(cls):
+        """Set up fixtures for testing."""
+        cls.mass = 1e12 * u.solMass
+        cls.r0 = 10 * u.kpc  # scale factor
+
+        hernquist_pot = gpot.HernquistPotential(amp=2 * cls.mass, a=cls.r0)
+
+        # sampling a potential that lives in a galactocentric frame
+        # and enforcing a Cartesian representation
+        cls.sampler = PotentialSampler(
+            gdf.isotropicHernquistdf(hernquist_pot),
+            frame="galactocentric",
+            representation_type="cartesian",
+        )
+        # but when we measure, it's 1% errors in icrs, Spherical
+        cls.measurer = MeasurementErrorSampler(
+            c_err=1 * u.percent,
+            method=("rvs", "Gaussian"),
+            frame="icrs",
+            representation_type="spherical",
+        )
+        # fitting is done with an SCF potential
+        cls.fitter = PotentialFitter(
+            key="galpy",
+            potential_cls="scf",
+            frame=cls.sampler.frame,
+            representation_type=cls.sampler.representation_type,
+        )
+        # the residual function
+        cls.residualer = None
+        # the statistic function
+        cls.statistic = None
+
+        cls.inst = pipeline.Pipeline(
+            sampler=cls.sampler,
+            measurer=cls.measurer,
+            fitter=cls.fitter,
+            residualer=cls.residualer,
+            statistic=cls.statistic,
+        )
+
+    # /def
+
     #######################################################
     # Method tests
 
-    @pytest.mark.skip("TODO")
     def test___init__(self):
         """Test method ``__init__``."""
-        assert False
+        # -------------------
+        # basic, same as inst
+
+        pipe = pipeline.Pipeline(
+            sampler=self.sampler,
+            measurer=self.measurer,
+            fitter=self.fitter,
+            residualer=self.residualer,
+            statistic=self.statistic,
+        )
+
+        assert isinstance(pipe, pipeline.Pipeline)
+        assert isinstance(pipe._sampler, PotentialSampler)
+        assert isinstance(pipe._measurer, MeasurementErrorSampler)
+        assert isinstance(pipe._fitter, PotentialFitter)
+        assert isinstance(pipe._residualer, object)
+        assert isinstance(pipe._statisticer, object)
+        assert pipe._result is None
+
+        # -------------------
+        # CAN set `fitter` without `measurer`
+
+        pipe = pipeline.Pipeline(
+            sampler=self.sampler,
+            # measurer=self.measurer,
+            fitter=self.fitter,
+            residualer=self.residualer,
+            statistic=self.statistic,
+        )
+
+        assert isinstance(pipe, pipeline.Pipeline)
+        assert isinstance(pipe._sampler, PotentialSampler)
+        assert pipe._measurer is None
+        assert isinstance(pipe._fitter, PotentialFitter)
+        assert isinstance(pipe._residualer, object)
+        assert isinstance(pipe._statisticer, object)
+        assert pipe._result is None
+
+        # -------------------
+        # can't set `residualer` without `fitter`
+
+        with pytest.raises(ValueError) as e:
+            pipeline.Pipeline(
+                sampler=self.sampler,
+                measurer=self.measurer,
+                # fitter=self.fitter,  # skipping fitter
+                residualer=object(),
+                statistic=self.statistic,
+            )
+
+        assert "Can't set `residualer` without `fitter`." in str(e.value)
+
+        # -------------------
+        # can't set `residualer` without `fitter`
+
+        with pytest.raises(ValueError) as e:
+            pipeline.Pipeline(
+                sampler=self.sampler,
+                measurer=self.measurer,
+                fitter=self.fitter,
+                # residualer=self.residualer,  # skipping residualer
+                statistic=object(),
+            )
+
+        assert "Can't set `statistic` without `residualer`" in str(e.value)
 
     # /def
 
