@@ -124,7 +124,7 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
         :class:`~astropy.coordinates.SkyCoord`
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Implement in subclass.")
 
     # /def
 

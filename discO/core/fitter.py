@@ -210,7 +210,7 @@ class PotentialFitter(CommonBase):
         #     if not isinstance(potential, PotentialWrapper)
         #     else potential
         # )
-        raise NotImplementedError()
+        raise NotImplementedError("Implement in subclass.")
 
     # /def
 

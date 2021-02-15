@@ -11,7 +11,6 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import inspect
 from abc import abstractmethod
 from types import MappingProxyType
 
@@ -253,10 +252,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
             klass = self.obj._registry["unittest"]
 
-            msamp = self.obj(
-                self.potential,
-                key="unittest",
-            )
+            msamp = self.obj(self.potential, key="unittest")
 
             # test class type
             assert isinstance(msamp, klass)
@@ -265,22 +261,20 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             # test inputs
             assert msamp._fitter == self.potential
 
-        # --------------------------
-        else:  # never hit in Test_PotentialSampler, only in subs
-
             # ---------------
             # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                sig = inspect.signature(self.obj)
-                ba = sig.bind_partial(
-                    potential_cls=self.potential,
+                self.obj.__new__(
+                    self.SubClassUnitTest,
+                    potential_cls=None,
                     key="not None",
                 )
-                ba.apply_defaults()
-                self.obj(*ba.args, **ba.kwargs)
 
             assert "Can't specify 'key'" in str(e.value)
+
+        # --------------------------
+        else:  # never hit in Test_PotentialSampler, only in subs
 
             # ---------------
             # AOK
@@ -354,6 +348,13 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
         # run tests on super
         super().test___call__()
 
+        if self.obj is fitter.PotentialFitter:
+
+            with pytest.raises(NotImplementedError) as e:
+                self.obj.__call__(self.inst, None)
+
+            assert "Implement in subclass" in str(e.value)
+
     # /def
 
     # TODO! with hypothesis
@@ -407,6 +408,18 @@ class Test_PotentialFitter_SubClass(
         """Setup fixtures for testing."""
         super().setup_class()
         cls.inst = cls.obj(cls.potential)
+
+    # /def
+
+    # -------------------------------
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        fit = self.inst(crd)
+
+        assert isinstance(fit, PotentialWrapper)
+        assert isinstance(fit.__wrapped__, object)
+        assert fit.frame is None
 
     # /def
 

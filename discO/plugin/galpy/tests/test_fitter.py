@@ -106,6 +106,14 @@ class Test_GalpyPotentialFitter(
             # test inputs
             assert msamp._fitter == self.potential
 
+            # ---------------
+            # key is not None
+
+            with pytest.raises(ValueError) as e:
+                self.obj.__new__(self.SubClassUnitTest, key="not None")
+
+            assert "Can't specify 'key'" in str(e.value)
+
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
 
