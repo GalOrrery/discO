@@ -12,15 +12,91 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
+import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import pipeline
+from discO.core.core import PotentialWrapper
 from discO.core.fitter import PotentialFitter
 from discO.core.measurement import MeasurementErrorSampler
 from discO.core.sample import PotentialSampler
+
+##############################################################################
+# PYTEST
+
+
+def setup_module(module):
+    """Setup fixtures for module."""
+
+    class SubClassUnitTest(PotentialSampler, key="unittest"):
+        def __call__(
+            self,
+            n,
+            *,
+            frame=None,
+            representation_type=None,
+            random=None,
+            **kwargs
+        ):
+            # Get preferred frames
+            frame = self._infer_frame(frame)
+            representation_type = self._infer_representation(
+                representation_type,
+            )
+
+            if random is None:
+                random = np.random
+            elif isinstance(random, int):
+                random = np.random.default_rng(random)
+
+            # return
+            rep = coord.UnitSphericalRepresentation(
+                lon=random.uniform(size=n) * u.deg,
+                lat=2 * random.uniform(size=n) * u.deg,
+            )
+
+            if representation_type is None:
+                representation_type = rep.__class__
+            sample = coord.SkyCoord(
+                frame.realize_frame(
+                    rep, representation_type=representation_type,
+                ),
+                copy=False,
+            )
+            sample.mass = np.ones(n)
+            sample.potential = object()
+
+            return sample
+
+    module.SubClassUnitTest = SubClassUnitTest
+    # /class
+
+    # ------------------
+
+    class FitterSubClass(PotentialFitter, key="unittest"):
+        def __call__(self, c, **kwargs):
+            c.represent_as(coord.CartesianRepresentation)
+            return PotentialWrapper(object(), frame=None)
+
+        # /def
+
+    module.FitterSubClass = FitterSubClass
+    # /class
+
+
+# /def
+
+
+def teardown_module(module):
+    """Teardown fixtures for module."""
+    module.SubClassUnitTest._registry.pop("unittest", None)
+    module.FitterSubClass._registry.pop("unittest", None)
+
+
+# /def
 
 ##############################################################################
 # TESTS
@@ -28,7 +104,7 @@ from discO.core.sample import PotentialSampler
 
 
 class Test_Pipeline(object):
-    """docstring for Test_Pipeline"""
+    """Test Pipeline."""
 
     def setup_class(cls):
         """Set up fixtures for testing."""
@@ -39,6 +115,7 @@ class Test_Pipeline(object):
         # and enforcing a Cartesian representation
         cls.sampler = PotentialSampler(
             object(),  # TODO!
+            key="unittest",
             frame="galactocentric",
             representation_type="cartesian",
         )
@@ -51,8 +128,8 @@ class Test_Pipeline(object):
         )
         # fitting is done with an SCF potential
         cls.fitter = PotentialFitter(
-            key="galpy",
-            potential_cls="scf",
+            object(),
+            key="unittest",
             frame=cls.sampler.frame,
             representation_type=cls.sampler.representation_type,
         )
