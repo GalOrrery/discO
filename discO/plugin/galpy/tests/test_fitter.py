@@ -12,6 +12,7 @@ __all__ = [
 # IMPORTS
 
 # THIRD PARTY
+import astropy.units as u
 import pytest
 from galpy import potential as gpot
 
@@ -178,6 +179,32 @@ class Test_GalpySCFPotentialFitter(
         """Test method ``__call__``."""
         # run tests on super
         super().test___call__()
+
+        # -------------------
+        # some errors
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, Nmax=0)
+
+        assert "Nmax & Lmax must be >0." in str(e.value)
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, Lmax=0)
+
+        assert "Nmax & Lmax must be >0." in str(e.value)
+
+        with pytest.raises(u.UnitsError) as e:
+            self.inst(None, scale_factor=2 * u.Hz)
+
+        assert (
+            "scale factor must have units of length or be dimensionless"
+            in str(e.value)
+        )
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, scale_factor=[1, 2] * u.km)
+
+        assert "scale factor must be a scalar." in str(e.value)
 
         # TODO! actually run tests
 
