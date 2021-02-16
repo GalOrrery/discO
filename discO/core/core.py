@@ -58,7 +58,10 @@ class CommonBase(metaclass=ABCMeta):
     def __init_subclass__(
         cls,
         key: T.Union[
-            str, ModuleType, T.Sequence[T.Union[ModuleType, str]], None,
+            str,
+            ModuleType,
+            T.Sequence[T.Union[ModuleType, str]],
+            None,
         ] = None,
     ) -> None:
         """Initialize a subclass.
@@ -166,7 +169,8 @@ class CommonBase(metaclass=ABCMeta):
 
     @staticmethod
     def _infer_package(
-        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
     ) -> ModuleType:
 
         if inspect.ismodule(package):

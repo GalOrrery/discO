@@ -16,17 +16,15 @@ __all__ = [
 import typing as T
 import weakref
 
-# FIRST PARTY
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
-
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .sample import PotentialSampler, RandomLike
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # CODE
@@ -147,7 +145,7 @@ class Pipeline:
     # /def
 
     @property
-    def potential_representation_type(self,) -> TH.OptRepresentationType:
+    def potential_representation_type(self) -> TH.OptRepresentationType:
         """Representation type of potential."""
         return self.sampler.representation_type
 
@@ -161,7 +159,7 @@ class Pipeline:
     # /def
 
     @property
-    def observer_representation_type(self,) -> TH.OptRepresentationType:
+    def observer_representation_type(self) -> TH.OptRepresentationType:
         """Observer representation type."""
         return self._measurer.representation_type
 

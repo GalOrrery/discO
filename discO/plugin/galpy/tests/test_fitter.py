@@ -28,7 +28,8 @@ from discO.plugin.galpy import GalpyPotentialWrapper, fitter
 
 
 class Test_GalpyPotentialFitter(
-    PotentialFitterTester, obj=fitter.GalpyPotentialFitter,
+    PotentialFitterTester,
+    obj=fitter.GalpyPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
@@ -38,7 +39,10 @@ class Test_GalpyPotentialFitter(
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
             def __init__(
-                self, potential_cls, frame=None, **kwargs,
+                self,
+                potential_cls,
+                frame=None,
+                **kwargs,
             ):
                 super().__init__(
                     potential_cls=potential_cls, frame=frame, **kwargs
@@ -48,7 +52,8 @@ class Test_GalpyPotentialFitter(
 
             def __call__(self, c, **kwargs):
                 return GalpyPotentialWrapper(
-                    gpot.Potential(), frame=self.frame,
+                    gpot.Potential(),
+                    frame=self.frame,
                 )
 
             # /def
@@ -156,7 +161,8 @@ class Test_GalpyPotentialFitter(
 
 
 class Test_GalpySCFPotentialFitter(
-    Test_GalpyPotentialFitter, obj=fitter.GalpySCFPotentialFitter,
+    Test_GalpyPotentialFitter,
+    obj=fitter.GalpySCFPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):

@@ -83,7 +83,9 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
 
         with pytest.raises(TypeError) as e:
             self.subclass._convert_to_frame(
-                self.points.data, None, representation_type=TypeError,
+                self.points.data,
+                None,
+                representation_type=TypeError,
             )
 
         assert "Input representation must be" in str(e.value)
@@ -93,7 +95,8 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         # passes through unchanged
 
         points, from_frame = self.subclass._convert_to_frame(
-            self.points.data, None,
+            self.points.data,
+            None,
         )
         assert points is self.points.data
         assert from_frame is None
@@ -138,7 +141,9 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
             ):
 
                 points, from_frame = self.subclass._convert_to_frame(
-                    p, "galactocentric", representation_type=rep_type,
+                    p,
+                    "galactocentric",
+                    representation_type=rep_type,
                 )
                 if rep_type is None:
                     expected = self.points.representation_type
@@ -151,7 +156,8 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         # same frame
 
         points, from_frame = self.subclass._convert_to_frame(
-            self.points, frame=self.points.frame.replicate_without_data(),
+            self.points,
+            frame=self.points.frame.replicate_without_data(),
         )
 
         # ---------------
@@ -159,7 +165,8 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
 
         with pytest.raises(TypeError) as e:
             self.subclass._convert_to_frame(
-                TypeError, coord.Galactocentric(),
+                TypeError,
+                coord.Galactocentric(),
             )
 
         assert "<SkyCoord, CoordinateFrame, or Representation>" in str(e.value)

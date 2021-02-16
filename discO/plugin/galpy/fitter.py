@@ -251,7 +251,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
         representation_type = (
             resolve_representationlike(
-                self.representation_type, error_if_not_type=False
+                self.representation_type,
+                error_if_not_type=False,
             )
             if representation_type is None
             else resolve_representationlike(representation_type)
@@ -294,7 +295,10 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         return GalpyPotentialWrapper(
             self.potential_cls(
-                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor
+                amp=mass.sum(),
+                Acos=Acos,
+                Asin=Asin,
+                a=scale_factor,
             ),
             frame=frame,
             representation_type=representation_type,

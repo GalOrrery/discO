@@ -111,7 +111,8 @@ class PotentialWrapperMeta(ABCMeta):
             p = points
         elif from_frame is None:  # but frame is not None
             p = resolved_frame.realize_frame(
-                points, representation_type=rep_type,
+                points,
+                representation_type=rep_type,
             )
         # don't need to transform
         elif (
@@ -291,7 +292,8 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # On the class
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, optionally adding to registry.
 
@@ -392,9 +394,9 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             if representation_type not in (None, Ellipsis)
             else representation_type
         )
-        if (
-            frame is not Ellipsis
-            and self._default_representation not in (Ellipsis, None)
+        if frame is not Ellipsis and self._default_representation not in (
+            Ellipsis,
+            None,
         ):
             self._frame.representation_type = self._default_representation
 
@@ -410,7 +412,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # /def
 
     @property
-    def default_representation(self,) -> TH.RepresentationType:
+    def default_representation(self) -> TH.RepresentationType:
         """The default |Representation| of the potential."""
         return self._default_representation
         # TODO? should this resolve?
@@ -584,7 +586,8 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
     @staticmethod
     def _infer_key(
-        obj: T.Any, package: T.Union[ModuleType, str, None] = None,
+        obj: T.Any,
+        package: T.Union[ModuleType, str, None] = None,
     ) -> str:
         """Figure out the package name of an object.
 

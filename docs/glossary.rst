@@ -244,6 +244,16 @@ Glossary
        This argument has a default value. See the signature and/or documentation
        for details.
 
+   representation-like
+   representation_like
+       a :class:`~astropy.coordinates.BaseRepresentation` subclass or instance
+       or a string that can be converted to a Representation
+       (its in :obj:`astropy.coordinates.representations.REPRESENTATION_CLASSES`)
+
+   representation-resolvable
+   representation_resolvable
+       :term:`representation-like` or :term:`python:None` or :term:`python:Ellipsis`
+
    scalar
        In NumPy, usually a synonym for :term:`array scalar`.
 

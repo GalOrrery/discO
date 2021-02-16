@@ -53,7 +53,8 @@ def test__MEASURE_REGISTRY():
 
 
 class Test_MeasurementErrorSampler(
-    CommonBase_Test, obj=measurement.MeasurementErrorSampler,
+    CommonBase_Test,
+    obj=measurement.MeasurementErrorSampler,
 ):
     @classmethod
     def setup_class(cls):
@@ -330,12 +331,14 @@ class Test_MeasurementErrorSampler(
         # rep is not None
 
         rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation((1, 2, 3)), None,
+            coord.CartesianRepresentation((1, 2, 3)),
+            None,
         )
         assert rep == coord.CartesianRepresentation
 
         rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation, None,
+            coord.CartesianRepresentation,
+            None,
         )
         assert rep == coord.CartesianRepresentation
 
@@ -379,7 +382,9 @@ class Test_MeasurementErrorSampler(
         # no angular units
 
         rep = coord.CartesianRepresentation(
-            x=[1, 2] * u.kpc, y=[3, 4] * u.kpc, z=[5, 6] * u.kpc,
+            x=[1, 2] * u.kpc,
+            y=[3, 4] * u.kpc,
+            z=[5, 6] * u.kpc,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(array, rep.__class__, rep._units)
@@ -391,18 +396,23 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.UnitSphericalRepresentation(
-            lon=[1, 2] * u.deg, lat=[3, 4] * u.deg,
+            lon=[1, 2] * u.deg,
+            lat=[3, 4] * u.deg,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91]])
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(got, np.array([[-180, 0, 540], [-89, 0, 89]]))
 
@@ -411,30 +421,40 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.SphericalRepresentation(
-            lon=[1, 2] * u.deg, lat=[3, 4] * u.deg, distance=[5, 6] * u.kpc,
+            lon=[1, 2] * u.deg,
+            lat=[3, 4] * u.deg,
+            distance=[5, 6] * u.kpc,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91], [5, 6, 7]])
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(
-            got, np.array([[-180, 0, 540], [-89, 0, 89], [5, 6, 7]]),
+            got,
+            np.array([[-180, 0, 540], [-89, 0, 89], [5, 6, 7]]),
         )
 
         # 3) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91], [-5, 6, -7]])
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(
-            got, np.array([[0, 0, 720], [89, 0, -89], [5, 6, 7]]),
+            got,
+            np.array([[0, 0, 720], [89, 0, -89], [5, 6, 7]]),
         )
 
         # -------------------------------
@@ -442,18 +462,24 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.CylindricalRepresentation(
-            rho=[5, 6] * u.kpc, phi=[1, 2] * u.deg, z=[3, 4] * u.parsec,
+            rho=[5, 6] * u.kpc,
+            phi=[1, 2] * u.deg,
+            z=[3, 4] * u.parsec,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-5, 6, -7], [-180, 0, 180], [-4, 4, 4]])
         got = self.inst._fix_branch_cuts(
-            array.copy(), rep.__class__, rep._units,
+            array.copy(),
+            rep.__class__,
+            rep._units,
         )
         assert np.allclose(got, np.array([[5, 6, 7], [0, 0, 360], [-4, 4, 4]]))
 
@@ -463,13 +489,17 @@ class Test_MeasurementErrorSampler(
         with pytest.raises(NotImplementedError):
 
             rep = coord.PhysicsSphericalRepresentation(
-                phi=[1, 2] * u.deg, theta=[3, 4] * u.deg, r=[5, 6] * u.kpc,
+                phi=[1, 2] * u.deg,
+                theta=[3, 4] * u.deg,
+                r=[5, 6] * u.kpc,
             )
             array = (
                 rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
             )
             self.inst._fix_branch_cuts(
-                array.copy(), coord.PhysicsSphericalRepresentation, rep._units,
+                array.copy(),
+                coord.PhysicsSphericalRepresentation,
+                rep._units,
             )
 
     # /def
@@ -550,7 +580,8 @@ class Test_MeasurementErrorSampler(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c), -1,
+            len(self.c),
+            -1,
         )
         with pytest.raises(NotImplementedError):
             self.inst.resample(c, c_err=c_err, random=0)
@@ -574,7 +605,10 @@ class Test_MeasurementErrorSampler(
 
         with pytest.raises(NotImplementedError):
             self.inst.resample(
-                c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
+                c,
+                c_err=10 * u.percent,
+                random=0,
+                frame=coord.Galactic(),
             )
 
         # ---------------
@@ -610,7 +644,9 @@ class Test_MeasurementErrorSampler(
         # BaseCoordinateFrame, SkyCoord
 
         r_err = coord.SphericalRepresentation(
-            (0.1, 0.2) * u.deg, (0.2, 0.3) * u.deg, 1,
+            (0.1, 0.2) * u.deg,
+            (0.2, 0.3) * u.deg,
+            1,
         )
         c_err = coord.ICRS(r_err)
 
@@ -693,7 +729,8 @@ class Test_MeasurementErrorSampler(
 
 
 class Test_RVS_ContinuousMeasurementErrorSampler(
-    Test_MeasurementErrorSampler, obj=measurement.RVS_Continuous,
+    Test_MeasurementErrorSampler,
+    obj=measurement.RVS_Continuous,
 ):
     @classmethod
     def setup_class(cls):
@@ -941,7 +978,10 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         obj = self.inst.resample(
-            self.c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
+            self.c,
+            c_err=10 * u.percent,
+            random=0,
+            frame=coord.Galactic(),
         )
 
         assert np.allclose(obj.ra.deg, [9.67618154, 14.27986628])
@@ -1051,7 +1091,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c), -1,
+            len(self.c),
+            -1,
         )
         res = self.inst.resample(c, c_err=c_err, random=0)
         assert res.shape == c.shape
@@ -1092,7 +1133,10 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         res = self.inst.resample(
-            c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
+            c,
+            c_err=10 * u.percent,
+            random=0,
+            frame=coord.Galactic(),
         )
         assert res.shape == c.shape
         assert np.allclose(
@@ -1306,7 +1350,8 @@ class Test_GaussianMeasurementError(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c), -1,
+            len(self.c),
+            -1,
         )
         res = self.inst.resample(c, c_err=c_err, random=0)
         assert res.shape == c.shape
@@ -1347,7 +1392,10 @@ class Test_GaussianMeasurementError(
         assert self.inst.frame != coord.Galactic()
 
         res = self.inst.resample(
-            c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
+            c,
+            c_err=10 * u.percent,
+            random=0,
+            frame=coord.Galactic(),
         )
         assert res.shape == c.shape
         assert np.allclose(

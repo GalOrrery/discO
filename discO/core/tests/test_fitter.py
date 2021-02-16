@@ -22,8 +22,8 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import fitter
-from discO.core.wrapper import PotentialWrapper
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.core.wrapper import PotentialWrapper
 from discO.utils.coordinates import UnFrame
 
 ##############################################################################

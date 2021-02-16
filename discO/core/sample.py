@@ -191,7 +191,9 @@ class PotentialSampler(CommonBase):
     ) -> None:
         super().__init__()
         self._wrapper_potential = PotentialWrapper(
-            potential, frame=frame, representation_type=representation_type
+            potential,
+            frame=frame,
+            representation_type=representation_type,
         )
 
     # /def
@@ -376,7 +378,8 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_frame(
-        self, frame: T.Union[TH.FrameLikeType, None, TH.EllipsisType],
+        self,
+        frame: T.Union[TH.FrameLikeType, None, TH.EllipsisType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -402,7 +405,8 @@ class PotentialSampler(CommonBase):
     # /def
 
     def _infer_representation(
-        self, representation_type: TH.OptRepresentationLikeType,
+        self,
+        representation_type: TH.OptRepresentationLikeType,
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 

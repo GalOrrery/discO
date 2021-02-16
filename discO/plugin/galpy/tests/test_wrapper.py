@@ -36,7 +36,8 @@ from discO.utils import resolve_framelike, vectorfield
 
 
 class Test_GalpyPotentialWrapperMeta(
-    PotentialWrapperMeta_Test, obj=wrapper.GalpyPotentialMeta,
+    PotentialWrapperMeta_Test,
+    obj=wrapper.GalpyPotentialMeta,
 ):
     @classmethod
     def setup_class(cls):
@@ -46,7 +47,9 @@ class Test_GalpyPotentialWrapperMeta(
         # now galpy stuff
         # override super
         cls.potential = KeplerPotential(
-            amp=1 * u.solMass, ro=8 * u.kpc, vo=220 * u.km / u.s,
+            amp=1 * u.solMass,
+            ro=8 * u.kpc,
+            vo=220 * u.km / u.s,
         )
         cls.potential.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
@@ -69,7 +72,8 @@ class Test_GalpyPotentialWrapperMeta(
         # basic
 
         points, values = self.subclass.specific_potential(
-            self.potential, self.points.data,
+            self.potential,
+            self.points.data,
         )
 
         # the points are unchanged
@@ -93,7 +97,9 @@ class Test_GalpyPotentialWrapperMeta(
         ):
 
             points, values = self.subclass.specific_potential(
-                self.potential, self.points, frame=frame,
+                self.potential,
+                self.points,
+                frame=frame,
             )
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
@@ -155,7 +161,9 @@ class Test_GalpyPotentialWrapperMeta(
         ):
 
             vf = self.subclass.specific_force(
-                self.potential, self.points, frame=frame,
+                self.potential,
+                self.points,
+                frame=frame,
             )
 
             assert isinstance(vf, vectorfield.BaseVectorField)
@@ -205,13 +213,16 @@ class Test_GalpyPotentialWrapperMeta(
 
 
 class Test_GalpyPotentialWrapper(
-    PotentialWrapper_Test, obj=wrapper.GalpyPotentialWrapper,
+    PotentialWrapper_Test,
+    obj=wrapper.GalpyPotentialWrapper,
 ):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
         cls.potential = KeplerPotential(
-            amp=1 * u.solMass, ro=8 * u.kpc, vo=220 * u.km / u.s,
+            amp=1 * u.solMass,
+            ro=8 * u.kpc,
+            vo=220 * u.km / u.s,
         )
         cls.potential.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
@@ -265,7 +276,8 @@ class Test_GalpyPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             points, values = self.inst.specific_potential(
-                self.points, frame=coord.Galactocentric(),
+                self.points,
+                frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -274,7 +286,8 @@ class Test_GalpyPotentialWrapper(
         # representation_type
 
         points, values = self.inst.specific_potential(
-            self.points, representation_type=coord.CartesianRepresentation,
+            self.points,
+            representation_type=coord.CartesianRepresentation,
         )
         assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
@@ -322,7 +335,8 @@ class Test_GalpyPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             points, values = self.inst(
-                self.points, frame=coord.Galactocentric(),
+                self.points,
+                frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -331,7 +345,8 @@ class Test_GalpyPotentialWrapper(
         # representation_type
 
         points, values = self.inst(
-            self.points, representation_type=coord.CartesianRepresentation,
+            self.points,
+            representation_type=coord.CartesianRepresentation,
         )
         assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
@@ -368,7 +383,8 @@ class Test_GalpyPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             vf = self.inst.specific_force(
-                self.points, frame=coord.Galactocentric(),
+                self.points,
+                frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -379,7 +395,8 @@ class Test_GalpyPotentialWrapper(
         # representation_type
 
         vf = self.inst.specific_force(
-            self.points, representation_type=coord.CartesianRepresentation,
+            self.points,
+            representation_type=coord.CartesianRepresentation,
         )
 
         assert isinstance(vf, vectorfield.BaseVectorField)

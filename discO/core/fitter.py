@@ -75,7 +75,8 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -260,7 +261,7 @@ class PotentialFitter(CommonBase):
                 Care should be taken that this matches the frame of the
                 sampling potential.
 
-        representation_type: |Representation| or None or Ellipsis (optional, keyword-only)
+        representation_type: representation-resolvable (optional, keyword-only)
             The coordinate representation.
 
         **kwargs

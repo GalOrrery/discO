@@ -19,10 +19,10 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import pipeline
-from discO.core.wrapper import PotentialWrapper
 from discO.core.fitter import PotentialFitter
 from discO.core.measurement import MeasurementErrorSampler
 from discO.core.sample import PotentialSampler
+from discO.core.wrapper import PotentialWrapper
 
 ##############################################################################
 # PYTEST

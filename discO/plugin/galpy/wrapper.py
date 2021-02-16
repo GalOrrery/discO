@@ -23,7 +23,7 @@ import numpy as np
 import discO.type_hints as TH
 from .type_hints import PotentialType
 from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta
-from discO.utils import vectorfield, resolve_representationlike
+from discO.utils import resolve_representationlike, vectorfield
 
 ##############################################################################
 # PARAMETERS
@@ -150,12 +150,16 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         Fz = potential.zforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
 
         vf = vectorfield.CylindricalVectorField(
-            points=r, vf_rho=Frho, vf_phi=Fphi, vf_z=Fz, frame=frame,
+            points=r,
+            vf_rho=Frho,
+            vf_phi=Fphi,
+            vf_z=Fz,
+            frame=frame,
         )
 
         if representation_type is not None:
             vf = vf.represent_as(
-                resolve_representationlike(representation_type)
+                resolve_representationlike(representation_type),
             )
 
         return vf
@@ -169,7 +173,9 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
 
 
 class GalpyPotentialWrapper(
-    PotentialWrapper, key="galpy", metaclass=GalpyPotentialMeta,
+    PotentialWrapper,
+    key="galpy",
+    metaclass=GalpyPotentialMeta,
 ):
     """Wrap :mod:`~galpy` :class:`~galpy.Potential` objects.
 

@@ -136,6 +136,8 @@ numpydoc_xref_aliases = {
     "frame-like": ":term:`frame-like`",
     "number": ":term:`number`",
     "optional": ":term:`optional`",
+    "representation-like": ":term:`representation-like`",
+    "representation-resolvable": ":term:`representation-resolvable`",
     "unit-like": ":term:`unit-like`",
     "quantity-like": ":term:`quantity-like`",
     "Quantity": ":class:`~astropy.units.Quantity`",

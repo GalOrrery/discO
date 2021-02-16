@@ -64,7 +64,10 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
     # On the instance
 
     def __new__(
-        cls, *, potential_cls: T.Optional[str] = None, **kwargs,
+        cls,
+        *,
+        potential_cls: T.Optional[str] = None,
+        **kwargs,
     ):
         # The class AGAMAPotentialFitter is a wrapper for anything in its
         # registry If directly instantiating a AGAMAPotentialFitter (not
@@ -167,7 +170,8 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         )
         representation_type = (
             resolve_representationlike(
-                self.representation_type, error_if_not_type=False
+                self.representation_type,
+                error_if_not_type=False,
             )
             if representation_type is None
             else resolve_representationlike(representation_type)
@@ -190,7 +194,9 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         potential = self.potential_cls(particles=particles, **kw)
 
         return AGAMAPotentialWrapper(
-            potential, frame=frame, representation_type=representation_type,
+            potential,
+            frame=frame,
+            representation_type=representation_type,
         )
 
     # /def

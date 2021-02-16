@@ -23,7 +23,7 @@ import astropy.units as u
 import discO.type_hints as TH
 from .type_hints import PotentialType
 from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta
-from discO.utils import vectorfield, resolve_representationlike
+from discO.utils import resolve_representationlike, vectorfield
 
 ##############################################################################
 # Parameters
@@ -161,12 +161,16 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         # return vectorfield
         # TODO? convert back to from_frame?
         vf = vectorfield.CartesianVectorField(
-            points=r, vf_x=Fx, vf_y=Fy, vf_z=Fz, frame=frame,
+            points=r,
+            vf_x=Fx,
+            vf_y=Fy,
+            vf_z=Fz,
+            frame=frame,
         )
 
         if representation_type is not None:
             vf = vf.represent_as(
-                resolve_representationlike(representation_type)
+                resolve_representationlike(representation_type),
             )
 
         return vf
@@ -180,7 +184,9 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
 
 class AGAMAPotentialWrapper(
-    PotentialWrapper, key="agama", metaclass=AGAMAPotentialMeta,
+    PotentialWrapper,
+    key="agama",
+    metaclass=AGAMAPotentialMeta,
 ):
     """Wrap :mod:`~agama` :class:`~agama.Potential` objects."""
 
