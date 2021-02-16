@@ -55,6 +55,7 @@ Modules:
 - ``pipeline`` : for comboing the analysis [#19]
 - ``wrapper`` : for wrapping potentials [#45]
 
+
 **discO.core.core**
 
 The base class samplers, fitters, and most everything else.
@@ -160,6 +161,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       ``potential_representation_type``, ``measured``, ``observation_frame``,
       ``observation_representation_type``, ``fit``, ``residual``,
       ``statistic``. [#45]
+
 
 **discO.core.residual**
 
