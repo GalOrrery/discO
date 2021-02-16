@@ -5,10 +5,11 @@
 
 __all__ = [
     # modules
-    "core_tests",
+    "common_tests",
     "sample_tests",
     "measurement_tests",
     "fitter_tests",
+    "residual_tests",
     "pipeline_tests",
     # instance
     "test",
@@ -25,10 +26,11 @@ from pathlib import Path
 from astropy.tests.runner import TestRunner
 
 # PROJECT-SPECIFIC
-from . import test_core as core_tests
+from . import test_common as common_tests
 from . import test_fitter as fitter_tests
 from . import test_measurement as measurement_tests
 from . import test_pipeline as pipeline_tests
+from . import test_residual as residual_tests
 from . import test_sample as sample_tests
 
 ##############################################################################

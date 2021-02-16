@@ -25,7 +25,7 @@ import scipy.stats
 
 # PROJECT-SPECIFIC
 from discO.core import measurement
-from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 
 ##############################################################################
 # TESTS

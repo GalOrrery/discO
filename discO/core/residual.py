@@ -22,7 +22,7 @@ import astropy.coordinates as coord
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .core import CommonBase
+from .common import CommonBase
 from .wrapper import PotentialWrapper
 from discO.utils.coordinates import resolve_representationlike
 

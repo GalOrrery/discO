@@ -533,7 +533,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             The total mass.
 
         """
-        return self.__class__.total_mass(self.potential)
+        return self.__class__.total_mass(self.__wrapped__)
 
     # /def
 
@@ -576,7 +576,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
         return self.__class__.specific_potential(
-            self.potential,  # potential
+            self.__wrapped__,  # potential
             points=points,
             frame=self.frame,
             representation_type=representation_type,
@@ -623,7 +623,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
         return self.__class__.specific_force(
-            self.potential,
+            self.__wrapped__,
             points=points,
             frame=self.frame,
             representation_type=representation_type,
@@ -650,7 +650,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             if there are.
 
         """
-        return self.__class__.coefficients(self.potential)
+        return self.__class__.coefficients(self.__wrapped__)
 
     # /def
 

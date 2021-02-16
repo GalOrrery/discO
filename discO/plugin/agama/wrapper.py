@@ -244,6 +244,8 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
             elif b"CylSpline" in ptype:
                 raise NotImplementedError("TODO")
 
+        # /with
+
         return coeffs
 
     # /def

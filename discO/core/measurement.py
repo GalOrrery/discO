@@ -47,7 +47,7 @@ from astropy.utils.decorators import classproperty
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .core import CommonBase
+from .common import CommonBase
 from .sample import RandomLike  # TODO move to type-hints
 from discO.utils import resolve_framelike, resolve_representationlike
 
