@@ -13,6 +13,7 @@ __all__ = [
 # BUILT-IN
 import abc
 import contextlib
+import unittest.mock
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -210,11 +211,19 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             ) in str(e.value)
 
             # ---------------
-            # with return_specific_class
+            # with subclass
 
-            key, klass = tuple(self.obj._registry.items())[0]
+            try:
+                key = "galpy"
+                klass = self.obj._registry[key]
+            except KeyError:
+                key, klass = tuple(self.obj._registry.items())[0]
+                potential = self.potential
+            else:
+                potential = unittest.mock.Mock()
+                potential._pot = self.potential
 
-            msamp = self.obj(self.potential, key=key)
+            msamp = self.obj(potential, key=key)
 
             # test class type
             assert isinstance(msamp, klass)

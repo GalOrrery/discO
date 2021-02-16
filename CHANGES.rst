@@ -37,7 +37,8 @@ discO.type_hints
 discO.config
 ^^^^^^^^^^^^
 
-- Add configuration for default frame. Defaults to "icrs". [#17]
+- Add configuration for default frame ("icrs"). [#17]
+- Add configuration for default representation type ("cartesian") [#45]
 
 
 discO.core
@@ -73,7 +74,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + unified interface for the specific potential and specific force.
     + all methods are both instance and static methods.
     + specific force returns a vector field.
-
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
 
 **discO.core.sample**
 
@@ -90,6 +92,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``__call__`` and ``sample`` are used to sample the potential
     + ``sample`` samples the potential many times. This
       can be done for many iterations and different sample number points.
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
 
 
 **discO.core.measurement**
@@ -102,6 +106,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``MeasurementErrorSampler`` is a registry wrapper class and can be used
       in-place of any of its subclasses.
     + Add method ``resample`` for ND array samples from ``PotentialSampler`` [#38]
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
 
 - ``RVS_Continuous`` : scipy rv_continuous distribution [#42]
 
@@ -126,6 +132,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``__call__`` and ``fit`` are used to fit the potential, with the latter
       working on N-D samples (multiple iterations).
     + returns a ``PotentialWrapper`` [#40]
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
 
 **discO.core.pipeline**
 
@@ -134,6 +142,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``PotentialSampler`` to ``MeasurementErrorSampler`` to
       ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``.
     + Pipelines can also be created by concatenation.
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
 
 
 - ``PipelineResult`` store results of a pipe [#37]
