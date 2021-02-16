@@ -30,6 +30,7 @@ Let's do this for galpy
 
 __all__ = [
     "PotentialSampler",
+    "CompoundSampler",
 ]
 
 
@@ -445,6 +446,141 @@ class PotentialSampler(CommonBase):
             context = contextlib.nullcontext()
 
         return context
+
+    # /def
+
+
+# /class
+
+
+##############################################################################
+# Composite Sampler
+
+
+class CompoundSampler(dict, PotentialSampler):
+    """Sample many things."""
+
+    #################################################################
+    # On the class
+
+    def __init_subclass__(cls):
+        """Initialize subclass. Stop the super-chain here."""
+        super().__init_subclass__()
+
+    # /def
+
+    #################################################################
+    # On the instance
+
+    def __new__(cls, *, frame: T.Optional[FrameLikeType] = None, **components):
+        return super().__new__(cls)  # (dict)
+
+    # /def
+
+    # ---------------------------------------------------------------
+
+    def __init__(
+        self, *, frame: T.Optional[FrameLikeType] = None, **components
+    ):
+        super().__init__(**components)  # TODO validate
+        self.frame = resolve_framelike(frame)  # also sets frame on comps
+
+    # /def
+
+    def _validate_component(self, component):
+
+        pass
+
+    # /def
+
+    @property
+    def frame(self):
+        return self._frame
+
+    # /def
+
+    @frame.setter
+    def _(self, value: FrameLikeType):
+        # parse str, etc -> empty frame instance
+        newframe = resolve_framelike(value)
+        # set here
+        self._frame = newframe
+        # and on components
+        for comp in self.keys():
+            self[comp].frame = newframe
+
+    # /def
+
+    #################################################################
+    # Sampling
+
+    def __call__(
+        self,
+        n: int = 1,
+        *,
+        frame: T.Optional[FrameLikeType] = None,
+        random: Random_Like = None,
+        **kwargs,
+    ) -> T.Dict[str, SkyCoordType]:
+        """
+
+        .. todo::
+            
+            allow n for each component by [compname]_n
+
+        """
+
+        # Get preferred frame
+        frame = self._preferred_frame_resolve(frame)
+
+        samples = {}
+        for name, comp in self.items():
+            # make kwargs
+            comp_specific_kwargs = kwargs.pop(name, {})
+            kw = {**kwargs, **comp_specific_kwargs}  # prefer comp_specifc
+
+            # call
+            samples[name] = comp(n, frame=frame, random=random, **kw)
+
+        return samples
+
+    # /def
+
+    # ---------------------------------------------------------------
+
+    def sample(
+        self,
+        n: int = 1,
+        niter: int = 1,
+        *,
+        frame: T.Optional[FrameLikeType] = None,
+        random: Random_Like = None,
+        **kwargs,
+    ):
+        """
+
+        .. todo::
+
+            - allow n for each component by [compname]_n
+            - but not niter
+
+        """
+
+        # Get preferred frame
+        frame = self._preferred_frame_resolve(frame)
+
+        samples = {}
+        for name, comp in self.items():
+            # make kwargs
+            comp_specific_kwargs = kwargs.pop(name, {})
+            kw = {**kwargs, **comp_specific_kwargs}  # prefer comp_specifc
+
+            # sample
+            samples[name] = comp.sample(
+                n=n, niter=niter, frame=frame, random=random, **kw
+            )
+
+        return samples
 
     # /def
 
