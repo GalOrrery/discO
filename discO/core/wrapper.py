@@ -269,6 +269,27 @@ class PotentialWrapperMeta(ABCMeta):
 
     # /def
 
+    # -----------------------------------------------------
+
+    def coefficients(self, potential) -> T.Optional[T.Dict[str, T.Any]]:
+        """Coefficients of the potential.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+
+        Returns
+        -------
+        None or dict
+            None if there aren't coefficients, a dict of the coefficients
+            if there are.
+
+        """
+        raise NotImplementedError("Please use the appropriate subpackage.")
+
+    # /def
+
 
 # /class
 
@@ -340,6 +361,26 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: TH.OptRepresentationLikeType = None,
     ):
+        # A wrapped potential goes thru
+        if isinstance(potential, PotentialWrapper):
+            # get class
+            kls = potential.__class__
+            # get frame and rep-type, defaulting to wrapper
+            frame = potential.frame if frame is None else frame
+            representation_type = (
+                potential.representation_type
+                if representation_type is None
+                else representation_type
+            )
+
+            # we return using kls's __new__, in-case it does something special.
+            return kls.__new__(
+                kls,
+                potential.__wrapped__,
+                frame=frame,
+                representation_type=representation_type,
+            )
+
         # PotentialWrapper can become any of it's registered subclasses.
         if cls is PotentialWrapper:
             # try to infer the package of the potential.
@@ -403,6 +444,13 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # /def
 
     # -----------------------------------------------------
+
+    @property
+    def potential(self) -> object:
+        """The wrapped potential."""
+        return self.__wrapped__
+
+    # /def
 
     @property
     def frame(self) -> T.Optional[TH.FrameType]:
@@ -485,9 +533,11 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             The total mass.
 
         """
-        return self.__class__.total_mass(self.__wrapped__)
+        return self.__class__.total_mass(self.potential)
 
     # /def
+
+    # -----------------------------------------------------
 
     @sharedmethod
     def specific_potential(
@@ -526,7 +576,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
         return self.__class__.specific_potential(
-            self.__wrapped__,  # potential
+            self.potential,  # potential
             points=points,
             frame=self.frame,
             representation_type=representation_type,
@@ -534,6 +584,8 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
     # /def
+
+    # -----------------------------------------------------
 
     @sharedmethod
     def specific_force(
@@ -571,7 +623,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
         return self.__class__.specific_force(
-            self.__wrapped__,
+            self.potential,
             points=points,
             frame=self.frame,
             representation_type=representation_type,
@@ -579,6 +631,27 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         )
 
     acceleration = specific_force
+    # /def
+
+    # -----------------------------------------------------
+
+    @sharedmethod
+    def coefficients(self):
+        """Coefficients of the potential.
+
+        .. todo::
+
+            Make this an attribute
+
+        Returns
+        -------
+        None or dict
+            None if there aren't coefficients, a dict of the coefficients
+            if there are.
+
+        """
+        return self.__class__.coefficients(self.potential)
+
     # /def
 
     ####################################################

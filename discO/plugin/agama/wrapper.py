@@ -12,12 +12,14 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import tempfile
 import typing as T
 
 # THIRD PARTY
 import agama
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -54,6 +56,8 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         return potential.totalMass() * u.solMass  # FIXME! b/c agama units
 
     # /def
+
+    # -----------------------------------------------------
 
     def specific_potential(
         self,
@@ -108,6 +112,8 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
     # /def
 
+    # -----------------------------------------------------
+
     def specific_force(
         self,
         potential: PotentialType,
@@ -121,7 +127,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
         Parameters
         ----------
-        potential : `~agama.Potential`
+        potential : :class:`~agama.Potential`
             The potential.
         points : coord-array or |Representation| or None (optional)
             The points at which to evaluate the potential.
@@ -178,6 +184,69 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
     # /def
 
     acceleration = specific_force
+
+    # -----------------------------------------------------
+
+    def coefficients(
+        self,
+        potential: PotentialType,
+    ) -> T.Optional[T.Dict[str, T.Any]]:
+        """Coefficients of the potential.
+
+        Parameters
+        ----------
+        potential : :class:`~agama.Potential`
+            The potential.
+
+        Returns
+        -------
+        None or dict
+            None if there aren't coefficients, a dict of the coefficients
+            if there are.
+
+        """
+        coeffs = None
+
+        # There's no way way to tell if a potential is an expansion or not
+        # except by importing it to a text file and reading out the type.
+        # We make a temporary file, and work within that.
+        with tempfile.NamedTemporaryFile() as file:
+            potential.export(file.name)
+
+            ptype = file.readline()
+
+            if b"Multipole" in ptype:
+
+                n_radial = int(file.readline().split(b"\t")[0])
+                l_max = int(file.readline().split(b"\t")[0])
+                unused = int(file.readline().split(b"\t")[0])
+                _ = file.readline()[:-1]  # TODO
+                radius, *lminfo = file.readline().split(b"\t")
+                # rest = file.readlines()  # TODO! dPhidr
+
+                Phi = np.loadtxt(
+                    file.name,
+                    skiprows=6,
+                    max_rows=51,
+                )  # TODO! what should max_rows be!
+
+                coeffs = dict(
+                    type="Multipole",
+                    info=dict(
+                        n_radial=n_radial,
+                        l_max=l_max,
+                        unused=unused,
+                        lminfo=lminfo,
+                    ),
+                    coeffs=Phi,
+                )
+
+            elif b"CylSpline" in ptype:
+                raise NotImplementedError("TODO")
+
+        return coeffs
+
+    # /def
 
 
 # /class

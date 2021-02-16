@@ -17,6 +17,7 @@ import typing as T
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
+import galpy.potential as gpot
 import numpy as np
 
 # PROJECT-SPECIFIC
@@ -54,6 +55,8 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         return potential.mass(np.inf)
 
     # /def
+
+    # -----------------------------------------------------
 
     def specific_potential(
         self,
@@ -106,6 +109,8 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         return p, values
 
     # /def
+
+    # -----------------------------------------------------
 
     def specific_force(
         self,
@@ -167,6 +172,38 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
     # /def
 
     acceleration = specific_force
+
+    # -----------------------------------------------------
+
+    def coefficients(self, potential) -> T.Optional[T.Dict[str, T.Any]]:
+        """Coefficients of the potential.
+
+        Parameters
+        ----------
+        potential : :class:`~galpy.potential.Potential`
+            The potential.
+
+        Returns
+        -------
+        None or dict
+            None if there aren't coefficients, a dict of the coefficients
+            if there are.
+
+        """
+        coeffs = None  # start with None, then figure out.
+
+        if isinstance(self.potential, gpot.SCFPotential):
+            coeffs = dict(
+                type="SCF",
+                Acos=self.potential._Acos,
+                Asin=self.potential._Asin,
+            )
+        elif isinstance(self.potential, gpot.DiskSCFPotential):
+            raise NotImplementedError("TODO")
+
+        return coeffs
+
+    # /def
 
 
 # /class
