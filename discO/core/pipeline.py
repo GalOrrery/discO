@@ -131,23 +131,37 @@ class Pipeline:
     # /def
 
     @property
+    def sampler(self) -> PotentialSampler:
+        """The sampler."""
+        return self._sampler
+
+    # /def
+
+    @property
     def potential(self) -> T.Any:
         """The potential from which we sample."""
-        return self._sampler.potential
+        return self.sampler.potential
 
     # /def
 
     @property
     def potential_frame(self) -> TH.OptFrameType:
         """The frame in which the potential is sampled and fit."""
-        return self._sampler.frame
+        return self.sampler.frame
 
     # /def
 
     @property
     def potential_representation_type(self) -> TH.OptRepresentationType:
         """Representation type of potential."""
-        return self._sampler.representation_type
+        return self.sampler.representation_type
+
+    # /def
+
+    @property
+    def measurer(self) -> T.Optional[MeasurementErrorSampler]:
+        """The measurer."""
+        return self._measurer
 
     # /def
 
@@ -162,6 +176,27 @@ class Pipeline:
     def observer_representation_type(self) -> TH.OptRepresentationType:
         """Observer representation type."""
         return self._measurer.representation_type
+
+    # /def
+
+    @property
+    def fitter(self) -> T.Optional[PotentialFitter]:
+        """The fitter."""
+        return self._fitter
+
+    # /def
+
+    @property
+    def residualer(self) -> T.Optional[T.Callable]:
+        """The residual function."""
+        return self._residualer
+
+    # /def
+
+    @property
+    def statisticer(self) -> T.Optional[T.Callable]:
+        """The statistic function."""
+        return self._statisticer
 
     # /def
 
@@ -292,7 +327,7 @@ class Pipeline:
         # ----------
         # 1) sample
 
-        oi: TH.SkyCoordType = self._sampler.sample(
+        oi: TH.SkyCoordType = self.sampler.sample(
             n,
             niter=niter,
             frame=sample_and_fit_frame,
@@ -545,9 +580,33 @@ class PipelineResult:
     # /def
 
     @property
+    def potential_frame(self):
+        return self.samples.frame
+
+    # /def
+
+    @property
+    def potential_representation_type(self):
+        return self.samples.representation_type
+
+    # /def
+
+    @property
     def measured(self) -> T.Optional[TH.SkyCoordType]:
         """The re-samples."""
         return self._measured
+
+    # /def
+
+    @property
+    def observation_frame(self):
+        return self.measured.frame
+
+    # /def
+
+    @property
+    def observation_representation_type(self):
+        return self.measured.representation_type
 
     # /def
 

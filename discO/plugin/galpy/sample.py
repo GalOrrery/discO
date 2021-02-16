@@ -21,6 +21,7 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
+from .type_hints import PotentialType
 from discO.core.sample import PotentialSampler
 from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import RandomLike
@@ -55,12 +56,13 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
     def __init__(
         self,
-        df,
+        df: T.Union[PotentialType, gdf.df.df],
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
+        # need to pop from wrapper
         if isinstance(df, PotentialWrapper):
             frame = df.frame if frame is None else frame
             representation_type = (
@@ -70,6 +72,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             )
             df = df.__wrapped__
 
+        # potetntial -> DF
         if isinstance(df, gpot.Potential):
             df = DF_REGISTRY[df.__class__.__name__](df)
 
@@ -79,7 +82,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             representation_type=representation_type,
             **kwargs
         )
-        self._df = df
+        self._df: gdf.df.df = df
 
     # /def
 
@@ -90,7 +93,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         self,
         n: int = 1,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs

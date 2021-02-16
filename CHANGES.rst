@@ -53,6 +53,7 @@ Modules:
 - ``measurement`` : for resampling, given observational errors. [#17]
 - ``fitter`` : for fitting a Potential given a sample [#20]
 - ``pipeline`` : for comboing the analysis [#19]
+- ``wrapper`` : for wrapping potentials [#45]
 
 **discO.core.core**
 
@@ -69,13 +70,6 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
     + provides tools for working with class registries
 
-- ``PotentialWrapper`` : base class for wrapping Potentials [#39]
-
-    + unified interface for the specific potential and specific force.
-    + all methods are both instance and static methods.
-    + specific force returns a vector field.
-    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
-      that works with ``resolve_framelike``. [#45]
 
 **discO.core.sample**
 
@@ -108,10 +102,12 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + Add method ``resample`` for ND array samples from ``PotentialSampler`` [#38]
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything
       that works with ``resolve_framelike``. [#45]
+    + ``c_err`` must be a keyword argument. [#45]
 
 - ``RVS_Continuous`` : scipy rv_continuous distribution [#42]
 
-  + Any scipy rv_continuous distribution
+  + Any scipy rv_continuous distribution.
+  + ``rvs`` must be a keyword argument. [#45]
 
 - ``GaussianMeasurementError`` : Gaussian rvs distribution [#42]
 
@@ -132,8 +128,11 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``__call__`` and ``fit`` are used to fit the potential, with the latter
       working on N-D samples (multiple iterations).
     + returns a ``PotentialWrapper`` [#40]
+    + Allow for ``frame`` and ``representation``. Care should be taken this
+      matches the sampling frame. [#45]
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything
       that works with ``resolve_framelike``. [#45]
+
 
 **discO.core.pipeline**
 
@@ -142,13 +141,37 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``PotentialSampler`` to ``MeasurementErrorSampler`` to
       ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``.
     + Pipelines can also be created by concatenation.
+    + Pipeline can take arguments ``frame`` and ``representation_type``. [#45]
+    + Calling pipeline can take arguments observer versions of ``frame`` and
+      ``representation_type``. [#45]
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything
       that works with ``resolve_framelike``. [#45]
+    + convenience properties for ``potential``, ``frame``,
+      ``representation_type``, ``potential_frame``,
+      ``potential_representation_type``, ``observer_frame``,
+      ``observer_representation_type``, ``sampler``, ``measurer``, ``fitter``,
+      ``residualer``, ``statisticer``. [#45]
 
 
 - ``PipelineResult`` store results of a pipe [#37]
 
-  + produced by ``Pipeline`` at end of a ``run`` or call.
+    + produced by ``Pipeline`` at end of a ``run`` or call.
+    + convenience properties for ``samples``, ``potential_frame``,
+      ``potential_representation_type``, ``measured``, ``observation_frame``,
+      ``observation_representation_type``, ``fit``, ``residual``,
+      ``statistic``. [#45]
+
+
+**discO.core.wrapper**
+
+- ``PotentialWrapper`` : base class for wrapping Potentials [#39]
+
+    + unified interface for the specific potential and specific force.
+    + all methods are both instance and static methods.
+    + specific force returns a vector field.
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
+    + ``total_mass`` function. [#45]
 
 
 discO.data
@@ -192,6 +215,7 @@ discO.plugin.agama
     + unified interface for the specific potential and specific force.
     + all methods are both instance and static methods.
     + specific force returns a vector field.
+    + ``total_mass`` function. [#45]
 
 
 discO.plugin.galpy
@@ -207,6 +231,7 @@ discO.plugin.galpy
     + unified interface for the specific potential and specific force.
     + all methods are both instance and static methods.
     + specific force returns a vector field.
+    + ``total_mass`` function. [#45]
 
 - ``GalpySCFPotentialFitter`` : for fitting an SCF to particles [#41]
 
@@ -218,13 +243,15 @@ discO.utils
 
 - ``resolve_framelike`` [#17]
 
-    Determine the frame and return a blank instance for anything that can be
-    used in ``frame=`` in  ``Skycoord(...,frame=)``.
-    None resolves to the configured default frame.
+    + Determine the frame and return a blank instance for anything that can be
+      used in ``frame=`` in  ``Skycoord(...,frame=)``.
+    + Ellipsis resolves to the configured default frame ("icrs"). [#45]
+    + None becomes ``UnFrame()`` [#45]
 
 - ``resolve_representationlike`` [#42]
 
-    Determine the representation type given a class, instance, or string name.
+    + Determine the representation type given a class, instance, or string name.
+    + Ellipsis uses default representation type ("cartesian") [#45]
 
 - ``UnFrame`` : unconnected generic coordinate frame [#43]
 

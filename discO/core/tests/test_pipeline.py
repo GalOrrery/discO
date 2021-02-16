@@ -234,15 +234,21 @@ class Test_Pipeline(object):
 
     # /def
 
+    def test_sampler(self):
+        """Test property ``sampler``."""
+        assert self.inst.sampler is self.inst._sampler
+
+    # /def
+
     def test_potential(self):
         """Test property ``potential``."""
-        assert self.inst.potential is self.inst._sampler.potential
+        assert self.inst.potential is self.inst.sampler.potential
 
     # /def
 
     def test_potential_frame(self):
         """Test property ``potential_frame``."""
-        assert self.inst.potential_frame is self.inst._sampler.frame
+        assert self.inst.potential_frame is self.inst.sampler.frame
 
     # /def
 
@@ -250,14 +256,20 @@ class Test_Pipeline(object):
         """Test property ``potential_representation_type``."""
         assert (
             self.inst.potential_representation_type
-            is self.inst._sampler.representation_type
+            is self.inst.sampler.representation_type
         )
+
+    # /def
+
+    def test_measurer(self):
+        """Test property ``measurer``."""
+        assert self.inst.measurer is self.inst._measurer
 
     # /def
 
     def test_observer_frame(self):
         """Test property ``observer_frame``."""
-        assert self.inst.observer_frame is self.inst._measurer.frame
+        assert self.inst.observer_frame is self.inst.measurer.frame
 
     # /def
 
@@ -265,10 +277,30 @@ class Test_Pipeline(object):
         """Test property ``observer_representation_type``."""
         assert (
             self.inst.observer_representation_type
-            is self.inst._measurer.representation_type
+            is self.inst.measurer.representation_type
         )
 
     # /def
+
+    def test_fitter(self):
+        """Test property ``fitter``."""
+        assert self.inst.fitter is self.inst._fitter
+
+    # /def
+
+    def test_residualer(self):
+        """Test property ``residualer``."""
+        assert self.inst.residualer is self.inst._residualer
+
+    # /def
+
+    def test_statisticer(self):
+        """Test property ``statisticer``."""
+        assert self.inst.statisticer is self.inst._statisticer
+
+    # /def
+
+    # -----------------------------------------------------
 
     @pytest.mark.skip("TODO")
     def test___call__(self):
@@ -375,30 +407,63 @@ class Test_PipelineResult(object):
 
     def test_samples(self):
         """Test method ``samples``."""
-        assert self.inst._samples == 1
+        assert self.inst.samples is self.inst._samples
+        assert self.inst.samples == 1
+
+    # /def
+
+    def test_potential_frame(self):
+        """Test method ``potential_frame``."""
+        with pytest.raises(AttributeError):
+            self.inst.potential_frame
+
+    # /def
+
+    def test_potential_representation_type(self):
+        """Test method ``potential_representation_type``."""
+        with pytest.raises(AttributeError):
+            self.inst.potential_representation_type
 
     # /def
 
     def test_measured(self):
         """Test method ``measured``."""
-        assert self.inst._measured == "2"
+        assert self.inst.measured is self.inst._measured
+        assert self.inst.measured == "2"
+
+    # /def
+
+    def test_observation_frame(self):
+        """Test method ``observation_frame``."""
+        with pytest.raises(AttributeError):
+            self.inst.observation_frame
+
+    # /def
+
+    def test_observation_representation_type(self):
+        """Test method ``observation_representation_type``."""
+        with pytest.raises(AttributeError):
+            self.inst.potential_representation_type
 
     # /def
 
     def test_fit(self):
         """Test method ``fit``."""
+        assert self.inst.fit is self.inst._fit
         assert all(np.equal(self.inst._fit, [3, 3.0]))
 
     # /def
 
     def test_residual(self):
         """Test method ``residual``."""
-        assert isinstance(self.inst._residual, object)
+        assert self.inst.residual is self.inst._residual
+        assert isinstance(self.inst.residual, object)
 
     # /def
 
     def test_statistic(self):
         """Test method ``statistic``."""
+        assert self.inst.statistic is self.inst._statistic
         assert self.inst._statistic is NotImplemented
 
     # /def
