@@ -152,8 +152,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     def __new__(
         cls,
-        c_err: T.Optional[CERR_Type] = None,
         *,
+        c_err: T.Optional[CERR_Type] = None,
         method: T.Optional[str] = None,
         **kwargs,
     ):
@@ -172,7 +172,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
             # from registry. Registered in __init_subclass__
             kls = cls[method]
-            return kls.__new__(kls)
+            return kls.__new__(kls, c_err=c_err, method=None, **kwargs)
 
         elif method is not None:
             raise ValueError(
@@ -186,10 +186,10 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        c_err: T.Optional[CERR_Type] = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Union[TH.RepresentationLikeType, None] = None,
+        c_err: T.Optional[CERR_Type] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> None:
         # kwargs are ignored
@@ -197,16 +197,34 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         self.c_err = c_err
 
         # store frame. If not None, resolve it.
-        self.frame = resolve_framelike(frame) if frame is not None else None
-        self.representation_type = (
-            resolve_representationlike(representation_type)
-            if representation_type is not None
-            else None
+        self._frame = (
+            resolve_framelike(frame)
+            if (frame is not None and frame is not Ellipsis)
+            else frame
+        )
+        self._representation_type = (
+            representation_type
+            if representation_type is None or representation_type is Ellipsis
+            else resolve_representationlike(representation_type)
         )
 
         # params (+ pop from ``__new__``)
         self.params = kwargs
         self.params.pop("method", None)
+
+    # /def
+
+    @property
+    def frame(self) -> TH.OptFrameLikeType:
+        """The frame."""
+        return self._frame
+
+    # /def
+
+    @property
+    def representation_type(self) -> TH.OptRepresentationLikeType:
+        """The representation type."""
+        return self._representation_type
 
     # /def
 
@@ -219,8 +237,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         c: TH.CoordinateType,
         c_err: T.Optional[CERR_Type] = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: T.Optional[RandomLike] = None,
         **kwargs,
     ) -> TH.SkyCoordType:
@@ -266,8 +284,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         c: TH.SkyCoordType,
         c_err: TH.CoordinateType = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationType = None,
         random: T.Optional[RandomLike] = None,
         **kwargs,
     ) -> TH.SkyCoordType:
@@ -372,6 +390,9 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
                 samples.append(result)
 
             sample = concatenate(samples).reshape(c.shape)
+            # transfer mass & potential # TODO! better
+            sample.mass = getattr(c, "mass", None)
+            sample.potential = getattr(c, "potential", None)
 
         return sample
 
@@ -437,7 +458,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     def _resolve_frame(
         self,
-        frame: T.Optional[TH.RepresentationType],
+        frame: TH.OptFrameLikeType,
         c: TH.SkyCoordType,
     ) -> TH.FrameType:
         """Resolve, given coordinate and passed value.
@@ -470,7 +491,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     def _resolve_representation_type(
         self,
-        representation_type: T.Optional[TH.RepresentationLikeType],
+        representation_type: TH.OptRepresentationLikeType,
         c: TH.SkyCoordType,
     ) -> TH.RepresentationType:
         """Resolve, given coordinate and passed value.
@@ -502,7 +523,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     @staticmethod
     def _fix_branch_cuts(
         array: TH.QuantityType,
-        representation_type: TH.RepresentationType,
+        representation_type: TH.OptRepresentationLikeType,
         units: T.Dict[str, TH.UnitType],
     ) -> TH.QuantityType:
         """Fix Branch Cuts.
@@ -522,6 +543,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         array : |Quantity|
 
         """
+        representation_type = resolve_representationlike(representation_type)
+
         # First check if any of the components are angular
         if not any([v.physical_type == "angle" for v in units.values()]):
             return array
@@ -594,7 +617,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
     Parameters
     ----------
-    rvs : `~scipy.stats.rv_continuous` subclass instance
+    rvs : `~scipy.stats.rv_continuous` subclass (keyword-only)
         In the call method this is used to generate points by calling
         ``.rvs()`` with:
 
@@ -603,7 +626,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
             - ``scale`` from c_err
             - ``size`` as the samples' shape
             - ``random_state`` from the NumPy random generator.
-    c_err : float or None (optional)
+    c_err : float or None (optional, keyword-only)
         The absolute error.
 
     **kwargs
@@ -620,9 +643,9 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
     def __new__(
         cls,
+        *,
         rvs: scipy.stats.rv_continuous,
         c_err: T.Optional[CERR_Type] = None,
-        *,
         method: T.Optional[str] = None,
         **kwargs,
     ):
@@ -640,6 +663,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
                 )
 
             # from registry. Registered in __init_subclass__
+            # don't pass rvs, b/c not all subclasses take it
             return super().__new__(
                 cls[method], c_err=c_err, method=None, **kwargs
             )
@@ -649,7 +673,8 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
                 f"Can't specify 'method' on {cls}," " only on RVS_Continuous.",
             )
 
-        return super().__new__(cls, c_err, method=None, **kwargs)
+        # don't pass rvs, b/c not all subclasses take it
+        return super().__new__(cls, c_err=c_err, method=None, **kwargs)
 
     # /def
 
@@ -658,12 +683,14 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         rvs: T.Callable,  # scipy.stats.rv_continuous
         c_err: T.Optional[CERR_Type] = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> None:
         super().__init__(
             c_err=c_err,
             frame=frame,
+            representation_type=representation_type,
             **kwargs,
         )
         self._rvs = rvs
@@ -681,19 +708,10 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
     def __call__(
         self,
         c: TH.CoordinateType,
-        c_err: T.Union[
-            # T.Callable,  # not callable
-            TH.CoordinateType,
-            TH.RepresentationType,
-            float,
-            np.ndarray,
-            T.Mapping,
-            TH.QuantityType,
-            None,
-        ] = None,
+        c_err: T.Optional[CERR_Type] = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: T.Optional[RandomLike] = None,
         **params,
     ) -> TH.SkyCoordType:
@@ -846,8 +864,8 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
 
     Parameters
     ----------
-    rvs : callable (optional)
-    c_err : float or callable or None (optional)
+    rvs : callable (optional, keyword-only)
+    c_err : float or callable or None (optional, keyword-only)
         Callable with single mandatory positional argument -- coordinates
         ("c") -- that returns the absolute error.
 
@@ -870,15 +888,15 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
 
     def __new__(
         cls,
+        *,
         rvs: T.Callable = scipy.stats.norm,
         c_err: T.Optional[CERR_Type] = None,
-        *,
         method: T.Optional[str] = None,
         **kwargs,
     ):
         return super().__new__(
             cls,
-            rvs,
+            rvs=rvs,
             c_err=c_err,
             method=method,
             **kwargs,  # distribution
@@ -891,7 +909,8 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         rvs: T.Callable = scipy.stats.norm,
         c_err: T.Optional[CERR_Type] = None,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **params,
     ) -> None:
 
@@ -900,9 +919,10 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
             raise ValueError("rvs must be a Normal type.")
 
         super().__init__(
-            rvs,
+            rvs=rvs,
             c_err=c_err,
             frame=frame,
+            representation_type=representation_type,
             **params,
         )
 

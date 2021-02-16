@@ -21,10 +21,10 @@ import pytest
 from galpy.potential import KeplerPotential
 
 # PROJECT-SPECIFIC
-from discO.core.tests.test_core import (
+from discO.core.tests.test_wrapper import (
     Test_PotentialWrapper as PotentialWrapper_Test,
 )
-from discO.core.tests.test_core import (
+from discO.core.tests.test_wrapper import (
     Test_PotentialWrapperMeta as PotentialWrapperMeta_Test,
 )
 from discO.plugin.galpy import wrapper
@@ -228,6 +228,12 @@ class Test_GalpyPotentialWrapper(
 
         # set up the rest
         super().setup_class()
+
+        cls.inst = cls.obj(
+            cls.potential,
+            frame="galactocentric",
+            representation_type="cylindrical",
+        )
 
     # /def
 

@@ -17,12 +17,13 @@ import typing as T
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .type_hints import PotentialType
-from discO.core.core import PotentialWrapper, PotentialWrapperMeta
-from discO.utils import vectorfield
+from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta
+from discO.utils import resolve_representationlike, vectorfield
 
 ##############################################################################
 # PARAMETERS
@@ -37,14 +38,31 @@ _KMS2 = u.km / u.s ** 2
 class GalpyPotentialMeta(PotentialWrapperMeta):
     """Metaclass for wrapping :mod:`~galpy` potentials."""
 
+    def total_mass(self, potential: PotentialType) -> TH.QuantityType:
+        """Evaluate the total mass.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        return potential.mass(np.inf)
+
+    # /def
+
     def specific_potential(
         self,
         potential: PotentialType,
         points: TH.PositionType,
         *,
-        frame: T.Optional[TH.FrameType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        **kwargs
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs,
     ) -> T.Tuple[TH.FrameType, TH.QuantityType]:
         """Evaluate the specific potential.
 
@@ -71,7 +89,13 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
             The specific potential at `points`.
 
         """
-        p, _ = self._convert_to_frame(points, frame)
+        print(
+            f"points: {points[:4]}, {points.__class__}",
+            f"frame: {frame}",
+            f"representation_type: {representation_type}",
+            sep="\n",
+        )
+        p, _ = self._convert_to_frame(points, frame, representation_type)
         r = p.represent_as(coord.CylindricalRepresentation)
 
         # TODO! be careful about phi definition!
@@ -88,9 +112,9 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         potential,
         points: TH.PositionType,
         *,
-        frame: T.Optional[TH.FrameType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
-        **kwargs
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs,
     ) -> vectorfield.BaseVectorField:
         """Evaluate the specific force.
 
@@ -115,7 +139,7 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
             Type set by `representation_type`
 
         """
-        p, _ = self._convert_to_frame(points, frame)
+        p, _ = self._convert_to_frame(points, frame, representation_type)
         r = p.represent_as(coord.CylindricalRepresentation)
 
         # the specific force = acceleration
@@ -134,7 +158,9 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         )
 
         if representation_type is not None:
-            vf = vf.represent_as(representation_type)
+            vf = vf.represent_as(
+                resolve_representationlike(representation_type),
+            )
 
         return vf
 

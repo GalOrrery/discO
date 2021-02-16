@@ -13,6 +13,7 @@ __all__ = [
 # BUILT-IN
 import abc
 import contextlib
+import unittest.mock
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -23,6 +24,7 @@ import pytest
 # PROJECT-SPECIFIC
 from discO.core import sample
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
@@ -210,18 +212,48 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             ) in str(e.value)
 
             # ---------------
-            # with return_specific_class
+            # with subclass
 
-            key, klass = tuple(self.obj._registry.items())[0]
+            try:
+                key = "galpy"
+                klass = self.obj._registry[key]
+            except KeyError:
+                key, klass = tuple(self.obj._registry.items())[0]
+                potential = self.potential
+            else:
+                potential = unittest.mock.Mock()
+                potential._pot = self.potential
 
-            msamp = self.obj(self.potential, key=key)
+            msamp = self.obj(potential, key=key)
 
             # test class type
             assert isinstance(msamp, klass)
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._sampler == self.potential
+            assert msamp._potential == self.potential
+
+            # ---------------
+            # potential is PotentialWrapper
+
+            try:
+                key = "galpy"
+                klass = self.obj._registry[key]
+            except KeyError:
+                key, klass = tuple(self.obj._registry.items())[0]
+                potential = self.potential
+            else:
+                potential = unittest.mock.Mock()
+                potential._pot = self.potential
+
+            msamp = self.obj(PotentialWrapper(potential), key=key)
+
+            # test class type
+            assert isinstance(msamp, klass)
+            assert isinstance(msamp, self.obj)
+
+            # test inputs
+            assert msamp._potential == self.potential
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
@@ -243,7 +275,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, sample.PotentialSampler)
             assert not hasattr(msamp, "_instance")
-            assert msamp._sampler == self.potential
+            assert msamp._potential == self.potential
 
     # /def
 
@@ -264,7 +296,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_potential(self):
         """Test method ``potential``."""
-        assert self.inst.potential is self.inst._sampler
+        assert self.inst.potential.__wrapped__ is self.potential
 
     # /def
 
@@ -272,7 +304,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_frame(self):
         """Test method ``frame``."""
-        assert self.inst.frame is self.inst._frame
+        assert self.inst.frame is self.inst.potential.frame
 
     # /def
 
@@ -280,7 +312,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_representation_type(self):
         """Test method ``representation_type``."""
-        assert self.inst.representation_type is self.inst._representation_type
+        assert (
+            self.inst.representation_type
+            is self.inst.potential.representation_type
+        )
 
     # /def
 
@@ -375,10 +410,13 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     def test__infer_frame(self):
         """Test method ``_infer_frame``."""
         # None -> own frame
-        assert self.inst._infer_frame(None) == self.inst._frame
+        assert self.inst._infer_frame(None) == self.inst.potential.frame
 
         # own frame is passed through
-        assert self.inst._infer_frame(self.inst._frame) == self.inst._frame
+        assert (
+            self.inst._infer_frame(self.inst.potential.frame)
+            == self.inst.potential.frame
+        )
 
         # "icrs"
         assert self.inst._infer_frame("icrs") == coord.ICRS()
@@ -394,16 +432,16 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         assert (
             self.inst._infer_representation(None)
-            == self.inst._representation_type
+            == self.inst.potential.representation_type
         )
 
         # ----------------
         # still None
 
-        old_representation_type = self.inst._representation_type
-        self.inst._representation_type = None
+        old_representation_type = self.inst.representation_type
+        self.inst.potential._representation_type = None
         assert self.inst._infer_representation(None) is None
-        self.inst._representation_type = old_representation_type
+        self.inst.potential._representation_type = old_representation_type
 
         # ----------------
 

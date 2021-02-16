@@ -109,7 +109,7 @@ class Test_GalpyPotentialFitter(
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
             # ---------------
             # key is not None
@@ -131,7 +131,7 @@ class Test_GalpyPotentialFitter(
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, fitter.PotentialFitter)
             assert not hasattr(msamp, "_instance")
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
     # /def
 

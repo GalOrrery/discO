@@ -21,6 +21,10 @@ import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .sample import PotentialSampler, RandomLike
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # CODE
@@ -61,6 +65,9 @@ class Pipeline:
         fitter: T.Optional[PotentialFitter] = None,
         residualer: T.Optional[T.Callable] = None,
         statistic: T.Optional[T.Callable] = None,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
     ):
         # CAN set `fitter` without `measurer`
         if fitter is not None and measurer is None:
@@ -77,10 +84,11 @@ class Pipeline:
                 raise ValueError(
                     "sampler and fitter must have the same frame.",
                 )
-            if fitter.representation_type != sampler.representation_type:
-                raise ValueError(
-                    "sampler and fitter must have the same representation.",
-                )
+            # nice, but not necessary
+            # if fitter.representation_type != sampler.representation_type:
+            #     raise ValueError(
+            #         "sampler and fitter must have the same representation.",
+            #     )
 
         self._sampler = sampler
         self._measurer = measurer
@@ -90,43 +98,105 @@ class Pipeline:
 
         self._result = None
 
+        # -------------------
+        # Frame and Representation type
+
+        self._frame: TH.OptFrameType = (
+            frame
+            if (frame is None or frame is Ellipsis)
+            else resolve_framelike(frame)
+        )
+        self._representation_type: TH.OptRepresentationType = (
+            representation_type
+            if representation_type in (None, Ellipsis)
+            else resolve_representationlike(representation_type)
+        )
+
     # /def
 
     # ---------------------------------------------------------------
 
     @property
-    def potential(self):
+    def frame(self) -> TH.OptFrameType:
+        """The frame or None or Ellipse."""
+        return self._frame
+
+    # /def
+
+    @property
+    def representation_type(self) -> TH.OptRepresentationLikeType:
+        """The representation type or None or Ellipse."""
+        return self._representation_type
+
+    # /def
+
+    @property
+    def sampler(self) -> PotentialSampler:
+        """The sampler."""
+        return self._sampler
+
+    # /def
+
+    @property
+    def potential(self) -> T.Any:
         """The potential from which we sample."""
         return self.sampler.potential
 
     # /def
 
     @property
-    def potential_frame(self) -> T.Optional[TH.FrameType]:
+    def potential_frame(self) -> TH.OptFrameType:
         """The frame in which the potential is sampled and fit."""
         return self.sampler.frame
 
     # /def
 
     @property
-    def potential_representation_type(
-        self,
-    ) -> T.Optional[TH.RepresentationType]:
+    def potential_representation_type(self) -> TH.OptRepresentationType:
+        """Representation type of potential."""
         return self.sampler.representation_type
 
     # /def
 
     @property
-    def observer_frame(self) -> T.Optional[TH.FrameType]:
+    def measurer(self) -> T.Optional[MeasurementErrorSampler]:
+        """The measurer."""
+        return self._measurer
+
+    # /def
+
+    @property
+    def observer_frame(self) -> TH.OptFrameType:
+        """Observer frame."""
         return self._measurer.frame
 
     # /def
 
     @property
-    def observer_representation_type(
-        self,
-    ) -> T.Optional[TH.RepresentationType]:
+    def observer_representation_type(self) -> TH.OptRepresentationType:
+        """Observer representation type."""
         return self._measurer.representation_type
+
+    # /def
+
+    @property
+    def fitter(self) -> T.Optional[PotentialFitter]:
+        """The fitter."""
+        return self._fitter
+
+    # /def
+
+    @property
+    def residualer(self) -> T.Optional[T.Callable]:
+        """The residual function."""
+        return self._residualer
+
+    # /def
+
+    @property
+    def statisticer(self) -> T.Optional[T.Callable]:
+        """The statistic function."""
+        return self._statisticer
 
     # /def
 
@@ -139,17 +209,17 @@ class Pipeline:
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
-        # frame: T.Optional[TH.FrameLikeType] = None,
-        # representation_type: T.Optional[TH.RepresentationType] = None,
+        sample_and_fit_frame: TH.OptFrameType = None,
+        sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
         c_err: T.Optional[CERR_Type] = None,
-        observer_frame: T.Optional[TH.FrameLikeType] = None,
-        observer_representation_type: T.Optional[TH.RepresentationType] = None,
+        observer_frame: TH.OptFrameType = None,
+        observer_representation_type: TH.OptRepresentationType = None,
         # fitter
         # residual
         observable: T.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> object:
         """Run the pipeline.
 
         Parameters
@@ -169,11 +239,14 @@ class Pipeline:
         :class:`PipelineResult`
 
         """
+        # due to line length
+        sample_and_fit_rep_type = sample_and_fit_representation_type
         return self.run(
             n,
             niter=1,
             random=random,
-            # frame=frame,
+            sample_and_fit_frame=sample_and_fit_frame,
+            sample_and_fit_representation_type=sample_and_fit_rep_type,
             # observer
             c_err=c_err,
             observer_frame=observer_frame,
@@ -193,17 +266,17 @@ class Pipeline:
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
-        # frame: T.Optional[TH.FrameLikeType] = None,
-        # representation_type: T.Optional[TH.RepresentationType] = None,
+        sample_and_fit_frame: TH.OptFrameType = None,
+        sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
         c_err: T.Optional[CERR_Type] = None,
-        observer_frame: T.Optional[TH.FrameLikeType] = None,
-        observer_representation_type: T.Optional[TH.RepresentationType] = None,
+        observer_frame: TH.OptFrameType = None,
+        observer_representation_type: TH.OptRepresentationType = None,
         # fitter
         # residual
         observable: T.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> object:
         """Call.
 
         Parameters
@@ -237,24 +310,39 @@ class Pipeline:
         result = PipelineResult(self)
         # Now evaluate, passing around the output -> input
 
+        # frame
+        sample_and_fit_frame = (
+            self.frame
+            if sample_and_fit_frame is None
+            else sample_and_fit_frame
+        )
+
+        # representation type
+        sample_and_fit_representation_type = (
+            self.representation_type
+            if sample_and_fit_representation_type is None
+            else sample_and_fit_representation_type
+        )
+
         # ----------
         # 1) sample
 
-        oi = self._sampler.sample(
+        oi: TH.SkyCoordType = self.sampler.sample(
             n,
             niter=niter,
-            # frame=frame, representation_type=representation_type,
+            frame=sample_and_fit_frame,
+            representation_type=sample_and_fit_representation_type,
             random=random,
             **kwargs,
         )
-        result._samples = oi
+        result._samples: TH.SkyCoordType = oi
 
         # ----------
         # 2) measure
 
         if self._measurer is not None:
 
-            oi = self._measurer.resample(
+            oi: TH.SkyCoordType = self._measurer.resample(
                 oi,
                 random=random,
                 # c_err=c_err,
@@ -262,40 +350,45 @@ class Pipeline:
                 representation_type=observer_representation_type,
                 **kwargs,
             )
-            result._measured = oi
+            result._measured: TH.SkyCoordType = oi
 
         # ----------
         # 3) fit
         # we forced the fit to be in the same frame & representation type
         # as the samples.
 
-        oi = self._fitter.fit(oi, **kwargs)
-        result._fit = oi
+        oi: T.Any = self._fitter.fit(
+            oi,
+            frame=sample_and_fit_frame,
+            representation_type=sample_and_fit_representation_type,
+            **kwargs,
+        )
+        result._fit: T.Any = oi
 
         # ----------
         # 4) residual
 
         if self._residualer is not None:
 
-            oi = self._residualer.evaluate(
+            oi: T.Any = self._residualer.evaluate(
                 oi,
                 original_pot=self.potential,
                 observable=observable,
                 **kwargs,
             )
-            result._residual = oi
+            result._residual: T.Any = oi
 
         # ----------
         # 5) statistic
 
         if self._statisticer is not None:
 
-            oi = self._statisticer(oi, **kwargs)
-            result._statistic = oi
+            oi: T.Any = self._statisticer(oi, **kwargs)
+            result._statistic: T.Any = oi
 
         # ----------
 
-        self._result = result  # link to most recent result
+        self._result: PipelineResult = result  # link to most recent result
         return result
 
     # /defs
@@ -443,7 +536,7 @@ class Pipeline:
 # /class
 
 
-# -------------------------------------------------------------------
+#####################################################################
 
 
 class PipelineResult:
@@ -452,21 +545,21 @@ class PipelineResult:
     def __init__(
         self,
         pipe: Pipeline,
-        samples=None,
-        measured=None,
-        fit=None,
-        residual=None,
-        statistic=None,
+        samples: T.Optional[TH.SkyCoordType] = None,
+        measured: T.Optional[TH.SkyCoordType] = None,
+        fit: T.Optional[T.Any] = None,
+        residual: T.Optional[T.Any] = None,
+        statistic: T.Optional[T.Any] = None,
     ):
         # reference to parent
         self._parent_ref = weakref.ref(pipe)
 
         # results
-        self._samples = samples
-        self._measured = measured
-        self._fit = fit
-        self._residual = residual
-        self._statistic = statistic
+        self._samples: T.Optional[TH.SkyCoordType] = samples
+        self._measured: T.Optional[TH.SkyCoordType] = measured
+        self._fit: T.Optional[T.Any] = fit
+        self._residual: T.Optional[T.Any] = residual
+        self._statistic: T.Optional[T.Any] = statistic
 
     # /def
 
@@ -480,24 +573,63 @@ class PipelineResult:
     # /def
 
     @property
-    def samples(self):
+    def samples(self) -> T.Optional[TH.SkyCoordType]:
+        """The samples."""
         return self._samples
 
+    # /def
+
     @property
-    def measured(self):
+    def potential_frame(self):
+        return self.samples.frame
+
+    # /def
+
+    @property
+    def potential_representation_type(self):
+        return self.samples.representation_type
+
+    # /def
+
+    @property
+    def measured(self) -> T.Optional[TH.SkyCoordType]:
+        """The re-samples."""
         return self._measured
 
+    # /def
+
     @property
-    def fit(self):
+    def observation_frame(self):
+        return self.measured.frame
+
+    # /def
+
+    @property
+    def observation_representation_type(self):
+        return self.measured.representation_type
+
+    # /def
+
+    @property
+    def fit(self) -> T.Optional[T.Any]:
+        """The fit potential."""
         return self._fit
 
-    @property
-    def residual(self):
-        return self._residual
+    # /def
 
     @property
-    def statistic(self):
+    def residual(self) -> T.Optional[T.Any]:
+        """The residual between the original and fit potential."""
+        return self._residual
+
+    # /def
+
+    @property
+    def statistic(self) -> T.Optional[T.Any]:
+        """The statistic on the residual."""
         return self._statistic
+
+    # /def
 
 
 # /class

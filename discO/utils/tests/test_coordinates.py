@@ -19,6 +19,7 @@ import pytest
 # PROJECT-SPECIFIC
 from discO.config import conf
 from discO.utils.coordinates import (
+    UnFrame,
     resolve_framelike,
     resolve_representationlike,
 )
@@ -32,19 +33,27 @@ class Test_resolve_framelike:
     """Test function :func:`~discO.utils.resolve_framelike`."""
 
     @staticmethod
-    def test_frame_is_none():
-        """Test when frame is None."""
+    def test_frame_is_Ellipsis():
+        """Test when frame is Ellipsis."""
         # basic usage
-        assert resolve_framelike(frame=None) == resolve_framelike(
+        assert resolve_framelike(frame=Ellipsis) == resolve_framelike(
             frame=conf.default_frame,
         )
 
         # test changes with conf
         with conf.set_temp("default_frame", "galactocentric"):
 
-            assert resolve_framelike(frame=None) == resolve_framelike(
+            assert resolve_framelike(frame=Ellipsis) == resolve_framelike(
                 frame=conf.default_frame,
             )
+
+    # /def
+
+    @staticmethod
+    def test_frame_is_None():
+        """Test when frame is None."""
+        # basic usage
+        assert resolve_framelike(frame=None) == UnFrame()
 
     # /def
 
@@ -107,6 +116,23 @@ class Test_resolve_framelike:
 
 class Test_resolve_representationlike:
     """Test function :func:`~discO.utils.resolve_representationlike`."""
+
+    @staticmethod
+    def test_representation_is_Ellipsis():
+        """Test when representation is a BaseCoordinateFrame."""
+        with conf.set_temp("default_representation_type", "cartesian"):
+            assert (
+                resolve_representationlike(representation=Ellipsis)
+                == coord.CartesianRepresentation
+            )
+
+        with conf.set_temp("default_representation_type", "spherical"):
+            assert (
+                resolve_representationlike(representation=Ellipsis)
+                == coord.SphericalRepresentation
+            )
+
+    # /def
 
     @staticmethod
     def test_representation_is_str():

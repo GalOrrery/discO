@@ -21,11 +21,15 @@ __all__ = [
 class Conf(_config.ConfigNamespace):
     """Configuration parameters for :mod:`~discO`."""
 
-    # Footprint
-
     default_frame = _config.ConfigItem(
         "icrs",
         description="Default Footprint Frame.",
+        cfgtype="string",
+    )
+
+    default_representation_type = _config.ConfigItem(
+        "cartesian",
+        description="Default Representation Type.",
         cfgtype="string",
     )
 

@@ -23,6 +23,10 @@ import astropy.coordinates as coord
 import discO.type_hints as TH
 from .wrapper import AGAMAPotentialWrapper
 from discO.core.fitter import PotentialFitter
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # PARAMETERS
@@ -94,7 +98,7 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         self,
         *,
         potential_cls: str,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
         symmetry: str = "a",
         **kwargs,
@@ -126,6 +130,9 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> AGAMAPotentialWrapper:
         """Fit Potential given particles.
@@ -138,11 +145,43 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         -------
         :class:`~astropy.coordinates.SkyCoord`
 
+        Other Parameters
+        ----------------
+        frame: frame-like or None (optional, keyword-only)
+            The frame of the fit potential.
+
+            .. warning::
+
+                Care should be taken that this matches the frame of the
+                sampling potential.
+
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+
         """
+        # --------------
+        # frame and representation
+        # None -> default
+
+        frame = (
+            resolve_framelike(self.frame)  # incase self.frame is None or ...
+            if frame is None
+            else resolve_framelike(frame)
+        )
+        representation_type = (
+            resolve_representationlike(
+                self.representation_type,
+                error_if_not_type=False,
+            )
+            if representation_type is None
+            else resolve_representationlike(representation_type)
+        )
+
+        # --------------
         if mass is None:
             mass = sample.mass
 
-        sample = sample.transform_to(self.frame)  # FIXME!
+        sample = sample.transform_to(frame)  # FIXME!
         position = sample.represent_as(coord.CartesianRepresentation).xyz.T
         # TODO! velocities
 
@@ -152,12 +191,12 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
         kw.update(kwargs)
 
-        potential = self._fitter(particles=particles, **kw)
+        potential = self.potential_cls(particles=particles, **kw)
 
         return AGAMAPotentialWrapper(
             potential,
-            frame=self.frame,
-            representation_type=self.representation_type,
+            frame=frame,
+            representation_type=representation_type,
         )
 
     # /def
@@ -195,8 +234,8 @@ class AGAMAMultipolePotentialFitter(AGAMAPotentialFitter, key="multipole"):
     def __init__(
         self,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         symmetry: str = "a",
         gridsizeR: int = 20,
         lmax: int = 10,

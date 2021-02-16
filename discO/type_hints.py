@@ -28,14 +28,18 @@ __all__ = [
     # coordinates
     "RepresentationOrDifferentialType",
     "RepresentationType",
+    "OptRepresentationType",
     "RepresentationLikeType",
+    "OptRepresentationLikeType",
     "DifferentialType",
     "FrameType",
+    "OptFrameType",
     "SkyCoordType",
     "CoordinateType",
     "PositionType",
     "GenericPositionType",
     "FrameLikeType",
+    "OptFrameLikeType",
     # tables
     "TableType",
     "QTableType",
@@ -85,14 +89,20 @@ RepresentationType = T.TypeVar(
 )
 """|Representation|"""
 
+OptRepresentationType = T.Union[RepresentationType, None, EllipsisType]
+
 RepresentationLikeType = T.Union[RepresentationType, str]
 """|Representation| or `str`"""
+
+OptRepresentationLikeType = T.Union[RepresentationLikeType, None, EllipsisType]
 
 DifferentialType = T.TypeVar("BaseDifferential", bound=coord.BaseDifferential)
 """|Differential|"""
 
 FrameType = T.TypeVar("CoordinateFrame", bound=coord.BaseCoordinateFrame)
 """|CoordinateFrame|"""
+
+OptFrameType = T.Union[FrameType, None, EllipsisType]
 
 SkyCoordType = T.TypeVar("SkyCoord", bound=coord.SkyCoord)
 """|SkyCoord|"""
@@ -108,6 +118,8 @@ GenericPositionType = T.Union[RepresentationOrDifferentialType, CoordinateType]
 
 FrameLikeType = T.Union[CoordinateType, str]
 """|CoordinateFrame| or |SkyCoord| or `str`"""
+
+OptFrameLikeType = T.Union[FrameLikeType, None, EllipsisType]
 
 # -----------------
 # table

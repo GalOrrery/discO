@@ -38,12 +38,15 @@ class Test_GalpyPotentialSampler(
 
         # make potential
         cls.mass = 1e12 * u.solMass
+
         hernquist_pot = HernquistPotential(amp=2 * cls.mass)
         hernquist_pot.turn_physical_on()  # force units
-        cls.potential = isotropicHernquistdf(hernquist_pot)
-        cls.potential.turn_physical_on()
+        cls.potential = hernquist_pot
 
-        cls.inst = cls.obj(cls.potential)
+        cls.df = isotropicHernquistdf(hernquist_pot)
+        cls.df.turn_physical_on()
+
+        cls.inst = cls.obj(cls.df)
 
     # /def
 
@@ -52,7 +55,7 @@ class Test_GalpyPotentialSampler(
 
     def test_potential(self):
         """Test method ``potential``."""
-        assert self.inst.potential is self.inst._sampler._pot
+        assert self.inst.potential is self.inst._wrapper_potential
 
     # /def
 
@@ -85,7 +88,7 @@ class Test_GalpyPotentialSampler(
         )
         assert res.__class__ == coord.SkyCoord
 
-        assert res.potential == self.potential
+        assert res.potential.__wrapped__ == self.potential
         assert len(res.mass) == n
 
         got = res.mass.sum()
@@ -122,7 +125,7 @@ class Test_GalpyPotentialSampler(
         res = self.inst.sample(n, frame=frame, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
-        assert res.potential == self.potential
+        assert res.potential.__wrapped__ == self.potential
         assert len(res.mass) == n
         # FIXME!
         # assert np.isclose(

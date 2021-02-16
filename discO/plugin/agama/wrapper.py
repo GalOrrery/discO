@@ -22,8 +22,8 @@ import astropy.units as u
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .type_hints import PotentialType
-from discO.core.core import PotentialWrapper, PotentialWrapperMeta
-from discO.utils import vectorfield
+from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta
+from discO.utils import resolve_representationlike, vectorfield
 
 ##############################################################################
 # Parameters
@@ -36,15 +36,32 @@ agama.setUnits(mass=1, length=1, velocity=1)  # FIXME! bad
 
 
 class AGAMAPotentialMeta(PotentialWrapperMeta):
-    """docstring for AGAMAPotentialMeta"""
+    """Metaclass for wrapping :mod:`~agama` potentials."""
+
+    def total_mass(self, potential: TH.PositionType) -> TH.QuantityType:
+        """Evaluate the total mass.
+
+        Parameters
+        ----------
+        potential : object
+            The potential.
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        return potential.totalMass() * u.solMass  # FIXME! b/c agama units
+
+    # /def
 
     def specific_potential(
         self,
         potential: PotentialType,
         points: TH.PositionType,
         *,
-        frame: T.Optional[TH.FrameType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ) -> T.Tuple[TH.SkyCoordType, TH.QuantityType]:
         """Evaluate the specific potential.
@@ -74,7 +91,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         """
         shape = points.shape[:]  # copy the shape
 
-        p, _ = self._convert_to_frame(points, frame)
+        p, _ = self._convert_to_frame(points, frame, representation_type)
         r = p.represent_as(coord.CartesianRepresentation)
         r = r.reshape(-1)  # unfortunately can't flatten in-place
 
@@ -96,8 +113,8 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         potential: PotentialType,
         points: TH.PositionType,
         *,
-        frame: T.Optional[TH.FrameType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ) -> vectorfield.BaseVectorField:
         """Evaluate the specific force.
@@ -124,7 +141,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
         """
         shape = points.shape[:]  # copy the shape
-        p, _ = self._convert_to_frame(points, frame)
+        p, _ = self._convert_to_frame(points, frame, representation_type)
         # AGAMA uses a flattened Cartesian representation
         r = p.represent_as(coord.CartesianRepresentation).reshape(-1)
 
@@ -152,7 +169,9 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         )
 
         if representation_type is not None:
-            vf = vf.represent_as(representation_type)
+            vf = vf.represent_as(
+                resolve_representationlike(representation_type),
+            )
 
         return vf
 

@@ -49,7 +49,8 @@ import numpy as np
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .core import CommonBase
-from discO.utils import UnFrame, resolve_framelike, resolve_representationlike
+from .wrapper import PotentialWrapper
+from discO.utils import resolve_framelike, resolve_representationlike
 from discO.utils.random import NumpyRNGContext, RandomLike
 
 ##############################################################################
@@ -125,8 +126,8 @@ class PotentialSampler(CommonBase):
         cls,
         potential: T.Any,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         key: T.Union[ModuleType, str, None] = None,
         **kwargs,
     ):
@@ -134,6 +135,21 @@ class PotentialSampler(CommonBase):
         # If directly instantiating a PotentialSampler (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
+            # if potential wrapper
+            if isinstance(potential, PotentialWrapper):
+                # frame
+                frame = potential.frame if frame is None else frame
+                # representation type
+                representation_type = (
+                    potential.representation_type
+                    if representation_type is None
+                    else representation_type
+                )
+                # potential
+                potential = potential.__wrapped__
+
+            # /if
+
             # infer the key, to add to registry
             key = cls._infer_package(potential, key).__name__
 
@@ -169,20 +185,15 @@ class PotentialSampler(CommonBase):
         self,
         potential: T.Any,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> None:
         super().__init__()
-        self._sampler = potential
-
-        # frame and representation type
-        # None stays as None
-        self._frame: T.Optional[TH.FrameType] = None
-        self._representation_type: T.Optional[TH.RepresentationType] = None
-        self._frame = self._infer_frame(frame)
-        self._representation_type = self._infer_representation(
-            representation_type,
+        self._wrapper_potential = PotentialWrapper(
+            potential,
+            frame=frame,
+            representation_type=representation_type,
         )
 
     # /def
@@ -191,21 +202,27 @@ class PotentialSampler(CommonBase):
 
     @property
     def potential(self):
-        return self._sampler
+        return self._wrapper_potential
 
     # /def
 
     @property
-    def frame(self) -> T.Optional[TH.FrameType]:
+    def _potential(self):
+        return self.potential.__wrapped__
+
+    # /def
+
+    @property
+    def frame(self) -> TH.FrameType:
         """The frame of the data. Can be None."""
-        return self._frame
+        return self.potential.frame
 
     # /def
 
     @property
     def representation_type(self) -> T.Optional[TH.RepresentationType]:
         """The representation type of the data. Can be None."""
-        return self._representation_type
+        return self.potential.representation_type
 
     # /def
 
@@ -217,8 +234,8 @@ class PotentialSampler(CommonBase):
         self,
         n: int = 1,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs,
     ) -> TH.SkyCoordType:
@@ -255,8 +272,8 @@ class PotentialSampler(CommonBase):
         n: T.Union[int, T.Sequence[int]] = 1,
         niter: int = 1,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs,
     ) -> T.Union[TH.SkyCoordType, T.Sequence[TH.SkyCoordType]]:
@@ -362,7 +379,7 @@ class PotentialSampler(CommonBase):
 
     def _infer_frame(
         self,
-        frame: T.Optional[TH.FrameLikeType],
+        frame: T.Union[TH.FrameLikeType, None, TH.EllipsisType],
     ) -> T.Optional[TH.FrameType]:
         """Call `resolve_framelike`, but default to preferred frame.
 
@@ -372,7 +389,7 @@ class PotentialSampler(CommonBase):
 
         Parameters
         ----------
-        frame : frame-like or None
+        frame : frame-like or None or Ellipsis
 
         Returns
         -------
@@ -381,10 +398,7 @@ class PotentialSampler(CommonBase):
 
         """
         if frame is None:  # get default
-            frame = self._frame
-
-        if frame is None:  # still None
-            return UnFrame()  # TODO? move to resolve_framelike
+            frame = self.frame
 
         return resolve_framelike(frame)
 
@@ -392,7 +406,7 @@ class PotentialSampler(CommonBase):
 
     def _infer_representation(
         self,
-        representation_type: T.Optional[TH.RepresentationLikeType],
+        representation_type: TH.OptRepresentationLikeType,
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 
@@ -407,7 +421,7 @@ class PotentialSampler(CommonBase):
 
         """
         if representation_type is None:  # get default
-            representation_type = self._representation_type
+            representation_type = self.representation_type
 
         if representation_type is None:  # still None
             return representation_type
