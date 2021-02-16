@@ -13,6 +13,7 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import copy
 import typing as T
 import weakref
 
@@ -290,11 +291,11 @@ class Pipeline:
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
 
-        observer_frame: frame-like or None (optional, keyword-only)
+        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
            The frame of the observational errors, ie the frame in which
             the error function should be applied along each dimension.
             None defaults to the value set at initialization.
-        observer_representation_type: |Representation| or None (optional, keyword-only)
+        observer_representation_type: representation-resolvable (optional, keyword-only)
             The coordinate representation in which to resample along each
             dimension.
             None defaults to the value set at initialization.
@@ -328,7 +329,7 @@ class Pipeline:
         # ----------
         # 1) sample
 
-        oi: TH.SkyCoordType = self.sampler.sample(
+        samples: TH.SkyCoordType = self.sampler.sample(
             n,
             niter=niter,
             frame=sample_and_fit_frame,
@@ -336,56 +337,58 @@ class Pipeline:
             random=random,
             **kwargs,
         )
-        result._samples: TH.SkyCoordType = oi
+        result._samples: TH.SkyCoordType = samples
 
         # ----------
         # 2) measure
 
         if self.measurer is not None:
 
-            oi: TH.SkyCoordType = self.measurer.resample(
-                oi,
+            samples: TH.SkyCoordType = self.measurer.resample(
+                samples,
                 random=random,
                 # c_err=c_err,
                 frame=observer_frame,
                 representation_type=observer_representation_type,
                 **kwargs,
             )
-            result._measured: TH.SkyCoordType = oi
+            result._measured: TH.SkyCoordType = samples
 
         # ----------
         # 3) fit
         # we forced the fit to be in the same frame & representation type
         # as the samples.
 
-        oi: T.Any = self.fitter.fit(
-            oi,
+        fit_pot: T.Any = self.fitter.fit(
+            samples,
             frame=sample_and_fit_frame,
             representation_type=sample_and_fit_representation_type,
             **kwargs,
         )
-        result._fit: T.Any = oi
+        result._fit: T.Any = fit_pot
 
         # ----------
         # 4) residual
+        # only if 3)
 
         if self.residualer is not None:
 
-            oi: T.Any = self.residualer.evaluate(
-                oi,
+            resid: T.Any = self.residualer.evaluate(
+                fit_pot,
                 original_pot=self.potential,
                 observable=observable,
                 **kwargs,
             )
-            result._residual: T.Any = oi
+            result._residual: T.Any = resid
 
         # ----------
         # 5) statistic
+        # only if 4)
 
         if self.statisticer is not None:
 
-            oi: T.Any = self.statisticer(oi, **kwargs)
-            result._statistic: T.Any = oi
+            stat: T.Any = self.statisticer(resid, **kwargs)
+            result._statistic: T.Any = stat
 
         # ----------
 
@@ -394,72 +397,126 @@ class Pipeline:
 
     # /defs
 
+    def run_iter(
+        self,
+        n: T.Union[int, T.Sequence[int]],
+        niter: int = 1,
+        *,
+        random: T.Optional[RandomLike] = None,
+        # sampler
+        sample_and_fit_frame: TH.OptFrameType = None,
+        sample_and_fit_representation_type: TH.OptRepresentationType = None,
+        # observer
+        c_err: T.Optional[CERR_Type] = None,
+        observer_frame: TH.OptFrameType = None,
+        observer_representation_type: TH.OptRepresentationType = None,
+        # fitter
+        # residual
+        observable: T.Optional[str] = None,
+        **kwargs,
+    ) -> object:
+        """Run pipeline, yielding :class:`PipelineResult` for each of ``niter``.
+
+        Parameters
+        ----------
+        n : int (optional)
+            number of sample points
+        niter : int (optional)
+            Number of iterations. Must be > 0.
+
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+
+        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+            None defaults to the value set at initialization.
+        observer_representation_type: representation-resolvable (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+            None defaults to the value set at initialization.
+
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
+
+        Yields
+        ------
+        :class:`PipelineResult`
+            For each of ``niter``
+
+        """
+        # only for line length
+        sample_and_fit_rep_type = sample_and_fit_representation_type
+
+        # iterate over number of ieraions
+        for _ in range(niter):
+            yield self(
+                n=n,
+                random=random,
+                # sampler
+                sample_and_fit_frame=sample_and_fit_frame,
+                sample_and_fit_representation_type=sample_and_fit_rep_type,
+                # observer
+                c_err=c_err,
+                observer_frame=observer_frame,
+                observer_representation_type=observer_representation_type,
+                # fitter
+                # residual
+                observable=observable,
+                **kwargs,
+            )
+
+    # /def
+
     #################################################################
     # Pipeline
 
-    def __or__(self, other):  # FIXME
+    def __or__(
+        self,
+        other: T.Union[
+            MeasurementErrorSampler,
+            PotentialFitter,
+            ResidualMethod,
+            T.Callable,
+        ],
+    ):
+        """Combine ``other`` into a copy of Pipeline.
 
-        # For PotentialSampler
-        if self._sampler is None:  # a sanity check
-            raise Exception("sampler is None. Why'd you do that?")
-        elif isinstance(other, PotentialSampler):
-            raise TypeError("can't do that.")
+        Parameters
+        ----------
+        other : object
+            Combine into Pipeline.
 
-        # For MeasurementErrorSampler
-        elif isinstance(other, MeasurementErrorSampler):
+        Returns
+        -------
+        :class:`Pipeline`
+            With `other` mixed in.
 
-            if self._fitter is not None:
-                raise TypeError(
-                    "can't pass measurer when there's already a fitter",
-                )
-            elif self._measurer is not None:
-                raise ValueError("already have one of those")
+        """
+        # copy  # TODO, manually?
+        pipe = copy.deepcopy(self)
 
-            pipe = Pipeline(
-                sampler=self._sampler,
-                measurer=other,
-                fitter=None,
-                residual=None,
-            )
-
-        elif isinstance(other, PotentialFitter):
-
-            if self._fitter is not None:
-                raise ValueError("already have one of those")
-
-            pipe = Pipeline(
-                sampler=self._sampler,
-                measurer=self._measurer,
-                fitter=other,
-                residual=None,
-            )
-
-        # elif isinstance(other, residual):  # TODO
-
-        #     if self._fitter is None:
-        #         raise TypeError(
-        #             "need a fitter"
-        #         )
-        #     elif self._residual is not None:
-        #         raise ValueError("already have one of those")
-
-        #     pipe = Pipeline(
-        #         sampler=self._sampler,
-        #         measurer=self._measurer,
-        #         fitter=self._residual,
-        #         residual=other,
-        #     )
-
-        else:
-
-            raise TypeError("'other' not one of supported types.")
+        # add in-place
+        pipe.__ior__(other)
 
         return pipe
 
     # /def
 
     def __ior__(self, other):  # FIXME
+        """Combine ``other`` into Pipeline.
 
+        Parameters
+        ----------
+        other : object
+            Combine into Pipeline.
+
+        Returns
+        -------
+        :class:`Pipeline`
+            Current pipeline With `other` mixed in.
+
+        """
         # For PotentialSampler
         if self._sampler is None:  # a sanity check
             raise Exception("sampler is None. Why'd you do that?")
