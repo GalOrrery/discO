@@ -15,6 +15,8 @@ import typing as T
 
 # THIRD PARTY
 import astropy.coordinates as coord
+import galpy.potential as gpot
+import galpy.df as gdf
 import numpy as np
 
 # PROJECT-SPECIFIC
@@ -27,14 +29,20 @@ from discO.utils.random import RandomLike
 # CODE
 ##############################################################################
 
+DF_REGISTRY = {
+    "HernquistPotential": gdf.isotropicHernquistdf
+}
+
+##############################################################################
 
 class GalpyPotentialSampler(PotentialSampler, key="galpy"):
     """Sample a :mod:`~galpy` Potential.
 
     Parameters
     ----------
-    df : `~galpy.df.df.df.df`
+    df : :class:`~galpy.df.df.df.df` or :class:`~galpy.potential.Potential`
         Distribution Function holding the potential.
+        If potential, ties to match to distribution function registry.
 
     frame : frame-like or None (optional, keyword-only)
         The preferred frame in which to sample.
@@ -49,22 +57,19 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         df,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
-        # TODO support potential -> df
+        if isinstance(df, gpot.Potential):
+            df = DF_REGISTRY[df.__class__.__name__](df)
+
         super().__init__(
-            df, frame=frame, representation_type=representation_type, **kwargs
+            df._pot,
+            frame=frame,
+            representation_type=representation_type,
+            **kwargs
         )
-
-    # /def
-
-    # ---------------------------------------------------------------
-
-    @property
-    def potential(self) -> PotentialType:
-        """The potential."""
-        return self._sampler._pot  # get from DF
+        self._df = df
 
     # /def
 
@@ -76,7 +81,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         n: int = 1,
         *,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs
     ):
@@ -102,12 +107,8 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         # can't pass a random seed, set in context
         with self._random_context(random):
-            orbits = self._sampler.sample(
-                R=None,
-                z=None,
-                phi=None,
-                n=n,
-                return_orbit=True,
+            orbits = self._df.sample(
+                R=None, z=None, phi=None, n=n, return_orbit=True,
             )
 
         t = orbits.time()
@@ -131,9 +132,9 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         )
 
         # TODO! better storage of these properties, so stay when transform.
-        samples.potential = self._sampler
+        samples.potential = self.potential
         samples.mass = (  # AGAMA compatibility
-            np.ones(n) * self._sampler._pot.mass(np.inf) / n
+            np.ones(n) * self.potential.total_mass() / n
         )
 
         return samples

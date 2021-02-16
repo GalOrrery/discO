@@ -68,8 +68,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     representation_type = rep.__class__
                 sample = coord.SkyCoord(
                     frame.realize_frame(
-                        rep,
-                        representation_type=representation_type,
+                        rep, representation_type=representation_type,
                     ),
                     copy=False,
                 )
@@ -221,7 +220,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._sampler == self.potential
+            assert msamp._potential == self.potential
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
@@ -243,7 +242,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, sample.PotentialSampler)
             assert not hasattr(msamp, "_instance")
-            assert msamp._sampler == self.potential
+            assert msamp._potential == self.potential
 
     # /def
 
@@ -264,7 +263,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_potential(self):
         """Test method ``potential``."""
-        assert self.inst.potential is self.inst._sampler
+        assert self.inst.potential.__wrapped__ is self.potential
 
     # /def
 
@@ -272,7 +271,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_frame(self):
         """Test method ``frame``."""
-        assert self.inst.frame is self.inst._frame
+        assert self.inst.frame is self.inst.potential.frame
 
     # /def
 
@@ -280,7 +279,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_representation_type(self):
         """Test method ``representation_type``."""
-        assert self.inst.representation_type is self.inst._representation_type
+        assert (
+            self.inst.representation_type
+            is self.inst.potential.representation_type
+        )
 
     # /def
 
@@ -375,10 +377,13 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     def test__infer_frame(self):
         """Test method ``_infer_frame``."""
         # None -> own frame
-        assert self.inst._infer_frame(None) == self.inst._frame
+        assert self.inst._infer_frame(None) == self.inst.potential.frame
 
         # own frame is passed through
-        assert self.inst._infer_frame(self.inst._frame) == self.inst._frame
+        assert (
+            self.inst._infer_frame(self.inst.potential.frame)
+            == self.inst.potential.frame
+        )
 
         # "icrs"
         assert self.inst._infer_frame("icrs") == coord.ICRS()
@@ -394,16 +399,16 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         assert (
             self.inst._infer_representation(None)
-            == self.inst._representation_type
+            == self.inst.potential.representation_type
         )
 
         # ----------------
         # still None
 
-        old_representation_type = self.inst._representation_type
-        self.inst._representation_type = None
+        old_representation_type = self.inst.representation_type
+        self.inst.potential._representation_type = None
         assert self.inst._infer_representation(None) is None
-        self.inst._representation_type = old_representation_type
+        self.inst.potential._representation_type = old_representation_type
 
         # ----------------
 

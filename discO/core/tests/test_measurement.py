@@ -53,8 +53,7 @@ def test__MEASURE_REGISTRY():
 
 
 class Test_MeasurementErrorSampler(
-    CommonBase_Test,
-    obj=measurement.MeasurementErrorSampler,
+    CommonBase_Test, obj=measurement.MeasurementErrorSampler,
 ):
     @classmethod
     def setup_class(cls):
@@ -74,7 +73,7 @@ class Test_MeasurementErrorSampler(
 
             # have to go the long way around
             cls.inst = SubClass(
-                cls.c_err,
+                c_err=cls.c_err,
                 frame=coord.ICRS(),
                 representation_type=coord.SphericalRepresentation,
             )
@@ -311,14 +310,14 @@ class Test_MeasurementErrorSampler(
         # frame is None, self frame is None, so it's c frame
 
         old_frame = self.inst.frame
-        self.inst.frame = None
+        self.inst._frame = None
         assert self.inst.frame is None
 
         frame = self.inst._resolve_frame(None, self.c)
         assert frame == coord.ICRS()
         assert self.inst.frame is None
 
-        self.inst.frame = old_frame
+        self.inst._frame = old_frame
         assert self.inst.frame is old_frame
 
     # /def
@@ -331,14 +330,12 @@ class Test_MeasurementErrorSampler(
         # rep is not None
 
         rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation((1, 2, 3)),
-            None,
+            coord.CartesianRepresentation((1, 2, 3)), None,
         )
         assert rep == coord.CartesianRepresentation
 
         rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation,
-            None,
+            coord.CartesianRepresentation, None,
         )
         assert rep == coord.CartesianRepresentation
 
@@ -356,14 +353,14 @@ class Test_MeasurementErrorSampler(
         # rep is None, self rep is None, so it's c rep
 
         old_rep = self.inst.representation_type
-        self.inst.representation_type = None
+        self.inst._representation_type = None
         assert self.inst.representation_type is None
 
         rep = self.inst._resolve_representation_type(None, self.c)
         assert rep == coord.SphericalRepresentation
         assert self.inst.representation_type is None
 
-        self.inst.representation_type = old_rep
+        self.inst._representation_type = old_rep
         assert self.inst.representation_type is old_rep
 
     # /def
@@ -382,9 +379,7 @@ class Test_MeasurementErrorSampler(
         # no angular units
 
         rep = coord.CartesianRepresentation(
-            x=[1, 2] * u.kpc,
-            y=[3, 4] * u.kpc,
-            z=[5, 6] * u.kpc,
+            x=[1, 2] * u.kpc, y=[3, 4] * u.kpc, z=[5, 6] * u.kpc,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(array, rep.__class__, rep._units)
@@ -396,23 +391,18 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.UnitSphericalRepresentation(
-            lon=[1, 2] * u.deg,
-            lat=[3, 4] * u.deg,
+            lon=[1, 2] * u.deg, lat=[3, 4] * u.deg,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91]])
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(got, np.array([[-180, 0, 540], [-89, 0, 89]]))
 
@@ -421,40 +411,30 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.SphericalRepresentation(
-            lon=[1, 2] * u.deg,
-            lat=[3, 4] * u.deg,
-            distance=[5, 6] * u.kpc,
+            lon=[1, 2] * u.deg, lat=[3, 4] * u.deg, distance=[5, 6] * u.kpc,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91], [5, 6, 7]])
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(
-            got,
-            np.array([[-180, 0, 540], [-89, 0, 89], [5, 6, 7]]),
+            got, np.array([[-180, 0, 540], [-89, 0, 89], [5, 6, 7]]),
         )
 
         # 3) needs correction
         array = np.array([[-360, 0, 360], [-91, 0, 91], [-5, 6, -7]])
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(
-            got,
-            np.array([[0, 0, 720], [89, 0, -89], [5, 6, 7]]),
+            got, np.array([[0, 0, 720], [89, 0, -89], [5, 6, 7]]),
         )
 
         # -------------------------------
@@ -462,24 +442,18 @@ class Test_MeasurementErrorSampler(
 
         # 1) all good
         rep = coord.CylindricalRepresentation(
-            rho=[5, 6] * u.kpc,
-            phi=[1, 2] * u.deg,
-            z=[3, 4] * u.parsec,
+            rho=[5, 6] * u.kpc, phi=[1, 2] * u.deg, z=[3, 4] * u.parsec,
         )
         array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(got, array)
 
         # 2) needs correction
         array = np.array([[-5, 6, -7], [-180, 0, 180], [-4, 4, 4]])
         got = self.inst._fix_branch_cuts(
-            array.copy(),
-            rep.__class__,
-            rep._units,
+            array.copy(), rep.__class__, rep._units,
         )
         assert np.allclose(got, np.array([[5, 6, 7], [0, 0, 360], [-4, 4, 4]]))
 
@@ -489,17 +463,13 @@ class Test_MeasurementErrorSampler(
         with pytest.raises(NotImplementedError):
 
             rep = coord.PhysicsSphericalRepresentation(
-                phi=[1, 2] * u.deg,
-                theta=[3, 4] * u.deg,
-                r=[5, 6] * u.kpc,
+                phi=[1, 2] * u.deg, theta=[3, 4] * u.deg, r=[5, 6] * u.kpc,
             )
             array = (
                 rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
             )
             self.inst._fix_branch_cuts(
-                array.copy(),
-                coord.PhysicsSphericalRepresentation,
-                rep._units,
+                array.copy(), coord.PhysicsSphericalRepresentation, rep._units,
             )
 
     # /def
@@ -580,8 +550,7 @@ class Test_MeasurementErrorSampler(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c),
-            -1,
+            len(self.c), -1,
         )
         with pytest.raises(NotImplementedError):
             self.inst.resample(c, c_err=c_err, random=0)
@@ -605,10 +574,7 @@ class Test_MeasurementErrorSampler(
 
         with pytest.raises(NotImplementedError):
             self.inst.resample(
-                c,
-                c_err=10 * u.percent,
-                random=0,
-                frame=coord.Galactic(),
+                c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
             )
 
         # ---------------
@@ -644,9 +610,7 @@ class Test_MeasurementErrorSampler(
         # BaseCoordinateFrame, SkyCoord
 
         r_err = coord.SphericalRepresentation(
-            (0.1, 0.2) * u.deg,
-            (0.2, 0.3) * u.deg,
-            1,
+            (0.1, 0.2) * u.deg, (0.2, 0.3) * u.deg, 1,
         )
         c_err = coord.ICRS(r_err)
 
@@ -729,8 +693,7 @@ class Test_MeasurementErrorSampler(
 
 
 class Test_RVS_ContinuousMeasurementErrorSampler(
-    Test_MeasurementErrorSampler,
-    obj=measurement.RVS_Continuous,
+    Test_MeasurementErrorSampler, obj=measurement.RVS_Continuous,
 ):
     @classmethod
     def setup_class(cls):
@@ -738,8 +701,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         super().setup_class()
 
         cls.inst = cls.obj(
-            scipy.stats.norm,
-            cls.c_err,
+            rvs=scipy.stats.norm,
+            c_err=cls.c_err,
             frame=coord.ICRS(),
             representation_type=coord.SphericalRepresentation,
         )
@@ -781,7 +744,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # with method specified
 
         method, klass = tuple(self.obj.registry.items())[-1]
-        msamp = self.obj(self.rvs, self.c_err, method=method)
+        msamp = self.obj(rvs=self.rvs, c_err=self.c_err, method=method)
 
         # test class type
         assert isinstance(msamp, klass)
@@ -794,7 +757,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # bad "method" argument
 
         with pytest.raises(ValueError) as e:
-            self.obj(scipy.stats.norm, method="not in registry")
+            self.obj(rvs=scipy.stats.norm, method="not in registry")
 
         assert (
             "RVS_Continuous has no registered measurement resampler"
@@ -809,14 +772,14 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # --------------------------
         # default
 
-        self.obj(self.rvs, self.c_err, method="Gaussian")
+        self.obj(rvs=self.rvs, c_err=self.c_err, method="Gaussian")
 
         # --------------------------
         # explicitly None
 
         obj = self.obj(
-            self.rvs,
-            self.c_err,
+            rvs=self.rvs,
+            c_err=self.c_err,
             method="Gaussian",
             frame=None,
             representation_type=None,
@@ -841,8 +804,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         ):
 
             obj = self.obj(
-                self.rvs,
-                self.c_err,
+                rvs=self.rvs,
+                c_err=self.c_err,
                 method="Gaussian",
                 frame=frame,
                 representation_type=rep_type,
@@ -978,10 +941,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         obj = self.inst.resample(
-            self.c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
+            self.c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
         )
 
         assert np.allclose(obj.ra.deg, [9.67618154, 14.27986628])
@@ -1091,8 +1051,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c),
-            -1,
+            len(self.c), -1,
         )
         res = self.inst.resample(c, c_err=c_err, random=0)
         assert res.shape == c.shape
@@ -1133,10 +1092,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         res = self.inst.resample(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
+            c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
         )
         assert res.shape == c.shape
         assert np.allclose(
@@ -1196,14 +1152,14 @@ class Test_GaussianMeasurementError(
         # Can't have the "method" argument
 
         with pytest.raises(ValueError) as e:
-            self.obj(self.rvs, method="not None")
+            self.obj(rvs=self.rvs, method="not None")
 
         assert "Can't specify 'method'" in str(e.value)
 
         # ---------------
         # AOK
 
-        msamp = self.obj(self.rvs, c_err=self.c_err, method=None)
+        msamp = self.obj(rvs=self.rvs, c_err=self.c_err, method=None)
 
         assert self.obj is not measurement.MeasurementErrorSampler
         assert isinstance(msamp, self.obj)
@@ -1219,14 +1175,14 @@ class Test_GaussianMeasurementError(
         # --------------------------
         # default
 
-        self.obj(self.rvs, self.c_err)
+        self.obj(rvs=self.rvs, c_err=self.c_err)
 
         # --------------------------
         # explicitly None
 
         obj = self.obj(
-            self.rvs,
-            self.c_err,
+            rvs=self.rvs,
+            c_err=self.c_err,
             frame=None,
             representation_type=None,
         )
@@ -1248,10 +1204,9 @@ class Test_GaussianMeasurementError(
             # str
             ("galactocentric", "cartesian"),
         ):
-
             obj = self.obj(
-                self.rvs,
-                self.c_err,
+                rvs=self.rvs,
+                c_err=self.c_err,
                 frame=frame,
                 representation_type=rep_type,
             )
@@ -1265,7 +1220,7 @@ class Test_GaussianMeasurementError(
         # not normal
 
         with pytest.raises(ValueError) as e:
-            self.obj(scipy.stats.alpha)
+            self.obj(rvs=scipy.stats.alpha)
 
         assert "rvs must be a Normal type." in str(e.value)
 
@@ -1351,8 +1306,7 @@ class Test_GaussianMeasurementError(
         # 2D array, SkyCoord, nerriter = niter
 
         c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c),
-            -1,
+            len(self.c), -1,
         )
         res = self.inst.resample(c, c_err=c_err, random=0)
         assert res.shape == c.shape
@@ -1393,10 +1347,7 @@ class Test_GaussianMeasurementError(
         assert self.inst.frame != coord.Galactic()
 
         res = self.inst.resample(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
+            c, c_err=10 * u.percent, random=0, frame=coord.Galactic(),
         )
         assert res.shape == c.shape
         assert np.allclose(

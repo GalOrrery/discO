@@ -3,7 +3,9 @@
 
 """core."""
 
-__all__ = []
+__all__ = [
+    "PotentialWrapper",
+]
 
 
 ##############################################################################
@@ -12,6 +14,7 @@ __all__ = []
 
 # PROJECT-SPECIFIC
 from . import fitter, measurement, pipeline, sample
+from .wrapper import PotentialWrapper
 from .fitter import *  # noqa: F401, F403
 from .measurement import *  # noqa: F401, F403
 from .pipeline import *  # noqa: F401, F403

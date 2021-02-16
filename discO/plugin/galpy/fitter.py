@@ -25,6 +25,10 @@ import discO.type_hints as TH
 from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
 from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # PARAMETERS
@@ -111,6 +115,9 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
         self,
         c: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Fit Potential given particles.
@@ -118,6 +125,17 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
         Parameters
         ----------
         c : coord-like
+
+        frame: frame-like or None (optional, keyword-only)
+            The frame of the fit potential.
+
+            .. warning::
+
+                Care should be taken that this matches the frame of the
+                sampling potential.
+
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
 
         Returns
         -------
@@ -159,7 +177,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
     def __init__(
         self,
-        frame: T.Optional[TH.FrameLikeType] = None,
+        frame: TH.OptFrameLikeType = None,
         representation_type: T.Optional[TH.RepresentationType] = None,
         **kwargs,
     ) -> None:
@@ -186,6 +204,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         Nmax: int = 10,
         Lmax: int = 10,
         scale_factor: TH.QuantityType = 1 * u.one,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Fit Potential given particles.
@@ -206,7 +226,37 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         -------
         :class:`~astropy.coordinates.SkyCoord`
 
+        Other Parameters
+        ----------------
+        frame: frame-like or None (optional, keyword-only)
+            The frame of the fit potential.
+
+            .. warning::
+
+                Care should be taken that this matches the frame of the
+                sampling potential.
+
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+
         """
+        # --------------
+        # frame and representation
+        # None -> default
+
+        frame = (
+            resolve_framelike(self.frame)
+            if frame is None
+            else resolve_framelike(frame)
+        )
+        representation_type = (
+            resolve_representationlike(
+                self.representation_type, error_if_not_type=False
+            )
+            if representation_type is None
+            else resolve_representationlike(representation_type)
+        )
+
         # --------------
         # Validation
 
@@ -225,7 +275,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if mass is None:
             mass = sample.mass
 
-        sample = sample.transform_to(self.frame)  # FIXME!
+        sample = sample.transform_to(frame)  # FIXME!
         position = sample.represent_as(coord.CartesianRepresentation).xyz
 
         # kwargs
@@ -243,9 +293,11 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
 
         return GalpyPotentialWrapper(
-            self._fitter(amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor),
-            frame=self.frame,
-            representation_type=self.representation_type,
+            self.potential_cls(
+                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor
+            ),
+            frame=frame,
+            representation_type=representation_type,
         )
 
     # /def

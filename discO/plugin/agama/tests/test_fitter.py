@@ -106,7 +106,7 @@ class Test_AGAMAPotentialFitter(
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
@@ -130,7 +130,7 @@ class Test_AGAMAPotentialFitter(
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, fitter.PotentialFitter)
             assert not hasattr(msamp, "_instance")
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
     # /def
 

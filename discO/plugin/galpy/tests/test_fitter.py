@@ -28,8 +28,7 @@ from discO.plugin.galpy import GalpyPotentialWrapper, fitter
 
 
 class Test_GalpyPotentialFitter(
-    PotentialFitterTester,
-    obj=fitter.GalpyPotentialFitter,
+    PotentialFitterTester, obj=fitter.GalpyPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):
@@ -39,10 +38,7 @@ class Test_GalpyPotentialFitter(
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
             def __init__(
-                self,
-                potential_cls,
-                frame=None,
-                **kwargs,
+                self, potential_cls, frame=None, **kwargs,
             ):
                 super().__init__(
                     potential_cls=potential_cls, frame=frame, **kwargs
@@ -52,8 +48,7 @@ class Test_GalpyPotentialFitter(
 
             def __call__(self, c, **kwargs):
                 return GalpyPotentialWrapper(
-                    gpot.Potential(),
-                    frame=self.frame,
+                    gpot.Potential(), frame=self.frame,
                 )
 
             # /def
@@ -109,7 +104,7 @@ class Test_GalpyPotentialFitter(
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
             # ---------------
             # key is not None
@@ -131,7 +126,7 @@ class Test_GalpyPotentialFitter(
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, fitter.PotentialFitter)
             assert not hasattr(msamp, "_instance")
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
     # /def
 
@@ -161,8 +156,7 @@ class Test_GalpyPotentialFitter(
 
 
 class Test_GalpySCFPotentialFitter(
-    Test_GalpyPotentialFitter,
-    obj=fitter.GalpySCFPotentialFitter,
+    Test_GalpyPotentialFitter, obj=fitter.GalpySCFPotentialFitter,
 ):
     @classmethod
     def setup_class(cls):

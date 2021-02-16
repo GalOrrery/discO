@@ -21,10 +21,10 @@ import astropy.units as u
 import pytest
 
 # PROJECT-SPECIFIC
-from discO.core.tests.test_core import (
+from discO.core.tests.test_wrapper import (
     Test_PotentialWrapper as PotentialWrapper_Test,
 )
-from discO.core.tests.test_core import (
+from discO.core.tests.test_wrapper import (
     Test_PotentialWrapperMeta as PotentialWrapperMeta_Test,
 )
 from discO.plugin.agama import wrapper
@@ -36,8 +36,7 @@ from discO.utils import resolve_framelike, vectorfield
 
 
 class Test_AGAMAPotentialWrapperMeta(
-    PotentialWrapperMeta_Test,
-    obj=wrapper.AGAMAPotentialMeta,
+    PotentialWrapperMeta_Test, obj=wrapper.AGAMAPotentialMeta,
 ):
     @classmethod
     def setup_class(cls):
@@ -67,8 +66,7 @@ class Test_AGAMAPotentialWrapperMeta(
         # basic
 
         points, values = self.subclass.specific_potential(
-            self.potential,
-            self.points.data,
+            self.potential, self.points.data,
         )
 
         # the points are unchanged
@@ -92,9 +90,7 @@ class Test_AGAMAPotentialWrapperMeta(
         ):
 
             points, values = self.subclass.specific_potential(
-                self.potential,
-                self.points,
-                frame=frame,
+                self.potential, self.points, frame=frame,
             )
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
@@ -156,9 +152,7 @@ class Test_AGAMAPotentialWrapperMeta(
         ):
 
             vf = self.subclass.specific_force(
-                self.potential,
-                self.points,
-                frame=frame,
+                self.potential, self.points, frame=frame,
             )
 
             assert isinstance(vf, vectorfield.BaseVectorField)
@@ -208,8 +202,7 @@ class Test_AGAMAPotentialWrapperMeta(
 
 
 class Test_AGAMAPotentialWrapper(
-    PotentialWrapper_Test,
-    obj=wrapper.AGAMAPotentialWrapper,
+    PotentialWrapper_Test, obj=wrapper.AGAMAPotentialWrapper,
 ):
     @classmethod
     def setup_class(cls):
@@ -261,8 +254,7 @@ class Test_AGAMAPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             points, values = self.inst.specific_potential(
-                self.points,
-                frame=coord.Galactocentric(),
+                self.points, frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -271,8 +263,7 @@ class Test_AGAMAPotentialWrapper(
         # representation_type
 
         points, values = self.inst.specific_potential(
-            self.points,
-            representation_type=coord.CartesianRepresentation,
+            self.points, representation_type=coord.CartesianRepresentation,
         )
         assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
@@ -321,8 +312,7 @@ class Test_AGAMAPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             points, values = self.inst(
-                self.points,
-                frame=coord.Galactocentric(),
+                self.points, frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -331,8 +321,7 @@ class Test_AGAMAPotentialWrapper(
         # representation_type
 
         points, values = self.inst(
-            self.points,
-            representation_type=coord.CartesianRepresentation,
+            self.points, representation_type=coord.CartesianRepresentation,
         )
         assert points is not self.points
         assert isinstance(points, coord.SkyCoord)
@@ -368,8 +357,7 @@ class Test_AGAMAPotentialWrapper(
         with pytest.raises(TypeError) as e:
 
             vf = self.inst.specific_force(
-                self.points,
-                frame=coord.Galactocentric(),
+                self.points, frame=coord.Galactocentric(),
             )
 
         assert "multiple values for keyword argument 'frame'" in str(e.value)
@@ -380,8 +368,7 @@ class Test_AGAMAPotentialWrapper(
         # representation_type
 
         vf = self.inst.specific_force(
-            self.points,
-            representation_type=coord.CylindricalRepresentation,
+            self.points, representation_type=coord.CylindricalRepresentation,
         )
 
         assert isinstance(vf, vectorfield.BaseVectorField)

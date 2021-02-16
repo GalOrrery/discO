@@ -51,8 +51,13 @@ class PotentialFitter(CommonBase):
         The type of potential with which to fit the data.
 
     frame: frame-like or None (optional, keyword-only)
-       The frame of the fit potential. Care should be taken that this
-       matches the frame of the sampling potential.
+        The frame of the fit potential.
+
+        .. warning::
+
+            Care should be taken that this matches the frame of the sampling
+            potential.
+
     representation_type: |Representation| or None (optional, keyword-only)
         The coordinate representation.
 
@@ -70,8 +75,7 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls,
-        key: T.Union[str, ModuleType, None] = None,
+        cls, key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -135,18 +139,20 @@ class PotentialFitter(CommonBase):
         self,
         potential_cls: T.Any,
         *,
-        frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationType] = None,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ):
-        self._fitter: T.Any = potential_cls
-        self._frame: T.Optional[TH.FrameLikeType] = (
-            None if frame is None else resolve_framelike(frame)
+        self._potential_cls: T.Any = potential_cls
+        self._frame: TH.OptFrameLikeType = (
+            frame
+            if (frame is None or frame is Ellipsis)
+            else resolve_framelike(frame)
         )
-        self._representation_type: T.Optional[TH.RepresentationLikeType] = (
+        self._representation_type: TH.OptRepresentationLikeType = (
             resolve_representationlike(representation_type)
-            if representation_type is not None
-            else None
+            if representation_type not in (None, Ellipsis)
+            else representation_type
         )
 
         # ----------------
@@ -158,19 +164,19 @@ class PotentialFitter(CommonBase):
     # /def
 
     @property
-    def potential(self) -> T.Any:
+    def potential_cls(self) -> T.Any:
         """The potential used for fitting."""
-        return self._fitter
+        return self._potential_cls
 
     @property
-    def frame(self) -> T.Optional[TH.FrameLikeType]:
+    def frame(self) -> TH.OptFrameLikeType:
         """The frame of the potential"""
         return self._frame
 
     # /def
 
     @property
-    def representation_type(self) -> T.Optional[TH.RepresentationType]:
+    def representation_type(self) -> TH.OptRepresentationLikeType:
         """The representation type of the potential."""
         return self._representation_type
 
@@ -189,6 +195,9 @@ class PotentialFitter(CommonBase):
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> object:
         """Fit a potential given the data.
@@ -196,19 +205,26 @@ class PotentialFitter(CommonBase):
         Parameters
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
+
+        frame: frame-like or None (optional, keyword-only)
+            The frame of the fit potential.
+
+            .. warning::
+
+                Care should be taken that this matches the frame of the
+                sampling potential.
+
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+
         **kwargs
-            passed to underlying instance
+            passed to fitting potential.
 
         Returns
         -------
         Potential : object
 
         """
-        # return (
-        #     PotentialWrapper(potential, frame=self.frame)
-        #     if not isinstance(potential, PotentialWrapper)
-        #     else potential
-        # )
         raise NotImplementedError("Implement in subclass.")
 
     # /def
@@ -217,6 +233,9 @@ class PotentialFitter(CommonBase):
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> object:
         """Fit.
@@ -232,18 +251,34 @@ class PotentialFitter(CommonBase):
         ----------
         sample : :class:`~astropy.coordinates.SkyCoord` instance
             can have shape (nsamp, ) or (nsamp, niter)
+
+        frame: frame-like or None or Ellipsis (optional, keyword-only)
+            The frame of the fit potential.
+
+            .. warning::
+
+                Care should be taken that this matches the frame of the
+                sampling potential.
+
+        representation_type: |Representation| or None or Ellipsis (optional, keyword-only)
+            The coordinate representation.
+
         **kwargs
-            passed to underlying instance
+            passed to fitting potential.
 
         Returns
         -------
         Potential : object
 
         """
+        if mass is None:
+            mass = sample.mass
+
         if len(sample.shape) == 1:  # (nsamp, ) -> (nsamp, niter=1)
-            mass, potential = sample.mass, sample.potential
+            potential = sample.potential
             sample = sample.reshape((-1, 1))
-            sample.mass, sample.potential = mass.reshape((-1, 1)), potential
+            sample.mass = mass.reshape((-1, 1))
+            sample.potential = potential
 
         # shape (niter, )
         niter = sample.shape[1]
@@ -252,7 +287,13 @@ class PotentialFitter(CommonBase):
         # (niter, nsamp) -> iter on niter
         for i, (samp, mass) in enumerate(zip(sample.T, sample.mass.T)):
             samp.mass, samp.potential = mass, sample.potential
-            fits[i] = self(samp, mass=mass, **kwargs)
+            fits[i] = self(
+                samp,
+                mass=mass,
+                frame=frame,
+                representation_type=representation_type,
+                **kwargs,
+            )
 
         if niter == 1:
             return fits[0]

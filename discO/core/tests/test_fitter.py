@@ -22,8 +22,9 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import fitter
-from discO.core.core import PotentialWrapper
+from discO.core.wrapper import PotentialWrapper
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.utils.coordinates import UnFrame
 
 ##############################################################################
 # PARAMETERS
@@ -259,7 +260,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             assert isinstance(msamp, self.obj)
 
             # test inputs
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
             # ---------------
             # Can't have the "key" argument
@@ -285,7 +286,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             assert isinstance(msamp, self.obj)
             assert isinstance(msamp, fitter.PotentialFitter)
             assert not hasattr(msamp, "_instance")
-            assert msamp._fitter == self.potential
+            assert msamp._potential_cls == self.potential
 
     # /def
 
@@ -304,9 +305,9 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # -------------------------------
 
-    def test_potential(self):
-        """Test property ``potential``."""
-        assert self.inst.potential is self.inst._fitter
+    def test_potential_cls(self):
+        """Test property ``potential_cls``."""
+        assert self.inst.potential_cls is self.inst._potential_cls
 
     # /def
 
@@ -419,7 +420,7 @@ class Test_PotentialFitter_SubClass(
 
         assert isinstance(fit, PotentialWrapper)
         assert isinstance(fit.__wrapped__, object)
-        assert fit.frame is None
+        assert fit.frame == UnFrame()
 
     # /def
 

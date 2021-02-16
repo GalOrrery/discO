@@ -46,7 +46,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
         self,
         n: int = 1,
         frame: T.Optional[TH.FrameLikeType] = None,
-        representation_type: T.Optional[TH.RepresentationLikeType] = None,
+        representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs
     ) -> TH.SkyCoordType:
@@ -73,7 +73,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
         # TODO accepts a potential parameter. what does this do?
         # TODO confirm random seed.
         with self._random_context(random):
-            pos, masses = self._sampler.sample(n=n)  # potential=None
+            pos, masses = self._potential.sample(n=n)
 
         # process the position and mass
         if np.shape(pos)[1] == 6:
@@ -94,7 +94,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
             copy=False,
         )
         samples.mass = masses * u.solMass
-        samples.potential = self._sampler
+        samples.potential = self.potential
 
         return samples
 

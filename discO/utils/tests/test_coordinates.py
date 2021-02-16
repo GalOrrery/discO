@@ -35,14 +35,14 @@ class Test_resolve_framelike:
     def test_frame_is_none():
         """Test when frame is None."""
         # basic usage
-        assert resolve_framelike(frame=None) == resolve_framelike(
+        assert resolve_framelike(frame=Ellipsis) == resolve_framelike(
             frame=conf.default_frame,
         )
 
         # test changes with conf
         with conf.set_temp("default_frame", "galactocentric"):
 
-            assert resolve_framelike(frame=None) == resolve_framelike(
+            assert resolve_framelike(frame=Ellipsis) == resolve_framelike(
                 frame=conf.default_frame,
             )
 

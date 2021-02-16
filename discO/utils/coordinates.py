@@ -49,7 +49,7 @@ class UnFrame(BaseCoordinateFrame):
 
 
 def resolve_framelike(
-    frame: T.Union[TH.FrameLikeType, None, T.Any],
+    frame: T.Union[TH.FrameLikeType, None, TH.EllipsisType, T.Any],
     error_if_not_type: bool = True,
 ) -> T.Union[TH.FrameType, T.Any]:
     """Determine the frame and return a blank instance.
@@ -59,7 +59,8 @@ def resolve_framelike(
     frame : frame-like instance or None
         If BaseCoordinateFrame, replicates without data.
         If str, uses astropy parsers to determine frame class
-        If None (default), gets default frame name from config, and parses.
+        If None (default), return UnFrame.
+        If Ellipsis, return default frame.
 
     error_if_not_type : bool
         Whether to raise TypeError if `frame` is not one of the allowed types.
@@ -74,6 +75,8 @@ def resolve_framelike(
     # If no frame is specified, assume that the input footprint is in a
     # frame specified in the configuration
     if frame is None:
+        frame: TH.FrameType = UnFrame()
+    elif frame is Ellipsis:
         frame: str = conf.default_frame
 
     if isinstance(frame, str):
@@ -99,7 +102,7 @@ def resolve_framelike(
 
 
 def resolve_representationlike(
-    representation: T.Union[TH.RepresentationLikeType, T.Any],
+    representation: T.Union[TH.RepresentationLikeType, TH.EllipsisType, T.Any],
     error_if_not_type: bool = True,
 ) -> T.Union[TH.RepresentationType, T.Any]:
     """Determine the representation and return the class.
@@ -109,6 +112,7 @@ def resolve_representationlike(
     representation : |Representation| or str
         If Representation (instance or class), return the class.
         If str, uses astropy to determine class
+        If Ellipsis, return default representation type
 
     error_if_not_type : bool
         Whether to raise TypeError if `representation` is not one of the
@@ -120,13 +124,15 @@ def resolve_representationlike(
         Replicated without data.
 
     """
+    if representation is Ellipsis:
+        representation = conf.default_representation_type
+
     if isinstance(representation, str):
         representation = _REP_CLSs[representation]
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(
-        representation,
-        BaseRepresentation,
+        representation, BaseRepresentation,
     ):
         pass
 
