@@ -22,6 +22,7 @@ import numpy as np
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
+from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import RandomLike
 
 ##############################################################################
@@ -60,6 +61,15 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
+        if isinstance(df, PotentialWrapper):
+            frame = df.frame if frame is None else frame
+            representation_type = (
+                df.representation_type
+                if representation_type is None
+                else representation_type
+            )
+            df = df.__wrapped__
+
         if isinstance(df, gpot.Potential):
             df = DF_REGISTRY[df.__class__.__name__](df)
 
