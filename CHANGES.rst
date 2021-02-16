@@ -90,6 +90,23 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       that works with ``resolve_framelike``. [#45]
 
 
+**discO.core.fitter**
+
+- ``PotentialFitter`` : base class for fitting potentials [#20]
+
+    + registers subclasses.
+    + PotentialFitter can be used to initialize any of its subclasses. [#44]
+    + Takes a ``potential_cls`` and ``key`` argument which are used to figure
+      out the desired subclass, and how to fit the potential.
+    + ``__call__`` and ``fit`` are used to fit the potential, with the latter
+      working on N-D samples (multiple iterations).
+    + returns a ``PotentialWrapper`` [#40]
+    + Allow for ``frame`` and ``representation``. Care should be taken this
+      matches the sampling frame. [#45]
+    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
+      that works with ``resolve_framelike``. [#45]
+
+
 **discO.core.measurement**
 
 - ``MeasurementErrorSampler`` : base class for resampling a potential given
@@ -117,29 +134,12 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
   Convenience function for construct errors with X% error in each dimension.
 
 
-**discO.core.fitter**
-
-- ``PotentialFitter`` : base class for fitting potentials [#20]
-
-    + registers subclasses.
-    + PotentialFitter can be used to initialize any of its subclasses. [#44]
-    + Takes a ``potential_cls`` and ``key`` argument which are used to figure
-      out the desired subclass, and how to fit the potential.
-    + ``__call__`` and ``fit`` are used to fit the potential, with the latter
-      working on N-D samples (multiple iterations).
-    + returns a ``PotentialWrapper`` [#40]
-    + Allow for ``frame`` and ``representation``. Care should be taken this
-      matches the sampling frame. [#45]
-    + ``frame`` and ``representation_type`` can be None or Ellipse or anything
-      that works with ``resolve_framelike``. [#45]
-
-
 **discO.core.pipeline**
 
 - ``Pipeline`` : run a full analysis pipeline [#19]
 
     + ``PotentialSampler`` to ``MeasurementErrorSampler`` to
-      ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``.
+      ``PotentialFitter`` to ``ResidualMethod`` to ``statistic``. [#19,#26]
     + Pipelines can also be created by concatenation.
     + Pipeline can take arguments ``frame`` and ``representation_type``. [#45]
     + Calling pipeline can take arguments observer versions of ``frame`` and
@@ -151,7 +151,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       ``potential_representation_type``, ``observer_frame``,
       ``observer_representation_type``, ``sampler``, ``measurer``, ``fitter``,
       ``residualer``, ``statisticer``. [#45]
-
+    + Add method ``run_iter`` to iteratively call pipeline. [#26]
 
 - ``PipelineResult`` store results of a pipe [#37]
 
@@ -160,6 +160,17 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       ``potential_representation_type``, ``measured``, ``observation_frame``,
       ``observation_representation_type``, ``fit``, ``residual``,
       ``statistic``. [#45]
+
+**discO.core.residual**
+
+- ``ResidualMethod`` : calculate a residual [#26]
+
+  + difference between original and fit potential
+
+- ``GridResidual`` : calculate a residual on a pre-defined grid [#26]
+
+  + difference between original and fit potential
+  + need pre-defined grid
 
 
 **discO.core.wrapper**

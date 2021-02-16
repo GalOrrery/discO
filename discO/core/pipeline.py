@@ -21,8 +21,8 @@ import weakref
 import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
-from .sample import PotentialSampler, RandomLike
 from .residual import ResidualMethod
+from .sample import PotentialSampler, RandomLike
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
