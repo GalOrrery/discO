@@ -23,6 +23,7 @@ from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .residual import ResidualMethod
 from .sample import PotentialSampler, RandomLike
+from discO.setup_package import tqdm
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
@@ -329,7 +330,7 @@ class Pipeline:
         # ----------
         # 1) sample
 
-        samples: TH.SkyCoordType = self.sampler.sample(
+        samples: TH.SkyCoordType = self.sampler.run(
             n,
             niter=niter,
             frame=sample_and_fit_frame,
@@ -344,7 +345,7 @@ class Pipeline:
 
         if self.measurer is not None:
 
-            samples: TH.SkyCoordType = self.measurer.resample(
+            samples: TH.SkyCoordType = self.measurer.run(
                 samples,
                 random=random,
                 # c_err=c_err,
@@ -359,7 +360,7 @@ class Pipeline:
         # we forced the fit to be in the same frame & representation type
         # as the samples.
 
-        fit_pot: T.Any = self.fitter.fit(
+        fit_pot: T.Any = self.fitter.run(
             samples,
             frame=sample_and_fit_frame,
             representation_type=sample_and_fit_representation_type,
@@ -373,7 +374,7 @@ class Pipeline:
 
         if self.residualer is not None:
 
-            resid: T.Any = self.residualer.evaluate(
+            resid: T.Any = self.residualer.run(
                 fit_pot,
                 original_pot=self.potential,
                 observable=observable,
@@ -415,7 +416,7 @@ class Pipeline:
         observable: T.Optional[str] = None,
         **kwargs,
     ) -> object:
-        """Run pipeline, yielding :class:`PipelineResult` for each of ``niter``.
+        """Run pipeline, yielding :class:`PipelineResult` over ``niter``.
 
         Parameters
         ----------
@@ -448,8 +449,8 @@ class Pipeline:
         # only for line length
         sample_and_fit_rep_type = sample_and_fit_representation_type
 
-        # iterate over number of ieraions
-        for _ in range(niter):
+        # iterate over number of iterations
+        for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
             yield self(
                 n=n,
                 random=random,

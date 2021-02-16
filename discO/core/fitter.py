@@ -230,7 +230,7 @@ class PotentialFitter(CommonBase):
 
     # /def
 
-    def fit(
+    def run(
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,

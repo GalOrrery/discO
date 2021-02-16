@@ -373,10 +373,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             ((1, 2), 2, None, None, None, {}),  # niters and array of n
         ],
     )
-    def test_sample(self, n, niter, frame, representation, random, kwargs):
-        """Test method ``resample``."""
+    def test_run(self, n, niter, frame, representation, random, kwargs):
+        """Test method ``run``."""
         # print(n, niter, frame, representation, random, kwargs)
-        samples = self.inst.sample(
+        samples = self.inst.run(
             n=n,
             niter=niter,
             frame=frame,
@@ -399,9 +399,9 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     # /def
 
     def test_sample_error(self):
-        """Test method ``resample`` raises error."""
+        """Test method ``run`` raises error."""
         with pytest.raises(ValueError):
-            self.inst.sample(10, 0)
+            self.inst.run(10, 0)
 
     # /def
 

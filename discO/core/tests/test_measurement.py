@@ -518,8 +518,8 @@ class Test_MeasurementErrorSampler(
     # /def
 
     @abstractmethod
-    def test_resample(self):
-        """Test method ``resample``.
+    def test_run(self):
+        """Test method ``run``.
 
         When Test_MeasurementErrorSampler this calls on the wrapped instance,
         which is GaussianMeasurementErrorSampler.
@@ -540,13 +540,13 @@ class Test_MeasurementErrorSampler(
         # c_err = None
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(self.c, random=0)
+            self.inst.run(self.c, random=0)
 
         # ---------------
         # random
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(self.c, random=1)
+            self.inst.run(self.c, random=1)
 
         # ---------------
         # len(c.shape) == 1
@@ -554,7 +554,7 @@ class Test_MeasurementErrorSampler(
         assert len(self.c.shape) == 1
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(self.c, self.c_err, random=0)
+            self.inst.run(self.c, self.c_err, random=0)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = 1
@@ -562,7 +562,7 @@ class Test_MeasurementErrorSampler(
         c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(c, c_err=self.c_err, random=0)
+            self.inst.run(c, c_err=self.c_err, random=0)
 
         # ---------------
         # 2D array, SkyCoord, nerriter != niter
@@ -572,7 +572,7 @@ class Test_MeasurementErrorSampler(
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.resample(c, c_err)
+            self.inst.run(c, c_err)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
@@ -584,19 +584,19 @@ class Test_MeasurementErrorSampler(
             -1,
         )
         with pytest.raises(NotImplementedError):
-            self.inst.resample(c, c_err=c_err, random=0)
+            self.inst.run(c, c_err=c_err, random=0)
 
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(c, c_err=1 * u.percent, random=0)
+            self.inst.run(c, c_err=1 * u.percent, random=0)
 
         # ---------------
         # 2D array, other
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(self.c, NotImplementedError())
+            self.inst.run(self.c, NotImplementedError())
 
         # ---------------
         # in different frame
@@ -604,7 +604,7 @@ class Test_MeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(
+            self.inst.run(
                 c,
                 c_err=10 * u.percent,
                 random=0,
@@ -618,7 +618,7 @@ class Test_MeasurementErrorSampler(
         assert self.inst.representation_type != coord.CylindricalRepresentation
 
         with pytest.raises(NotImplementedError):
-            self.inst.resample(
+            self.inst.run(
                 c,
                 c_err=10 * u.percent,
                 random=0,
@@ -977,7 +977,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
         assert self.inst.frame != coord.Galactic()
 
-        obj = self.inst.resample(
+        obj = self.inst(
             self.c,
             c_err=10 * u.percent,
             random=0,
@@ -994,7 +994,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
         assert self.inst.representation_type != coord.CylindricalRepresentation
 
-        obj = self.inst.resample(
+        obj = self.inst(
             self.c,
             c_err=10 * u.percent,
             random=0,
@@ -1011,8 +1011,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
     # --------------------------------------------------------------
 
     @abstractmethod
-    def test_resample(self):
-        """Test method ``resample``.
+    def test_run(self):
+        """Test method ``run``.
 
         When Test_MeasurementErrorSampler this calls on the wrapped instance,
         which is GaussianMeasurementErrorSampler.
@@ -1032,7 +1032,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # c_err = None
 
-        res = self.inst.resample(self.c, random=0)
+        res = self.inst.run(self.c, random=0)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1041,7 +1041,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # random
 
-        res2 = self.inst.resample(self.c, random=1)
+        res2 = self.inst.run(self.c, random=1)
         for c in res2.representation_component_names.keys():
             assert not np.allclose(getattr(res, c), getattr(res2, c))
         assert np.allclose(res2.ra.value, np.array([1.16243454, 181.78540628]))
@@ -1053,7 +1053,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
         assert len(self.c.shape) == 1
 
-        res = self.inst.resample(self.c, self.c_err, random=0)
+        res = self.inst.run(self.c, self.c_err, random=0)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1064,7 +1064,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
         c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
-        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        res = self.inst.run(c, c_err=self.c_err, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1083,7 +1083,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.resample(c, c_err)
+            self.inst.run(c, c_err)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
@@ -1094,7 +1094,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
             len(self.c),
             -1,
         )
-        res = self.inst.resample(c, c_err=c_err, random=0)
+        res = self.inst.run(c, c_err=c_err, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1108,7 +1108,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
-        res = self.inst.resample(c, c_err=1 * u.percent, random=0)
+        res = self.inst.run(c, c_err=1 * u.percent, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1123,7 +1123,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # 2D array, other
 
         with pytest.raises(NotImplementedError) as e:
-            self.inst.resample(self.c, NotImplementedError())
+            self.inst.run(self.c, NotImplementedError())
 
         assert "not yet supported." in str(e.value)
 
@@ -1132,7 +1132,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
         assert self.inst.frame != coord.Galactic()
 
-        res = self.inst.resample(
+        res = self.inst.run(
             c,
             c_err=10 * u.percent,
             random=0,
@@ -1154,7 +1154,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
         assert self.inst.representation_type != coord.CylindricalRepresentation
 
-        res = self.inst.resample(
+        res = self.inst.run(
             c,
             c_err=10 * u.percent,
             random=0,
@@ -1273,8 +1273,8 @@ class Test_GaussianMeasurementError(
     # --------------------------------------------------------------
 
     @abstractmethod
-    def test_resample(self):
-        """Test method ``resample``.
+    def test_run(self):
+        """Test method ``run``.
 
         When Test_MeasurementErrorSampler this calls on the wrapped instance,
         which is GaussianMeasurementErrorSampler.
@@ -1291,7 +1291,7 @@ class Test_GaussianMeasurementError(
         # ---------------
         # c_err = None
 
-        res = self.inst.resample(self.c, random=0)
+        res = self.inst.run(self.c, random=0)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1300,7 +1300,7 @@ class Test_GaussianMeasurementError(
         # ---------------
         # random
 
-        res2 = self.inst.resample(self.c, random=1)
+        res2 = self.inst.run(self.c, random=1)
         for c in res2.representation_component_names.keys():
             assert not np.allclose(getattr(res, c), getattr(res2, c))
         assert np.allclose(res2.ra.value, np.array([1.16243454, 181.78540628]))
@@ -1312,7 +1312,7 @@ class Test_GaussianMeasurementError(
 
         assert len(self.c.shape) == 1
 
-        res = self.inst.resample(self.c, self.c_err, random=0)
+        res = self.inst.run(self.c, self.c_err, random=0)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1323,7 +1323,7 @@ class Test_GaussianMeasurementError(
 
         c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
-        res = self.inst.resample(c, c_err=self.c_err, random=0)
+        res = self.inst.run(c, c_err=self.c_err, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1342,7 +1342,7 @@ class Test_GaussianMeasurementError(
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.resample(c, c_err)
+            self.inst.run(c, c_err)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
@@ -1353,7 +1353,7 @@ class Test_GaussianMeasurementError(
             len(self.c),
             -1,
         )
-        res = self.inst.resample(c, c_err=c_err, random=0)
+        res = self.inst.run(c, c_err=c_err, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1367,7 +1367,7 @@ class Test_GaussianMeasurementError(
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
-        res = self.inst.resample(c, c_err=1 * u.percent, random=0)
+        res = self.inst.run(c, c_err=1 * u.percent, random=0)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
@@ -1382,7 +1382,7 @@ class Test_GaussianMeasurementError(
         # 2D array, other
 
         with pytest.raises(NotImplementedError) as e:
-            self.inst.resample(self.c, NotImplementedError())
+            self.inst.run(self.c, NotImplementedError())
 
         assert "not yet supported." in str(e.value)
 
@@ -1391,7 +1391,7 @@ class Test_GaussianMeasurementError(
 
         assert self.inst.frame != coord.Galactic()
 
-        res = self.inst.resample(
+        res = self.inst.run(
             c,
             c_err=10 * u.percent,
             random=0,
@@ -1413,7 +1413,7 @@ class Test_GaussianMeasurementError(
         assert self.inst.frame != coord.Galactic()
         assert self.inst.representation_type != coord.CylindricalRepresentation
 
-        res = self.inst.resample(
+        res = self.inst.run(
             c,
             c_err=10 * u.percent,
             random=0,

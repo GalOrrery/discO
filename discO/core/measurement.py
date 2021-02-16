@@ -279,7 +279,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
     # /def
 
-    def resample(
+    def run(
         self,
         c: TH.SkyCoordType,
         c_err: TH.CoordinateType = None,

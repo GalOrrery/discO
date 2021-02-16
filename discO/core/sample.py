@@ -202,12 +202,14 @@ class PotentialSampler(CommonBase):
 
     @property
     def potential(self):
+        """The potential, wrapped."""
         return self._wrapper_potential
 
     # /def
 
     @property
     def _potential(self):
+        """The wrapped potential."""
         return self.potential.__wrapped__
 
     # /def
@@ -267,7 +269,7 @@ class PotentialSampler(CommonBase):
 
     # ---------------------------------------------------------------
 
-    def sample(
+    def run(
         self,
         n: T.Union[int, T.Sequence[int]] = 1,
         niter: int = 1,
