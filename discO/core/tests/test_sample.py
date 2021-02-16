@@ -24,6 +24,7 @@ import pytest
 # PROJECT-SPECIFIC
 from discO.core import sample
 from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
@@ -224,6 +225,28 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 potential._pot = self.potential
 
             msamp = self.obj(potential, key=key)
+
+            # test class type
+            assert isinstance(msamp, klass)
+            assert isinstance(msamp, self.obj)
+
+            # test inputs
+            assert msamp._potential == self.potential
+
+            # ---------------
+            # potential is PotentialWrapper
+
+            try:
+                key = "galpy"
+                klass = self.obj._registry[key]
+            except KeyError:
+                key, klass = tuple(self.obj._registry.items())[0]
+                potential = self.potential
+            else:
+                potential = unittest.mock.Mock()
+                potential._pot = self.potential
+
+            msamp = self.obj(PotentialWrapper(potential), key=key)
 
             # test class type
             assert isinstance(msamp, klass)

@@ -133,21 +133,21 @@ class Pipeline:
     @property
     def potential(self) -> T.Any:
         """The potential from which we sample."""
-        return self.sampler.potential
+        return self._sampler.potential
 
     # /def
 
     @property
     def potential_frame(self) -> TH.OptFrameType:
         """The frame in which the potential is sampled and fit."""
-        return self.sampler.frame
+        return self._sampler.frame
 
     # /def
 
     @property
     def potential_representation_type(self) -> TH.OptRepresentationType:
         """Representation type of potential."""
-        return self.sampler.representation_type
+        return self._sampler.representation_type
 
     # /def
 

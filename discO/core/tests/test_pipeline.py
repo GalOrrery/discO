@@ -222,6 +222,54 @@ class Test_Pipeline(object):
 
     # /def
 
+    def test_frame(self):
+        """Test property ``frame``."""
+        assert self.inst.frame is self.inst._frame
+
+    # /def
+
+    def test_representation_type(self):
+        """Test property ``representation_type``."""
+        assert self.inst.representation_type is self.inst._representation_type
+
+    # /def
+
+    def test_potential(self):
+        """Test property ``potential``."""
+        assert self.inst.potential is self.inst._sampler.potential
+
+    # /def
+
+    def test_potential_frame(self):
+        """Test property ``potential_frame``."""
+        assert self.inst.potential_frame is self.inst._sampler.frame
+
+    # /def
+
+    def test_potential_representation_type(self):
+        """Test property ``potential_representation_type``."""
+        assert (
+            self.inst.potential_representation_type
+            is self.inst._sampler.representation_type
+        )
+
+    # /def
+
+    def test_observer_frame(self):
+        """Test property ``observer_frame``."""
+        assert self.inst.observer_frame is self.inst._measurer.frame
+
+    # /def
+
+    def test_observer_representation_type(self):
+        """Test property ``observer_representation_type``."""
+        assert (
+            self.inst.observer_representation_type
+            is self.inst._measurer.representation_type
+        )
+
+    # /def
+
     @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``."""
