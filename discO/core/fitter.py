@@ -298,8 +298,8 @@ class PotentialFitter(CommonBase):
 
         if niter == 1:
             return fits[0]
-        # else:
-        return fits
+        else:
+            return fits
 
     # /def
 
