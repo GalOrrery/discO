@@ -20,19 +20,22 @@ from types import ModuleType
 import astropy.coordinates as coord
 
 # PROJECT-SPECIFIC
-from .core import PotentialBase, PotentialWrapper
+import discO.type_hints as TH
+from .core import CommonBase
+from .wrapper import PotentialWrapper
+from discO.utils.coordinates import resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
 
-RESIDUAL_REGISTRY = dict()  # key : sampler
+RESIDUAL_REGISTRY: T.Dict[str, object] = dict()  # key : sampler
 
 ##############################################################################
 # CODE
 ##############################################################################
 
 
-class ResidualMethod(PotentialBase):
+class ResidualMethod(CommonBase):
     """Calculate Residual."""
 
     #################################################################
@@ -49,7 +52,7 @@ class ResidualMethod(PotentialBase):
         """
         super().__init_subclass__(key=key)
 
-        if key is not None:  # same trigger as PotentialBase
+        if key is not None:  # same trigger as CommonBase
             # cls._package defined in super()
             cls.__bases__[0]._registry[cls._key] = cls
 
@@ -61,11 +64,11 @@ class ResidualMethod(PotentialBase):
 
     def __call__(
         self,
-        fit_pot,
-        original_pot=None,
-        observable=None,
+        fit_pot: T.Any,
+        original_pot: T.Any = None,
+        observable: T.Optional[str] = None,
         *,
-        representation_type=None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
         original_pot = original_pot or self.original_pot
@@ -91,10 +94,14 @@ class ResidualMethod(PotentialBase):
             **kwargs
         )
 
+        # get difference
+        # TODO! weighting by errors
         residual = fitval - origval
 
+        # output representation type
         if representation_type is None:
             representation_type = residual.base_representation
+        representation_type = resolve_representationlike(representation_type)
 
         return residual.represent_as(representation_type)
 
@@ -118,10 +125,10 @@ class GridResidual(ResidualMethod, key="grid"):
 
     def __init__(
         self,
-        grid: coord.BaseRepresentation,
-        original_pot=None,
-        observable="acceleration",  # TODO make None and have config
-        representation_type=None,
+        grid: TH.RepresentationType,
+        original_pot: T.Optional[T.Any] = None,
+        observable: str = "acceleration",  # TODO make None and have config
+        representation_type: TH.OptRepresentationLikeType = None,
     ):
         self.points = grid
         self.original_pot = original_pot
@@ -132,11 +139,11 @@ class GridResidual(ResidualMethod, key="grid"):
 
     def evaluate(
         self,
-        potential,
+        potential: T.Any,
         observable: T.Optional[str] = None,
-        points=None,
+        points: T.Optional[TH.RepresentationType] = None,
         *,
-        representation_type=None,
+        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
         """Evaluate residual.
@@ -173,8 +180,10 @@ class GridResidual(ResidualMethod, key="grid"):
             points, representation_type=representation_type, **kwargs
         )
 
+        # output representation type
         if representation_type is None:
             representation_type = value.base_representation
+        representation_type = resolve_representationlike(representation_type)
 
         return value.represent_as(representation_type)
 

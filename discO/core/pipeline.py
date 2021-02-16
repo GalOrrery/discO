@@ -21,6 +21,7 @@ import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .sample import PotentialSampler, RandomLike
+from .residual import ResidualMethod
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
@@ -63,7 +64,7 @@ class Pipeline:
         sampler: PotentialSampler,
         measurer: T.Optional[MeasurementErrorSampler] = None,
         fitter: T.Optional[PotentialFitter] = None,
-        residualer: T.Optional[T.Callable] = None,
+        residualer: T.Optional[ResidualMethod] = None,
         statistic: T.Optional[T.Callable] = None,
         *,
         frame: TH.OptFrameLikeType = None,
@@ -187,7 +188,7 @@ class Pipeline:
     # /def
 
     @property
-    def residualer(self) -> T.Optional[T.Callable]:
+    def residualer(self) -> T.Optional[ResidualMethod]:
         """The residual function."""
         return self._residualer
 
@@ -340,9 +341,9 @@ class Pipeline:
         # ----------
         # 2) measure
 
-        if self._measurer is not None:
+        if self.measurer is not None:
 
-            oi: TH.SkyCoordType = self._measurer.resample(
+            oi: TH.SkyCoordType = self.measurer.resample(
                 oi,
                 random=random,
                 # c_err=c_err,
@@ -357,7 +358,7 @@ class Pipeline:
         # we forced the fit to be in the same frame & representation type
         # as the samples.
 
-        oi: T.Any = self._fitter.fit(
+        oi: T.Any = self.fitter.fit(
             oi,
             frame=sample_and_fit_frame,
             representation_type=sample_and_fit_representation_type,
@@ -368,9 +369,9 @@ class Pipeline:
         # ----------
         # 4) residual
 
-        if self._residualer is not None:
+        if self.residualer is not None:
 
-            oi: T.Any = self._residualer.evaluate(
+            oi: T.Any = self.residualer.evaluate(
                 oi,
                 original_pot=self.potential,
                 observable=observable,
@@ -381,9 +382,9 @@ class Pipeline:
         # ----------
         # 5) statistic
 
-        if self._statisticer is not None:
+        if self.statisticer is not None:
 
-            oi: T.Any = self._statisticer(oi, **kwargs)
+            oi: T.Any = self.statisticer(oi, **kwargs)
             result._statistic: T.Any = oi
 
         # ----------
