@@ -40,6 +40,8 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
         """Setup fixtures for testing."""
         super().setup_class()
 
+        cls.representation_type = None  # Whatevs. Need to prevent Cartesian.
+
         # TODO!! actual potential that properly evaluates
         cls.original_potential = gpot.NFWPotential(amp=2e12 * u.solMass)
 

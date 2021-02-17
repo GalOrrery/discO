@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""Residuals."""
+"""Residuals.
+
+.. todo::
+
+    enforce that the frames are the same between the original and fit
+    potential.
+
+"""
 
 
 __all__ = [
@@ -24,7 +31,10 @@ import astropy.coordinates as coord
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
-from discO.utils.coordinates import resolve_representationlike
+from discO.utils.coordinates import (
+    resolve_framelike,
+    resolve_representationlike,
+)
 
 ##############################################################################
 # PARAMETERS
@@ -41,15 +51,15 @@ class ResidualMethod(CommonBase):
 
     Parameters
     ----------
-    original_potential : object or :class:`~discO.core.wrapper.PotentialWrapper`
+    original_potential : object or :class:`~discO.core.PotentialWrapper`
         The original potential.
         In order to evaluate on a grid with a frame, should be a
         :class:`~discO.core.wrapper.PotentialWrapper`.
 
     observable : str (optional)
+        The quantity on which to calculate the residual.
+        Must be method of :class:`~discO.core.wrapper.PotentialWrapper`.
 
-    Other Parameters
-    ----------------
     representation_type : representation-resolvable (optional, keyword-only)
         The output representation type.
         If None, resolves to ``PotentialWrapper.base_representation``
@@ -186,7 +196,6 @@ class ResidualMethod(CommonBase):
         self,
         potential: T.Union[PotentialWrapper, T.Any],
         observable: T.Optional[str] = None,
-        points: T.Optional[TH.RepresentationType] = None,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
@@ -195,20 +204,78 @@ class ResidualMethod(CommonBase):
 
         Parameters
         ----------
-        potential : object
-        observable : str
-            method in :class:`~PotentialWrapper`
-        points : `~astropy.coordinates.BaseRepresentation` or None (optional)
-            The points of the grid.
+        potential : object or :class:`~PotentialWrapper`
+            The potential. If not already a PotentialWrapper, it is wrapped:
+            this means that the frame is :class:`~discO.UnFrame`.
+        observable : str or None (optional)
+            name of method in :class:`~PotentialWrapper`.
+            If None (default), uses default value -- ``.observable``.
+        representation_type: representation-resolvable (optional, keyword-only)
+            The output representation type. If None (default), uses default
+            representation point.
         **kwargs
             Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
 
         Returns
         -------
         object
 
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
+
         """
-        raise NotImplementedError("Must run on subclass.")
+        # -----------------------
+        # Setup
+
+        # observable.
+        # None -> default. Error if default also None.
+        observable = observable or self.observable  # None -> stored
+        if observable is None:  # still None
+            raise ValueError("Need to pass observable.")
+
+        # points, default to default
+        points = kwargs.pop("points", self.points)
+
+        # representation type, resolve it here
+        representation_type = (
+            resolve_representationlike(representation_type)
+            if representation_type is not None
+            else self.representation_type
+        )
+
+        # -----------------------
+        # Evaluate
+
+        # get class to evaluate
+        evaluator_cls = PotentialWrapper(
+            potential,
+            # frame=frame,
+            representation_type=representation_type,
+        )
+
+        # get method from evaluator class
+        evaluator: T.Callable = getattr(evaluator_cls, observable)
+
+        # evaluate
+        value = evaluator(
+            points, representation_type=representation_type, **kwargs
+        )
+
+        # -----------------------
+        # Return
+
+        if representation_type is None:
+            representation_type = value.base_representation
+        representation_type = resolve_representationlike(representation_type)
+
+        return value.represent_as(representation_type)
 
     # /def
 
@@ -227,8 +294,12 @@ class ResidualMethod(CommonBase):
 
         Parameters
         ----------
-        fit_potential : object or :class:`~discO.core.wrapper.PotentialWrapper`
-            The fit potential.
+        fit_potential : object or :class:`~PotentialWrapper`
+            The fitted potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+        original_potential : object or :class:`~PotentialWrapper` (optional)
+            The original potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
 
         observable : str or None (optional)
             The quantity on which to calculate the residual.
@@ -236,32 +307,92 @@ class ResidualMethod(CommonBase):
             None (default) becomes the default value at initialization.
 
         representation_type: representation-resolvable (optional, keyword-only)
-            The output representation type.
+            The output representation type. If None (default), uses default
+            representation point.
+
+        **kwargs
+            Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
+            See Other Parameters for more details.
 
         Returns
         -------
         residual : object
             In `representation_type`.
 
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
+
         """
+        # -----------------------
+        # Setup
+
         # kwargs, mix in defaults, overriding with passed.
         kw = dict(self.default_params.items())
         kw.update(kwargs)
+
+        # observable.
+        # None -> default. Error if default also None.
+        observable = observable or self.observable
+        if observable is None:  # TODO get from config
+            raise ValueError("`observable` not set. Need to pass.")
+
+        # representation type
+        # None -> default. Everything is resolved here.
+        # both potentials will use this representation type
+        # Note that this can still be None, which is we we need one more check
+        # at the end
+        representation_type = (
+            resolve_representationlike(representation_type)
+            if representation_type is not None
+            else self.representation_type
+        )
 
         # potential
         original_potential = original_potential or self.original_potential
         if original_potential is None:  # both passed and init are None
             raise ValueError("`original_potential` not set. Need to pass.")
 
-        observable = observable or self.observable
-        if observable is None:  # TODO get from config
-            raise ValueError("`observable` not set. Need to pass.")
+        original_potential = PotentialWrapper(
+            original_potential,
+            # frame=frame,  # NOT SET ON PURPOSE
+            representation_type=representation_type,
+        )
+        # now deal with Ellipsis to be threadsafe. resolve all frames here.
+        if original_potential.frame is Ellipsis:
+            original_potential._frame = resolve_framelike(Ellipsis)
+
+        fit_potential = PotentialWrapper(
+            fit_potential,
+            # frame=frame,  # NOT SET ON PURPOSE
+            representation_type=representation_type,
+        )
+
+        # -----------------------
+        # Validate
+
+        # now we confirm that the frames are the same.
+        # we can do this since everything is in a PotentialWrapper
+        if fit_potential.frame != original_potential.frame:
+            raise ValueError(
+                "original and fit potentials must have the same frames.\n"
+                f"The original potential has:\n\t{original_potential.frame}\n"
+                f"The fit potential has:\n\t{fit_potential.frame}\n",
+            )
+
+        # -----------------------
+        # Evaluate
 
         # get value on original potential
         origval = self.evaluate_potential(
             original_potential,
             observable=observable,
-            points=self.points,
             representation_type=coord.CartesianRepresentation,
             **kw,
         )
@@ -269,7 +400,6 @@ class ResidualMethod(CommonBase):
         fitval = self.evaluate_potential(
             fit_potential,
             observable=observable,
-            points=self.points,
             representation_type=coord.CartesianRepresentation,
             **kw,
         )
@@ -277,11 +407,12 @@ class ResidualMethod(CommonBase):
         # get difference
         residual = fitval - origval  # TODO! weighting by errors
 
+        # -----------------------
+        # Return
+
         # output representation type
-        # None -> default
-        if representation_type is None:  # None -> default
-            representation_type = self.representation_type
-        if representation_type is None:  # still None -> base_representation
+        # still None -> base_representation
+        if representation_type is None:
             representation_type = residual.base_representation
         representation_type = resolve_representationlike(representation_type)
 
@@ -304,8 +435,12 @@ class ResidualMethod(CommonBase):
 
         Parameters
         ----------
-        fit_potential : object or :class:`~discO.core.wrapper.PotentialWrapper`
-            The fit potential.
+        fit_potential : object or :class:`~PotentialWrapper`
+            The fitted potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+        original_potential : object or :class:`~PotentialWrapper` (optional)
+            The original potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
 
         observable : str or None (optional)
             The quantity on which to calculate the residual.
@@ -313,12 +448,26 @@ class ResidualMethod(CommonBase):
             None (default) becomes the default value at initialization.
 
         representation_type: representation-resolvable (optional, keyword-only)
-            The output representation type.
+            The output representation type. If None (default), uses default
+            representation point.
+
+        **kwargs
+            Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
 
         Returns
         -------
         residual : object
             In `representation_type`.
+
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
 
         """
         return self(
@@ -453,18 +602,19 @@ class ResidualMethod(CommonBase):
 class GridResidual(ResidualMethod, key="grid"):
     """Residual on a grid.
 
-    .. todo::
-
-        - want to allow grid to be in a Frame and awesomely transform
-
     Parameters
     ----------
     grid : |Representation|
         The grid on which to evaluate the residual. Mandatory.
 
-    original_potential : PotentialWrapper or object or None (optional)
+    original_potential: object or :class:`~PotentialWrapper` or None (optional)
+        The potential. If not already a PotentialWrapper, it is wrapped:
+        this means that the frame is :class:`~discO.UnFrame`. When evaluating
+        the residual, the grid can only be frame-like if this has a frame
+        (is not :class:`~discO.UnFrame`).
 
     observable : str (optional)
+        name of method in :class:`~PotentialWrapper`.
 
     Other Parameters
     ----------------
@@ -507,7 +657,6 @@ class GridResidual(ResidualMethod, key="grid"):
         self,
         potential: T.Union[PotentialWrapper, T.Any],
         observable: T.Optional[str] = None,
-        points: T.Optional[TH.RepresentationType] = None,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
@@ -516,47 +665,39 @@ class GridResidual(ResidualMethod, key="grid"):
 
         Parameters
         ----------
-        potential : object
+        potential : object or :class:`~PotentialWrapper`
+            The potential. If not already a PotentialWrapper, it is wrapped:
+            this means that the frame is :class:`~discO.UnFrame`.
         observable : str
-            method in :class:`~PotentialWrapper`
-        points : `~astropy.coordinates.BaseRepresentation` or None (optional)
-            The points of the grid
+            name of method in :class:`~PotentialWrapper`.
+            If None (default), uses default value -- ``.observable``.
+        representation_type: representation-resolvable (optional, keyword-only)
+            The output representation type. If None (default), uses default
+            representation point.
         **kwargs
-            Passed to method on :class:`~PotentialWrapper`
+            Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
 
         Returns
         -------
         object
 
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
+
         """
-        observable = observable or self.observable  # None -> stored
-        if observable is None:  # still None
-            raise ValueError("Need to pass observable.")
-
-        if points is None:  # default to default
-            points = self.points
-
-        # get class to evaluate
-        evaluator_cls = PotentialWrapper(
+        return super().evaluate_potential(
             potential,
-            # frame=frame,
+            observable=observable,
             representation_type=representation_type,
+            **kwargs,
         )
-
-        # get method from evaluator class
-        evaluator = getattr(evaluator_cls, observable)
-
-        # evaluate
-        value = evaluator(
-            points, representation_type=representation_type, **kwargs
-        )
-
-        # output representation type
-        if representation_type is None:
-            representation_type = value.base_representation
-        representation_type = resolve_representationlike(representation_type)
-
-        return value.represent_as(representation_type)
 
     # /def
 

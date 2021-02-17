@@ -194,7 +194,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
         with pytest.raises(NotImplementedError) as e:
             self.obj.evaluate_potential(self.inst, self.original_potential)
 
-        assert "Must run on subclass" in str(e.value)
+        assert "Please use the appropriate subpackage." in str(e.value)
 
         # evaluate_potential
         assert (
