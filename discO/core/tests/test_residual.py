@@ -8,6 +8,7 @@ __all__ = ["Test_ResidualMethod", "Test_GridResidual"]
 ##############################################################################
 # IMPORTS
 
+# BUILT-IN
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -18,12 +19,11 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import residual
-from discO.core.wrapper import PotentialWrapper
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
+from discO.core.wrapper import PotentialWrapper
 
 ##############################################################################
 # PYTEST
-
 
 
 ##############################################################################
@@ -60,7 +60,9 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
         _lat = np.linspace(-90, 90, num=10)
         r, lon, lat = np.meshgrid(_r, _lon, _lat)
         cls.points = coord.SphericalRepresentation(
-            lon=lon * u.deg, lat=lat * u.deg, distance=r * u.kpc
+            lon=lon * u.deg,
+            lat=lat * u.deg,
+            distance=r * u.kpc,
         )
 
         if cls.obj is residual.ResidualMethod:
@@ -195,9 +197,12 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
         assert "Must run on subclass" in str(e.value)
 
         # evaluate_potential
-        assert self.inst.evaluate_potential(
-            self.original_potential
-        ) == coord.CartesianRepresentation(x=1, y=2, z=3)
+        assert (
+            self.inst.evaluate_potential(
+                self.original_potential,
+            )
+            == coord.CartesianRepresentation(x=1, y=2, z=3)
+        )
 
     # /def
 
@@ -339,9 +344,12 @@ class Test_GridResidual(Test_ResidualMethod, obj=residual.GridResidual):
     def test_evaluate_potential(self):
         """Test method ``evaluate_potential``."""
         # evaluate_potential
-        assert self.inst.evaluate_potential(
-            self.original_potential
-        ) == coord.CartesianRepresentation(x=1, y=2, z=3)
+        assert (
+            self.inst.evaluate_potential(
+                self.original_potential,
+            )
+            == coord.CartesianRepresentation(x=1, y=2, z=3)
+        )
 
     # /def
 

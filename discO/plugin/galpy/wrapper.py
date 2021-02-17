@@ -199,7 +199,11 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
                 Asin=potential._Asin,
             )
         elif isinstance(potential, gpot.DiskSCFPotential):
-            raise NotImplementedError("TODO")
+            coeffs = dict(
+                type="diskSCF",
+                Acos=potential._scf._Acos,
+                Asin=potential._scf._Asin,
+            )
 
         return coeffs
 
