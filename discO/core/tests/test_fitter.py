@@ -22,7 +22,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import fitter
-from discO.core.tests.test_core import Test_CommonBase as CommonBase_Test
+from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper
 from discO.utils.coordinates import UnFrame
 
@@ -371,12 +371,12 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # TODO! with hypothesis
     @pytest.mark.parametrize("sample", [crd, multicrd])
-    def test_fit(self, sample):
-        """Test method ``fit``."""
+    def test_run(self, sample):
+        """Test method ``run``."""
         # for test need to assign correct potential type
         sample.potential = self.potential
 
-        pots = self.inst.fit(sample)
+        pots = self.inst.run(sample)
 
         if len(sample.shape) == 1:
             assert isinstance(pots.__wrapped__, sample.potential)

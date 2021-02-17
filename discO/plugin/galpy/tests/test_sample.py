@@ -120,9 +120,9 @@ class Test_GalpyPotentialSampler(
             (10, "FK5", dict(a=1, b=2)),  # adding kwargs
         ],
     )
-    def test_sample(self, n, frame, kwargs):
-        """Test method ``sample``."""
-        res = self.inst.sample(n, frame=frame, **kwargs)
+    def test_run(self, n, frame, kwargs):
+        """Test method ``run``."""
+        res = self.inst.run(n, frame=frame, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
         assert res.potential.__wrapped__ == self.potential

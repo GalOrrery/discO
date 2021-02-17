@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-__all__ = ["HAS_AGAMA", "HAS_GALPY"]
+__all__ = ["HAS_AGAMA", "HAS_GALPY", "HAS_TQDM"]
 
 
 ##############################################################################
@@ -44,6 +44,23 @@ else:
     __config__.set("astropy", "astropy-coords", "True")
 
 # /try
+
+# -------------------------------------
+
+try:
+    # THIRD PARTY
+    from tqdm import tqdm  # noqa: F401
+except ImportError:
+    HAS_TQDM = False
+
+    def tqdm(iterable, *args, **kwargs):
+        """Decorate an iterable object."""
+        return iterable
+
+    # /def
+
+else:
+    HAS_TQDM = True
 
 
 ##############################################################################

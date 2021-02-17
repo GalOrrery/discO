@@ -26,7 +26,7 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .core import CommonBase
+from .common import CommonBase
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
@@ -230,7 +230,7 @@ class PotentialFitter(CommonBase):
 
     # /def
 
-    def fit(
+    def run(
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,

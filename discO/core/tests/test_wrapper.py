@@ -173,8 +173,17 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
 
     # /def
 
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        with pytest.raises(NotImplementedError) as e:
+            self.subclass.total_mass(self.potential)
+
+        assert "Please use the appropriate subpackage." in str(e.value)
+
+    # /def
+
     def test_specific_potential(self):
-        """Test method ``specific_force``."""
+        """Test method ``specific_potential``."""
         with pytest.raises(NotImplementedError) as e:
             self.subclass.specific_potential(self.potential, self.points)
 
@@ -195,6 +204,15 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         """Test method ``acceleration``."""
         with pytest.raises(NotImplementedError) as e:
             self.subclass.acceleration(self.potential, self.points)
+
+        assert "Please use the appropriate subpackage." in str(e.value)
+
+    # /def
+
+    def test_coefficients(self):
+        """Test method ``coefficients``."""
+        with pytest.raises(NotImplementedError) as e:
+            self.subclass.coefficients(self.potential)
 
         assert "Please use the appropriate subpackage." in str(e.value)
 

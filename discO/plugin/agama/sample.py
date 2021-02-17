@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""**DOCSTRING**."""
+""":mod:`~agama` Potential Sampler."""
 
 __all__ = [
     "AGAMAPotentialSampler",

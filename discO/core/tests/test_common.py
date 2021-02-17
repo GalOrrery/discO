@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Testing :mod:`~discO.core.core`."""
+"""Testing :mod:`~discO.core.common`."""
 
 __all__ = [
     "Test_CommonBase",
@@ -21,7 +21,7 @@ from astropy.utils.introspection import resolve_name
 
 # PROJECT-SPECIFIC
 import discO
-from discO.core import core
+from discO.core import common
 from discO.tests.helper import ObjectTest
 
 ##############################################################################
@@ -29,7 +29,7 @@ from discO.tests.helper import ObjectTest
 ##############################################################################
 
 
-class Test_CommonBase(ObjectTest, obj=core.CommonBase):
+class Test_CommonBase(ObjectTest, obj=common.CommonBase):
 
     #################################################################
     # Method Tests
@@ -77,7 +77,7 @@ class Test_CommonBase(ObjectTest, obj=core.CommonBase):
     @abstractmethod
     def test__registry(self):
         """Test method ``_registry``."""
-        if self.obj is core.CommonBase:
+        if self.obj is common.CommonBase:
             assert isinstance(self.obj._registry, property)
 
         else:
@@ -127,7 +127,7 @@ class Test_CommonBase(ObjectTest, obj=core.CommonBase):
     @abstractmethod
     def test___init__(self):
         """Test method ``__init__``."""
-        if self.obj is core.CommonBase:
+        if self.obj is common.CommonBase:
 
             with pytest.raises(TypeError) as e:
                 self.obj()

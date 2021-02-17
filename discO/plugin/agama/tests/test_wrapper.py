@@ -18,6 +18,7 @@ from abc import abstractmethod
 import agama
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 import pytest
 
 # PROJECT-SPECIFIC
@@ -53,6 +54,15 @@ class Test_AGAMAPotentialWrapperMeta(
 
     #################################################################
     # Method Tests
+
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        assert np.allclose(
+            self.subclass.total_mass(self.potential),
+            1 * u.solMass,
+        )
+
+    # /def
 
     def test_specific_potential(self):
         """Test method ``specific_force``."""
@@ -197,6 +207,13 @@ class Test_AGAMAPotentialWrapperMeta(
 
     # /def
 
+    @pytest.mark.skip("TODO")
+    def test_coefficients(self):
+        """Test method ``coefficients``."""
+        assert False
+
+    # /def
+
     #################################################################
     # Usage Tests
 
@@ -224,6 +241,12 @@ class Test_AGAMAPotentialWrapper(
 
     #################################################################
     # Method Tests
+
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        assert np.allclose(self.inst.total_mass(), 1 * u.solMass)
+
+    # /def
 
     def test_specific_potential(self):
         """Test method ``specific_potential``."""
@@ -399,6 +422,13 @@ class Test_AGAMAPotentialWrapper(
     def test_acceleration(self):
         """Test method ``acceleration``."""
         assert self.subclass.acceleration == self.subclass.specific_force
+
+    # /def
+
+    @pytest.mark.skip("TODO")
+    def test_coefficients(self):
+        """Test method ``coefficients``."""
+        assert False
 
     # /def
 

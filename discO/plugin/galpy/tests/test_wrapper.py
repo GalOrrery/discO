@@ -17,8 +17,9 @@ from abc import abstractmethod
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
+import galpy.potential as gpot
+import numpy as np
 import pytest
-from galpy.potential import KeplerPotential
 
 # PROJECT-SPECIFIC
 from discO.core.tests.test_wrapper import (
@@ -46,7 +47,7 @@ class Test_GalpyPotentialWrapperMeta(
 
         # now galpy stuff
         # override super
-        cls.potential = KeplerPotential(
+        cls.potential = gpot.KeplerPotential(
             amp=1 * u.solMass,
             ro=8 * u.kpc,
             vo=220 * u.km / u.s,
@@ -57,6 +58,15 @@ class Test_GalpyPotentialWrapperMeta(
 
     #################################################################
     # Method Tests
+
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        assert np.allclose(
+            self.subclass.total_mass(self.potential),
+            1 * u.solMass,
+        )
+
+    # /def
 
     def test_specific_potential(self):
         """Test method ``specific_force``."""
@@ -202,6 +212,28 @@ class Test_GalpyPotentialWrapperMeta(
 
     # /def
 
+    def test_coefficients(self):
+        """Test method ``coefficients``."""
+        # No coefficients
+        pot = gpot.KeplerPotential()
+        assert self.subclass.coefficients(pot) is None
+
+        # SCF
+        pot = gpot.SCFPotential()
+        coeffs = self.subclass.coefficients(pot)
+        assert coeffs["type"] == "SCF"
+        assert np.all(np.equal(coeffs["Acos"], pot._Acos))
+        assert np.all(np.equal(coeffs["Asin"], pot._Asin))
+
+        # DiskSCFPotential
+        pot = gpot.DiskSCFPotential()
+        coeffs = self.subclass.coefficients(pot)
+        assert coeffs["type"] == "diskSCF"
+        assert np.all(np.equal(coeffs["Acos"], pot._scf._Acos))
+        assert np.all(np.equal(coeffs["Asin"], pot._scf._Asin))
+
+    # /def
+
     #################################################################
     # Usage Tests
 
@@ -219,7 +251,7 @@ class Test_GalpyPotentialWrapper(
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
-        cls.potential = KeplerPotential(
+        cls.potential = gpot.KeplerPotential(
             amp=1 * u.solMass,
             ro=8 * u.kpc,
             vo=220 * u.km / u.s,
@@ -239,6 +271,12 @@ class Test_GalpyPotentialWrapper(
 
     #################################################################
     # Method Tests
+
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        assert np.allclose(self.inst.total_mass(), 1 * u.solMass)
+
+    # /def
 
     def test_specific_potential(self):
         """Test method ``specific_force``."""
@@ -359,7 +397,6 @@ class Test_GalpyPotentialWrapper(
 
     # /def
 
-    @abstractmethod
     def test_specific_force(self):
         """Test method ``specific_force``."""
         # ---------------
@@ -415,6 +452,31 @@ class Test_GalpyPotentialWrapper(
     def test_acceleration(self):
         """Test method ``acceleration``."""
         assert self.subclass.acceleration == self.subclass.specific_force
+
+    # /def
+
+    def test_coefficients(self):
+        """Test method ``coefficients``."""
+        # No coefficients
+        pot = gpot.KeplerPotential()
+        inst = self.obj(pot)
+        assert inst.coefficients() is None
+
+        # SCF
+        pot = gpot.SCFPotential()
+        inst = self.obj(pot)
+        coeffs = inst.coefficients()
+        assert coeffs["type"] == "SCF"
+        assert np.all(np.equal(coeffs["Acos"], pot._Acos))
+        assert np.all(np.equal(coeffs["Asin"], pot._Asin))
+
+        # DiskSCFPotential
+        pot = gpot.DiskSCFPotential()
+        inst = self.obj(pot)
+        coeffs = inst.coefficients()
+        assert coeffs["type"] == "diskSCF"
+        assert np.all(np.equal(coeffs["Acos"], pot._scf._Acos))
+        assert np.all(np.equal(coeffs["Asin"], pot._scf._Asin))
 
     # /def
 
