@@ -62,7 +62,8 @@ class Test_GalpyPotentialWrapperMeta(
     def test_total_mass(self):
         """Test method ``total_mass``."""
         assert np.allclose(
-            self.subclass.total_mass(self.potential), 1 * u.solMass
+            self.subclass.total_mass(self.potential),
+            1 * u.solMass,
         )
 
     # /def
