@@ -48,8 +48,11 @@ class ResidualMethod(CommonBase):
 
     observable : str (optional)
 
+    Other Parameters
+    ----------------
     representation_type : representation-resolvable (optional, keyword-only)
-        The output representation type
+        The output representation type.
+        If None, resolves to ``PotentialWrapper.base_representation``
 
     """
 
@@ -70,6 +73,8 @@ class ResidualMethod(CommonBase):
         if key is not None:  # same trigger as CommonBase
             # cls._package defined in super()
             cls.__bases__[0]._registry[cls._key] = cls
+        else:  # key is None
+            cls._key = None
 
         # TODO? insist that subclasses define a evaluate method
         # this "abstractifies" the base-class even though it can be used
@@ -108,15 +113,16 @@ class ResidualMethod(CommonBase):
 
     def __init__(
         self,
-        *,
         original_potential: T.Optional[T.Any] = None,
         observable: str = "acceleration",  # TODO make None and have config
+        *,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> None:
-        kwargs.pop("method", None)
+        kwargs.pop("method", None)  # pop from ``__new__``.
+
         self._observable: str = observable
-        self._kwargs = MappingProxyType(kwargs)
+        self._default_params: T.Dict[str, T.Any] = kwargs
 
         # representation type
         representation_type = (
@@ -141,6 +147,13 @@ class ResidualMethod(CommonBase):
     def observable(self) -> str:
         """Observable."""
         return self._observable
+
+    # /def
+
+    @property
+    def default_params(self) -> MappingProxyType:
+        """Default parameters."""
+        return MappingProxyType(self._default_params)
 
     # /def
 
@@ -232,7 +245,7 @@ class ResidualMethod(CommonBase):
 
         """
         # kwargs, mix in defaults, overriding with passed.
-        kw = dict(self._kwargs.items())
+        kw = dict(self.default_params.items())
         kw.update(kwargs)
 
         # potential
@@ -324,12 +337,142 @@ class ResidualMethod(CommonBase):
 ##############################################################################
 
 
+# class RandomGridResidual(ResidualMethod, key="random"):
+#     """Residual at random points.
+
+#     .. todo::
+
+#         allow for distributions
+
+#     Parameters
+#     ----------
+#     original_potential : PotentialWrapper or object or None (optional)
+
+#     observable : str (optional)
+
+#     Other Parameters
+#     ----------------
+#     representation_type : representation-resolvable (optional, keyword-only)
+#         The output representation type.
+#         If None, resolves to ``PotentialWrapper.base_representation``
+#     **kwargs
+#         default arguments into ``evaluate_potential``.
+
+#     """
+
+#     #################################################################
+#     # On the instance
+
+#     def __init__(
+#         self,
+#         grid: TH.RepresentationType,
+#         original_potential: T.Union[PotentialWrapper, T.Any, None] = None,
+#         observable: str = "acceleration",  # TODO make None and have config
+#         *,
+#         representation_type: TH.OptRepresentationLikeType = None,
+#         **kwargs,
+#     ) -> None:
+#         # the points
+#         self.points = grid
+#         # initialize
+#         super().__init__(
+#             original_potential=original_potential,
+#             observable=observable,
+#             representation_type=representation_type,
+#             **kwargs,
+#         )
+
+#     # /def
+
+#     #################################################################
+#     # evaluate
+
+#     def evaluate_potential(
+#         self,
+#         potential: T.Union[PotentialWrapper, T.Any],
+#         observable: T.Optional[str] = None,
+#         points: T.Optional[TH.RepresentationType] = None,
+#         *,
+#         representation_type: TH.OptRepresentationLikeType = None,
+#         **kwargs,
+#     ) -> object:
+#         """Evaluate method on potential.
+
+#         Parameters
+#         ----------
+#         potential : object
+#         observable : str
+#             method in :class:`~PotentialWrapper`
+#         points : `~astropy.coordinates.BaseRepresentation` or None (optional)
+#             The points of the grid
+#         **kwargs
+#             Passed to method on :class:`~PotentialWrapper`
+
+#         Returns
+#         -------
+#         object
+
+#         """
+#         observable = observable or self.observable  # None -> stored
+#         if observable is None:  # still None
+#             raise ValueError("Need to pass observable.")
+
+#         if points is None:  # default to default
+#             points = self.points
+
+#         # get class to evaluate
+#         evaluator_cls = PotentialWrapper(
+#             potential,
+#             # frame=frame,
+#             representation_type=representation_type,
+#         )
+
+#         # get method from evaluator class
+#         evaluator = getattr(evaluator_cls, observable)
+
+#         # evaluate
+#         value = evaluator(
+#             points, representation_type=representation_type, **kwargs
+#         )
+
+#         # output representation type
+#         if representation_type is None:
+#             representation_type = value.base_representation
+#         representation_type = resolve_representationlike(representation_type)
+
+#         return value.represent_as(representation_type)
+
+#     # /def
+
+
+# # /class
+
+##############################################################################
+
+
 class GridResidual(ResidualMethod, key="grid"):
     """Residual on a grid.
 
     .. todo::
 
         - want to allow grid to be in a Frame and awesomely transform
+
+    Parameters
+    ----------
+    grid : |Representation|
+        The grid on which to evaluate the residual. Mandatory.
+
+    original_potential : PotentialWrapper or object or None (optional)
+
+    observable : str (optional)
+
+    Other Parameters
+    ----------------
+    representation_type : representation-resolvable (optional, keyword-only)
+        The output representation type.
+        If None, resolves to ``PotentialWrapper.base_representation``
+    **kwargs
+        default arguments into ``evaluate_potential``.
 
     """
 
@@ -339,13 +482,15 @@ class GridResidual(ResidualMethod, key="grid"):
     def __init__(
         self,
         grid: TH.RepresentationType,
-        original_potential: T.Optional[T.Any] = None,
+        original_potential: T.Union[PotentialWrapper, T.Any, None] = None,
         observable: str = "acceleration",  # TODO make None and have config
         *,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> None:
+        # the points
         self.points = grid
+        # initialize
         super().__init__(
             original_potential=original_potential,
             observable=observable,
