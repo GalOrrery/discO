@@ -133,9 +133,9 @@ def scf_compute_coeffs_nbody(
                     ),
                 )
 
-                phinlm = (-((ra) ** ll) / (ra + 1) ** (2.0 * ll + 1) * Cn)[
-                    None, :
-                ] * Ylm
+                phinlm = (
+                    -np.power(ra, ll) / np.power(ra + 1, (2.0 * ll + 1)) * Cn
+                )[None, :] * Ylm
 
                 Sum = np.sum(mass[None, :] * phinlm, axis=1)
 
