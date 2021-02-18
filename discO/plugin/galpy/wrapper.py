@@ -92,12 +92,6 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
             The specific potential at `points`.
 
         """
-        print(
-            f"points: {points[:4]}, {points.__class__}",
-            f"frame: {frame}",
-            f"representation_type: {representation_type}",
-            sep="\n",
-        )
         p, _ = self._convert_to_frame(points, frame, representation_type)
         r = p.represent_as(coord.CylindricalRepresentation)
 

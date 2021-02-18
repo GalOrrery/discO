@@ -318,7 +318,7 @@ class Pipeline:
             self.frame
             if sample_and_fit_frame is None
             else sample_and_fit_frame
-        )
+        )  # NOTE! can still be None
 
         # representation type
         sample_and_fit_representation_type = (
@@ -357,12 +357,12 @@ class Pipeline:
 
         # ----------
         # 3) fit
-        # we forced the fit to be in the same frame & representation type
+        # we force the fit to be in the same frame & representation type
         # as the samples.
 
         fit_pot: T.Any = self.fitter.run(
             samples,
-            frame=sample_and_fit_frame,
+            frame=samples.frame,
             representation_type=sample_and_fit_representation_type,
             **kwargs,
         )

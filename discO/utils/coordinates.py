@@ -72,8 +72,6 @@ def resolve_framelike(
         Replicated without data.
 
     """
-    # If no frame is specified, assume that the input footprint is in a
-    # frame specified in the configuration
     if frame is None:
         frame: TH.FrameType = UnFrame()
     elif frame is Ellipsis:
