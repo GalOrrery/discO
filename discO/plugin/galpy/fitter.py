@@ -289,6 +289,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if scale_factor.unit == u.one:
             scale_factor = scale_factor.value * position.unit
 
+        # TODO confirm that it does actually return both Acos and Asin
         Acos, Asin = scf_compute_coeffs_nbody(
             position, mass, N=Nmax, L=Lmax, a=scale_factor, **kw
         )

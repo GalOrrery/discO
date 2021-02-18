@@ -11,7 +11,7 @@
 
 # THIRD PARTY
 import astropy.units as u
-import numpy
+import numpy as np
 from scipy.special import gamma, gegenbauer, lpmv
 
 ##############################################################################
@@ -20,7 +20,7 @@ from scipy.special import gamma, gegenbauer, lpmv
 
 
 def _RToxi(r, a=1):
-    return numpy.divide((r / a - 1.0), (r / a + 1.0))
+    return np.divide((r / a - 1.0), (r / a + 1.0))
 
 
 def _C(xi, N, L, alpha=lambda x: 2 * x + 3.0 / 2):
@@ -41,7 +41,7 @@ def _C(xi, N, L, alpha=lambda x: 2 * x + 3.0 / 2):
        2016-05-16 - Written - Aladdin
 
     """
-    CC = numpy.zeros((N, L), float)
+    CC = np.zeros((N, L), float)
 
     for ll in range(L):
         for n in range(N):
@@ -97,47 +97,47 @@ def scf_compute_coeffs_nbody(
        2020-11-18 - Written - Morgan Bennett
 
     """
+    mass = mass.to_value(1e12 * u.solMass)  # :(
+    ns = np.arange(0, N)
+    ls = np.arange(0, L)
+    ms = np.arange(0, L)
 
-    ns = numpy.arange(0, N)
-    ls = numpy.arange(0, L)
-    ms = numpy.arange(0, L)
+    ra = (np.sqrt(np.sum(np.square(pos), axis=0)) / a).to_value(u.one)
+    phi = np.arctan2(pos[1], pos[0])
+    costheta = (pos[2] / ra / a).to_value(u.one)
 
-    r = numpy.sqrt(pos[0] ** 2 + pos[1] ** 2 + pos[2] ** 2)
-    phi = numpy.arctan2(pos[1], pos[0])
-    costheta = (pos[2] / r).to_value(u.one)
-
-    Anlm = numpy.zeros([2, L, L, L])
+    Anlm = np.zeros([2, L, L, L])
     for i, nn in enumerate(ns):
         for j, ll in enumerate(ls):
             for k, mm in enumerate(ms[: j + 1]):
 
                 Plm = lpmv(mm, ll, costheta)
 
-                cosmphi = numpy.cos(phi * mm)
-                sinmphi = numpy.sin(phi * mm)
+                cosmphi = np.cos(phi * mm)
+                sinmphi = np.sin(phi * mm)
 
                 Ylm = (
-                    numpy.sqrt(
+                    np.sqrt(
                         (2.0 * ll + 1)
                         * gamma(ll - mm + 1)
                         / gamma(ll + mm + 1),
                     )
                     * Plm
-                )[None, :] * numpy.array([cosmphi, sinmphi])
-                Ylm = numpy.nan_to_num(Ylm)
+                )[None, :] * np.array([cosmphi, sinmphi])
+                Ylm = np.nan_to_num(Ylm)
 
                 C = gegenbauer(nn, 2.0 * ll + 1.5)
                 Cn = C(
-                    u.Quantity((r / a - 1) / (r / a + 1), copy=False).to_value(
+                    u.Quantity((ra - 1) / (ra + 1), copy=False).to_value(
                         u.one,
                     ),
                 )
 
                 phinlm = (
-                    -((r / a) ** ll) / (r / a + 1) ** (2.0 * ll + 1) * Cn
+                    -np.power(ra, ll) / np.power(ra + 1, (2.0 * ll + 1)) * Cn
                 )[None, :] * Ylm
 
-                Sum = numpy.sum(mass[None, :] * phinlm, axis=1)
+                Sum = np.sum(mass[None, :] * phinlm, axis=1)
 
                 Knl = 0.5 * nn * (nn + 4.0 * ll + 3.0) + (ll + 1) * (
                     2.0 * ll + 1.0
@@ -145,7 +145,7 @@ def scf_compute_coeffs_nbody(
                 Inl = (
                     -Knl
                     * 4.0
-                    * numpy.pi
+                    * np.pi
                     / 2.0 ** (8.0 * ll + 6.0)
                     * gamma(nn + 4.0 * ll + 3.0)
                     / gamma(nn + 1)

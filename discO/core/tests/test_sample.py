@@ -375,7 +375,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     )
     def test_run(self, n, niter, frame, representation, random, kwargs):
         """Test method ``run``."""
-        # print(n, niter, frame, representation, random, kwargs)
         samples = self.inst.run(
             n=n,
             niter=niter,
