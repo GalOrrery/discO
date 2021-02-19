@@ -262,17 +262,16 @@ class Pipeline:
 
     # /defs
 
-    def run(
+    def run_with_samples(
         self,
-        n: T.Union[int, T.Sequence[int]],
-        niter: int = 1,
+        samples,
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
         sample_and_fit_frame: TH.OptFrameType = None,
         sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
-        c_err: T.Optional[CERR_Type] = None,
+        c_err: T.Union[CERR_Type, None, T.Literal[False]] = None,
         observer_frame: TH.OptFrameType = None,
         observer_representation_type: TH.OptRepresentationType = None,
         # fitter
@@ -313,6 +312,7 @@ class Pipeline:
         result = PipelineResult(self)
         # Now evaluate, passing around the output -> input
 
+        # TODO!!!
         # frame
         sample_and_fit_frame = (
             self.frame
@@ -330,25 +330,18 @@ class Pipeline:
         # ----------
         # 1) sample
 
-        samples: TH.SkyCoordType = self.sampler.run(
-            n,
-            niter=niter,
-            frame=sample_and_fit_frame,
-            representation_type=sample_and_fit_representation_type,
-            random=random,
-            **kwargs,
-        )
         result._samples: TH.SkyCoordType = samples
 
         # ----------
         # 2) measure
+        # optionally skip this step if c_err is False
 
-        if self.measurer is not None:
+        if self.measurer is not None and c_err is not False:
 
             samples: TH.SkyCoordType = self.measurer.run(
                 samples,
                 random=random,
-                # c_err=c_err,
+                c_err=c_err,
                 frame=observer_frame,
                 representation_type=observer_representation_type,
                 **kwargs,
@@ -376,7 +369,7 @@ class Pipeline:
 
             resid: T.Any = self.residualer.run(
                 fit_pot,
-                original_pot=self.potential,
+                original_potential=self.potential,
                 observable=observable,
                 **kwargs,
             )
@@ -394,6 +387,93 @@ class Pipeline:
         # ----------
 
         self._result: PipelineResult = result  # link to most recent result
+        return result
+
+    # /defs
+
+    def run(
+        self,
+        n: T.Union[int, T.Sequence[int]],
+        niter: int = 1,
+        *,
+        random: T.Optional[RandomLike] = None,
+        # sampler
+        sample_and_fit_frame: TH.OptFrameType = None,
+        sample_and_fit_representation_type: TH.OptRepresentationType = None,
+        # observer
+        c_err: T.Union[CERR_Type, None, T.Literal[False]] = None,
+        observer_frame: TH.OptFrameType = None,
+        observer_representation_type: TH.OptRepresentationType = None,
+        # fitter
+        # residual
+        observable: T.Optional[str] = None,
+        **kwargs,
+    ) -> object:
+        """Call.
+
+        Parameters
+        ----------
+        n : int (optional)
+            number of sample points
+        niter : int (optional)
+            Number of iterations. Must be > 0.
+
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+
+        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+            None defaults to the value set at initialization.
+        observer_representation_type: representation-resolvable (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+            None defaults to the value set at initialization.
+
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
+
+        Returns
+        -------
+        :class:`PipelineResult`
+
+        """
+        # frame
+        sample_and_fit_frame = (
+            self.frame
+            if sample_and_fit_frame is None
+            else sample_and_fit_frame
+        )  # NOTE! can still be None
+
+        # representation type
+        sample_and_fit_representation_type = (
+            self.representation_type
+            if sample_and_fit_representation_type is None
+            else sample_and_fit_representation_type
+        )
+
+        # ----------
+        # 1) sample
+
+        samples: TH.SkyCoordType = self.sampler.run(
+            n,
+            niter=niter,
+            frame=sample_and_fit_frame,
+            representation_type=sample_and_fit_representation_type,
+            random=random,
+            **kwargs,
+        )
+
+        result = self.run_with_samples(
+            samples,
+            random=random,
+            sample_and_fit_frame=sample_and_fit_frame,
+            sample_and_fit_representation_type=sample_and_fit_representation_type,
+            c_err=c_err,
+            observer_frame=observer_frame,
+            observer_representation_type=observer_representation_type,
+            observable=observable,
+        )
         return result
 
     # /defs
