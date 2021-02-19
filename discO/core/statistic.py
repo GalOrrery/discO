@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+
+"""Statistic."""
+
+__all__ = [
+    # functions
+    "rms",
+]
+
+
+##############################################################################
+# IMPORTS
+
+# THIRD PARTY
+import numpy as np
+
+# PROJECT-SPECIFIC
+import discO.type_hints as TH
+
+##############################################################################
+# CODE
+##############################################################################
+
+
+def rms(resid, **kwargs) -> TH.QuantityType:
+    """Root Mean Square.
+
+    Parameters
+    ----------
+    resid
+    **kwargs
+
+    Returns
+    -------
+    Quantity
+
+    """
+    N: int = np.prod(resid.shape)
+
+    return np.sqrt(np.nansum(np.square(resid.norm())) / N)
+
+
+# /def
+
+# -------------------------------------------------------------------
+
+
+##############################################################################
+# END
