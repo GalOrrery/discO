@@ -68,20 +68,20 @@ class Test_GalpyPotentialWrapperMeta(
 
     # /def
 
-    def test_specific_potential(self):
+    def test_potential(self):
         """Test method ``specific_force``."""
         # ---------------
         # when there isn't a frame
 
         with pytest.raises(TypeError) as e:
-            self.subclass.specific_potential(self.potential, self.points)
+            self.subclass.potential(self.potential, self.points)
 
         assert "the potential must have a frame." in str(e.value)
 
         # ---------------
         # basic
 
-        points, values = self.subclass.specific_potential(
+        points, values = self.subclass.potential(
             self.potential,
             self.points.data,
         )
@@ -106,7 +106,7 @@ class Test_GalpyPotentialWrapperMeta(
             "galactocentric",
         ):
 
-            points, values = self.subclass.specific_potential(
+            points, values = self.subclass.potential(
                 self.potential,
                 self.points,
                 frame=frame,
@@ -121,7 +121,7 @@ class Test_GalpyPotentialWrapperMeta(
         # ---------------
         # representation_type
 
-        points, values = self.subclass.specific_potential(
+        points, values = self.subclass.potential(
             self.potential,
             self.points,
             frame=self.points.frame.replicate_without_data(),
@@ -278,12 +278,12 @@ class Test_GalpyPotentialWrapper(
 
     # /def
 
-    def test_specific_potential(self):
+    def test_potential(self):
         """Test method ``specific_force``."""
         # ---------------
         # basic
 
-        points, values = self.inst.specific_potential(self.points.data)
+        points, values = self.inst.potential(self.points.data)
 
         # check data types
         assert isinstance(points, self.inst.frame.__class__)
@@ -296,7 +296,7 @@ class Test_GalpyPotentialWrapper(
         # ---------------
         # with a frame
 
-        points, values = self.inst.specific_potential(self.points)
+        points, values = self.inst.potential(self.points)
 
         # check data types
         assert isinstance(points, coord.SkyCoord)
@@ -313,7 +313,7 @@ class Test_GalpyPotentialWrapper(
 
         with pytest.raises(TypeError) as e:
 
-            points, values = self.inst.specific_potential(
+            points, values = self.inst.potential(
                 self.points,
                 frame=coord.Galactocentric(),
             )
@@ -323,7 +323,7 @@ class Test_GalpyPotentialWrapper(
         # ---------------
         # representation_type
 
-        points, values = self.inst.specific_potential(
+        points, values = self.inst.potential(
             self.points,
             representation_type=coord.CartesianRepresentation,
         )

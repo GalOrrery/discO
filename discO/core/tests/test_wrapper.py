@@ -182,10 +182,10 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
 
     # /def
 
-    def test_specific_potential(self):
-        """Test method ``specific_potential``."""
+    def test_potential(self):
+        """Test method ``potential``."""
         with pytest.raises(NotImplementedError) as e:
-            self.subclass.specific_potential(self.potential, self.points)
+            self.subclass.potential(self.potential, self.points)
 
         assert "Please use the appropriate subpackage." in str(e.value)
 
@@ -369,10 +369,10 @@ class Test_PotentialWrapper(ObjectTest, obj=wrapper.PotentialWrapper):
     # /def
 
     @abc.abstractmethod
-    def test_specific_potential(self):
-        """Test method ``specific_potential``."""
+    def test_potential(self):
+        """Test method ``potential``."""
         with pytest.raises(NotImplementedError):
-            self.inst.specific_potential(self.points)
+            self.inst.potential(self.points)
 
     # /def
 
