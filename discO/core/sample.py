@@ -435,7 +435,7 @@ class PotentialSampler(CommonBase):
     @staticmethod
     def _random_context(
         random: RandomLike,
-    ) -> T.Union[NumpyRNGContext, contextlib.nullcontext]:
+    ) -> T.Union[NumpyRNGContext, contextlib.suppress]:
         """Get a random-state context manager.
 
         This is used to supplement samplers that do not have a random seed.
@@ -444,7 +444,7 @@ class PotentialSampler(CommonBase):
         if isinstance(random, (int, np.random.RandomState)):
             context = NumpyRNGContext(random)
         else:  # None or Generator
-            context = contextlib.nullcontext()
+            context = contextlib.suppress()
 
         return context
 
