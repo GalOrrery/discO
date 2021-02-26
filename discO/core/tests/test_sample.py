@@ -483,10 +483,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         # else
 
         ctx = self.inst._random_context(None)
-        assert isinstance(ctx, contextlib.nullcontext)
+        assert isinstance(ctx, contextlib.suppress)
 
         ctx = self.inst._random_context(np.random.default_rng(0))
-        assert isinstance(ctx, contextlib.nullcontext)
+        assert isinstance(ctx, contextlib.suppress)
 
     # /def
 
