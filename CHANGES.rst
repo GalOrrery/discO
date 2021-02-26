@@ -179,7 +179,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
 - ``PotentialWrapper`` : base class for wrapping Potentials [#39]
 
-    + unified interface for the specific potential and specific force.
+    + unified interface for the potential and specific force.  [#39,#49]
     + all methods are both instance and static methods.
     + specific force returns a vector field.
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything

@@ -59,7 +59,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
     # -----------------------------------------------------
 
-    def specific_potential(
+    def potential(
         self,
         potential: PotentialType,
         points: TH.PositionType,

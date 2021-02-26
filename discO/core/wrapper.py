@@ -159,7 +159,7 @@ class PotentialWrapperMeta(ABCMeta):
     # /def
 
     @abstractmethod
-    def specific_potential(
+    def potential(
         self,
         potential: T.Any,
         points: TH.PositionType,
@@ -446,7 +446,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # -----------------------------------------------------
 
     @property
-    def potential(self) -> object:
+    def wrapped(self) -> object:
         """The wrapped potential."""
         return self.__wrapped__
 
@@ -514,7 +514,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         values : |Quantity|
 
         """
-        return self.specific_potential(
+        return self.potential(
             points, representation_type=representation_type, **kwargs
         )
 
@@ -540,7 +540,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # -----------------------------------------------------
 
     @sharedmethod
-    def specific_potential(
+    def potential(
         self,
         points: TH.PositionType,
         *,
@@ -575,7 +575,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
             else representation_type
         )
 
-        return self.__class__.specific_potential(
+        return self.__class__.potential(
             self.__wrapped__,  # potential
             points=points,
             frame=self.frame,
