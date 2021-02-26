@@ -178,7 +178,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
 
 **discO.core.statistic**
-  
+
 - ``rms`` : calculate the RMS [#50]
 
 
