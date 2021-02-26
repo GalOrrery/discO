@@ -52,6 +52,8 @@ Modules:
 - ``sample`` : for sampling from a Potential. [#17]
 - ``measurement`` : for resampling, given observational errors. [#17]
 - ``fitter`` : for fitting a Potential given a sample [#20]
+- ``residual`` : residual between fit and fiducial potential
+- ``statistic`` : statistic functions for collapsing a residual to a single number [#50]
 - ``pipeline`` : for comboing the analysis [#19]
 - ``wrapper`` : for wrapping potentials [#45]
 
@@ -173,6 +175,11 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
 
   + difference between original and fit potential
   + need pre-defined grid
+
+
+**discO.core.statistic**
+  
+- ``rms`` : calculate the RMS [#50]
 
 
 **discO.core.wrapper**
