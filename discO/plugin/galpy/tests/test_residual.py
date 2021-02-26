@@ -83,7 +83,7 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
         assert inst._observable is self.observable
         assert inst._default_params == self.kwargs
         assert isinstance(inst._original_potential, GalpyPotentialWrapper)
-        assert inst._original_potential.potential is self.original_potential
+        assert inst._original_potential.wrapped is self.original_potential
         assert inst._original_potential.representation_type is expected
 
     # /def

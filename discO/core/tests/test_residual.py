@@ -146,7 +146,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
         assert inst._observable is self.observable
         assert inst._default_params == self.kwargs
         assert isinstance(inst._original_potential, PotentialWrapper)
-        assert inst._original_potential.potential is self.original_potential
+        assert inst._original_potential.wrapped is self.original_potential
         assert inst._original_potential.representation_type is expected
 
     # /def
@@ -334,7 +334,7 @@ class Test_GridResidual(Test_ResidualMethod, obj=residual.GridResidual):
         assert inst._observable is self.observable
         assert inst._default_params == self.kwargs
         assert isinstance(inst._original_potential, PotentialWrapper)
-        assert inst._original_potential.potential is self.original_potential
+        assert inst._original_potential.wrapped is self.original_potential
         assert inst._original_potential.representation_type is expected
 
     # /def
