@@ -95,6 +95,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
+        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
         **kwargs
     ):
@@ -106,6 +107,10 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             number of samples
         frame : frame-like or None (optional)
             output frame of samples
+
+        total_mass : |Quantity| or None (optional)
+            overload the mass. Necessary if the potential has infinite mass.
+
         **kwargs
             ignored
 
@@ -118,14 +123,13 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         frame = self._infer_frame(frame)
         representation_type = self._infer_representation(representation_type)
 
+        # make sure physical is on
+        self._df._pot.turn_physical_on()
+
         # can't pass a random seed, set in context
         with self._random_context(random):
             orbits = self._df.sample(
-                R=None,
-                z=None,
-                phi=None,
-                n=n,
-                return_orbit=True,
+                R=None, z=None, phi=None, n=n, return_orbit=True,
             )
 
         t = orbits.time()
@@ -150,9 +154,18 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         # TODO! better storage of these properties, so stay when transform.
         samples.potential = self.potential
-        samples.mass = (  # AGAMA compatibility
-            np.ones(n) * self.potential.total_mass() / n
+
+        total_mass = (
+            total_mass
+            if total_mass is not None
+            else self._kwargs.pop("total_mass", None)
         )
+        total_mass = (
+            total_mass
+            if total_mass is not None
+            else self.potential.total_mass()
+        )
+        samples.mass = np.ones(n) * total_mass / n  # AGAMA compatibility
 
         return samples
 

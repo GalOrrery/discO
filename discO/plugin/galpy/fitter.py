@@ -19,12 +19,14 @@ from types import MappingProxyType
 import astropy.coordinates as coord
 import astropy.units as u
 from galpy.potential import SCFPotential
+from galpy.potential import scf_compute_coeffs_nbody
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
-from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
+
+# from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
@@ -212,7 +214,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         .. todo::
 
-            amp != mass. Do this correctly.
+            - amp != mass. Do this correctly.
+            - work on ``n=[]`` array, not just niters
 
         Parameters
         ----------
@@ -251,8 +254,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
         representation_type = (
             resolve_representationlike(
-                self.representation_type,
-                error_if_not_type=False,
+                self.representation_type, error_if_not_type=False,
             )
             if representation_type is None
             else resolve_representationlike(representation_type)
@@ -276,7 +278,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if mass is None:
             mass = sample.mass
 
-        sample = sample.transform_to(frame)  # FIXME!
+        sample = sample.transform_to(frame)
         position = sample.represent_as(coord.CartesianRepresentation).xyz
 
         # kwargs
@@ -289,17 +291,27 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if scale_factor.unit == u.one:
             scale_factor = scale_factor.value * position.unit
 
-        # TODO confirm that it does actually return both Acos and Asin
+        # Acos, Asin = scf_compute_coeffs_nbody(
+        #     position,
+        #     mass=mass,
+        #     N=Nmax,
+        #     L=Lmax,
+        #     a=scale_factor,
+        #     **kw,
+        # )
+        # TODO don't do ``to_value`` when it supports units
         Acos, Asin = scf_compute_coeffs_nbody(
-            position, mass, N=Nmax, L=Lmax, a=scale_factor, **kw
+            position.to_value(position.unit),
+            mass=mass.to_value(1e12 * u.solMass),
+            N=Nmax,
+            L=Lmax,
+            a=scale_factor.to_value(position.unit),
+            **kw,
         )
 
         return GalpyPotentialWrapper(
             self.potential_cls(
-                amp=mass.sum(),
-                Acos=Acos,
-                Asin=Asin,
-                a=scale_factor,
+                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor,
             ),
             frame=frame,
             representation_type=representation_type,

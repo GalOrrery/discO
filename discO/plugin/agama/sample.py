@@ -59,7 +59,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
         frame : frame-like or None
             output frame of samples
         **kwargs:
-            passed to underlying sampler.
+            ignored.
 
         Returns
         -------

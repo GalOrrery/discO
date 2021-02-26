@@ -17,6 +17,10 @@ import copy
 import typing as T
 import weakref
 
+# THIRD PARTY
+import astropy.coordinates as coord
+import numpy as np
+
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .fitter import PotentialFitter
@@ -312,7 +316,15 @@ class Pipeline:
         result = PipelineResult(self)
         # Now evaluate, passing around the output -> input
 
-        # TODO!!!
+        # TODO! resolve_randomstate(random)
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         # frame
         sample_and_fit_frame = (
             self.frame
@@ -330,7 +342,20 @@ class Pipeline:
         # ----------
         # 1) sample
 
+        # first store,
         result._samples: TH.SkyCoordType = samples
+
+        # we are going to make an assumption that if `samples` is a list of
+        # SkyCoord, a la ``run(n=[list])``, that all the SC have the same
+        # frame
+        if sample_and_fit_frame is None:
+            if not isinstance(samples, coord.SkyCoord):
+                _frame = samples[0].frame.replicate_without_data()
+
+            else:
+                _frame = samples.frame.replicate_without_data()
+
+            sample_and_fit_frame = _frame
 
         # ----------
         # 2) measure
@@ -355,7 +380,7 @@ class Pipeline:
 
         fit_pot: T.Any = self.fitter.run(
             samples,
-            frame=samples.frame,
+            frame=sample_and_fit_frame,
             representation_type=sample_and_fit_representation_type,
             **kwargs,
         )
@@ -398,6 +423,7 @@ class Pipeline:
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
+        total_mass: TH.QuantityType = None,
         sample_and_fit_frame: TH.OptFrameType = None,
         sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
@@ -438,6 +464,14 @@ class Pipeline:
         :class:`PipelineResult`
 
         """
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         # frame
         sample_and_fit_frame = (
             self.frame
@@ -446,7 +480,7 @@ class Pipeline:
         )  # NOTE! can still be None
 
         # representation type
-        sample_and_fit_representation_type = (
+        sf_rep_type = (
             self.representation_type
             if sample_and_fit_representation_type is None
             else sample_and_fit_representation_type
@@ -459,7 +493,8 @@ class Pipeline:
             n,
             niter=niter,
             frame=sample_and_fit_frame,
-            representation_type=sample_and_fit_representation_type,
+            representation_type=sf_rep_type,
+            total_mass=total_mass,
             random=random,
             **kwargs,
         )
@@ -468,7 +503,7 @@ class Pipeline:
             samples,
             random=random,
             sample_and_fit_frame=sample_and_fit_frame,
-            sample_and_fit_representation_type=sample_and_fit_representation_type,
+            sample_and_fit_representation_type=sf_rep_type,
             c_err=c_err,
             observer_frame=observer_frame,
             observer_representation_type=observer_representation_type,
@@ -480,7 +515,7 @@ class Pipeline:
 
     def run_iter(
         self,
-        n: T.Union[int, T.Sequence[int]],
+        n: int,
         niter: int = 1,
         *,
         random: T.Optional[RandomLike] = None,
@@ -502,6 +537,10 @@ class Pipeline:
         ----------
         n : int (optional)
             number of sample points
+
+            .. warning::
+
+                does not (yet) support a sequence of int
         niter : int (optional)
             Number of iterations. Must be > 0.
 
@@ -526,12 +565,20 @@ class Pipeline:
             For each of ``niter``
 
         """
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         # only for line length
         sample_and_fit_rep_type = sample_and_fit_representation_type
 
         # iterate over number of iterations
         for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
-            yield self(
+            yield self.run(
                 n=n,
                 random=random,
                 # sampler
