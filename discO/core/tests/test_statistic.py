@@ -36,6 +36,7 @@ def test_rms():
 
     assert got == np.sqrt(3) * u.km / u.s
 
+
 # /def
 
 
