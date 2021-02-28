@@ -90,6 +90,8 @@ def setup_module(module):
 
 # /def
 
+# -------------------------------------------------------------------
+
 
 def teardown_module(module):
     """Teardown fixtures for module."""
@@ -98,6 +100,49 @@ def teardown_module(module):
 
 
 # /def
+
+
+# -------------------------------------------------------------------
+
+
+class TestSampler(PotentialSampler):
+    """Dunder Sampler."""
+
+    def __call__(
+        self, n, *, frame=None, representation_type=None, random=None, **kwargs
+    ):
+        # Get preferred frames
+        frame = self._infer_frame(frame)
+        representation_type = self._infer_representation(representation_type)
+
+        if random is None:
+            random = np.random
+        elif isinstance(random, int):
+            random = np.random.default_rng(random)
+
+        # return
+        rep = coord.UnitSphericalRepresentation(
+            lon=random.uniform(size=n) * u.deg,
+            lat=2 * random.uniform(size=n) * u.deg,
+        )
+
+        if representation_type is None:
+            representation_type = rep.__class__
+
+        sample = coord.SkyCoord(
+            frame.realize_frame(rep, representation_type=representation_type),
+            copy=False,
+        )
+        sample.mass = np.ones(n)
+        sample.potential = object()
+
+        return sample
+
+    # /def
+
+
+# /class
+
 
 ##############################################################################
 # TESTS
@@ -304,7 +349,23 @@ class Test_Pipeline(object):
 
     @pytest.mark.skip("TODO")
     def test___call__(self):
-        """Test method ``__call__``."""
+        """Test method ``__call__``.
+
+        Even though ``__call__`` just runs ``run`` with ``niter=1``,
+        it's still worth running through all the tests.
+
+        Since 3rd party packages provide the backend for the sampling
+        and fitting, we use dunder methods here and implement
+        pipeline tests in the plugins.
+
+        .. todo::
+
+            There are so many variables, this will need some pytest
+            parametrize with itertools methods
+
+        """
+        # make pipeline
+        # sampler = TestSampler(object())
         assert False
 
     # /def

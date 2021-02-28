@@ -13,7 +13,6 @@ __all__ = [
 # BUILT-IN
 import abc
 import contextlib
-import unittest.mock
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -29,6 +28,21 @@ from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
 # TESTS
+##############################################################################
+
+
+class TestDF(object):
+    """docstring for TestDF"""
+
+    def __init__(self, potential):
+        self._pot = potential
+
+    # /def
+
+
+# /class
+
+
 ##############################################################################
 
 
@@ -76,7 +90,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     copy=False,
                 )
                 sample.mass = np.ones(n)
-                sample.potential = cls.potential
+                sample.potential = self.potential
 
                 return sample
 
@@ -214,17 +228,15 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             # ---------------
             # with subclass
 
-            try:
+            try:  # see if galpy is working
                 key = "galpy"
                 klass = self.obj._registry[key]
             except KeyError:
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
+                msamp = self.obj(potential, key=key)
             else:
-                potential = unittest.mock.Mock()
-                potential._pot = self.potential
-
-            msamp = self.obj(potential, key=key)
+                msamp = self.obj(self.potential, key=key, df=TestDF)
 
             # test class type
             assert isinstance(msamp, klass)
@@ -242,11 +254,11 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             except KeyError:
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
+                msamp = self.obj(PotentialWrapper(potential), key=key)
             else:
-                potential = unittest.mock.Mock()
-                potential._pot = self.potential
-
-            msamp = self.obj(PotentialWrapper(potential), key=key)
+                msamp = self.obj(
+                    PotentialWrapper(self.potential), key=key, df=TestDF
+                )
 
             # test class type
             assert isinstance(msamp, klass)

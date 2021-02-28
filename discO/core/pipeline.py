@@ -20,6 +20,7 @@ import weakref
 # THIRD PARTY
 import astropy.coordinates as coord
 import numpy as np
+import typing_extensions as TE
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -227,7 +228,7 @@ class Pipeline:
         observable: T.Optional[str] = None,
         **kwargs,
     ) -> object:
-        """Run the pipeline.
+        """Run the pipeline for 1 iteration.
 
         Parameters
         ----------
@@ -245,9 +246,15 @@ class Pipeline:
         -------
         :class:`PipelineResult`
 
+        Notes
+        -----
+        This actually calls the more general function ``run``, with
+        ``niter`` pinned to 1.
+
         """
         # due to line length
         sample_and_fit_rep_type = sample_and_fit_representation_type
+        # run, with ``niter` pinned to 1.
         return self.run(
             n,
             niter=1,
@@ -275,7 +282,7 @@ class Pipeline:
         sample_and_fit_frame: TH.OptFrameType = None,
         sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
-        c_err: T.Union[CERR_Type, None, T.Literal[False]] = None,
+        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
         observer_frame: TH.OptFrameType = None,
         observer_representation_type: TH.OptRepresentationType = None,
         # fitter
@@ -294,6 +301,8 @@ class Pipeline:
 
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
+            In order that a sequence of samples is different in each element
+            we here resolve random seeds into a |RandomState|.
 
         observer_frame: frame-like or None or Ellipse (optional, keyword-only)
            The frame of the observational errors, ie the frame in which
@@ -427,7 +436,7 @@ class Pipeline:
         sample_and_fit_frame: TH.OptFrameType = None,
         sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
-        c_err: T.Union[CERR_Type, None, T.Literal[False]] = None,
+        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
         observer_frame: TH.OptFrameType = None,
         observer_representation_type: TH.OptRepresentationType = None,
         # fitter
@@ -446,6 +455,8 @@ class Pipeline:
 
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
+            In order that a sequence of samples is different in each element
+            we here resolve random seeds into a |RandomState|.
 
         observer_frame: frame-like or None or Ellipse (optional, keyword-only)
            The frame of the observational errors, ie the frame in which
@@ -499,6 +510,9 @@ class Pipeline:
             **kwargs,
         )
 
+        # ----------
+        # 2-5) resample, fit, residual, statistic
+
         result = self.run_with_samples(
             samples,
             random=random,
@@ -532,6 +546,11 @@ class Pipeline:
         **kwargs,
     ) -> object:
         """Run pipeline, yielding :class:`PipelineResult` over ``niter``.
+
+        .. todo::
+
+            - Fold this into just ``run`` with a flag ``sequential`` or something.
+            - See ``emcee`` for the backend.
 
         Parameters
         ----------

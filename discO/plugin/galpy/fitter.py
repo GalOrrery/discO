@@ -18,8 +18,7 @@ from types import MappingProxyType
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
-from galpy.potential import SCFPotential
-from galpy.potential import scf_compute_coeffs_nbody
+from galpy.potential import SCFPotential, scf_compute_coeffs_nbody
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -203,9 +202,9 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
         *,
-        Nmax: int = 10,
-        Lmax: int = 10,
-        scale_factor: TH.QuantityType = 1 * u.one,
+        Nmax: int = None,
+        Lmax: int = None,
+        scale_factor: TH.QuantityType = None,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
@@ -221,7 +220,10 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         ----------
         sample : |CoordinateFrame| or |SkyCoord|
         Nmax, Lmax : int
-            > 0.
+            The number of radial (N) and angular (L) coefficients.
+            Must be integers > 0.
+            If None (default) tries to draw from kwargs set at class
+            initialization. If None set, raises ValueError.
         scale_factor : scalar |Quantity|
             units of distance or dimensionless
 
@@ -242,7 +244,32 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
+        Raises
+        ------
+        ValueError
+            If `Nmax`, `Lmax` are None and no default set at initialization.
+
         """
+        # kwargs
+        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
+        kw.update(kwargs)
+
+        # get from defaults if not passed
+        _Nmax = kw.pop("Nmax", None)  # always try to pop
+        Nmax = Nmax if Nmax is not None else _Nmax
+        _Lmax = kw.pop("Lmax", None)  # always try to pop
+        Lmax = Lmax if Lmax is not None else _Lmax
+
+        if Nmax is None or Lmax is None:
+            raise ValueError(
+                "Nmax, Lmax have no default and must be specified.",
+            )
+
+        _scale_factor = kw.pop("scale_factor", 1 * u.one)
+        scale_factor = (
+            scale_factor if scale_factor is not None else _scale_factor
+        )
+
         # --------------
         # frame and representation
         # None -> default
@@ -254,7 +281,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
         representation_type = (
             resolve_representationlike(
-                self.representation_type, error_if_not_type=False,
+                self.representation_type,
+                error_if_not_type=False,
             )
             if representation_type is None
             else resolve_representationlike(representation_type)
@@ -280,10 +308,6 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         sample = sample.transform_to(frame)
         position = sample.represent_as(coord.CartesianRepresentation).xyz
-
-        # kwargs
-        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
-        kw.update(kwargs)
 
         # a dimensionless scale factor is assigned the same units as the
         # positions, so that (r / a) does not introduce an inadvertent scaling
@@ -311,7 +335,10 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         return GalpyPotentialWrapper(
             self.potential_cls(
-                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor,
+                amp=mass.sum(),
+                Acos=Acos,
+                Asin=Asin,
+                a=scale_factor,
             ),
             frame=frame,
             representation_type=representation_type,
