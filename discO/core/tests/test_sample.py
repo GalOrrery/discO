@@ -257,7 +257,9 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 msamp = self.obj(PotentialWrapper(potential), key=key)
             else:
                 msamp = self.obj(
-                    PotentialWrapper(self.potential), key=key, df=TestDF
+                    PotentialWrapper(self.potential),
+                    key=key,
+                    df=TestDF,
                 )
 
             # test class type
