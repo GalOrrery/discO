@@ -72,9 +72,9 @@ class PotentialSampler(CommonBase):
         The potential object.
 
     frame: frame-like or None (optional, keyword-only)
-       The frame in which to sample.
+       The frame of the potential, in which to sample.
     representation_type: |Representation| or None (optional, keyword-only)
-        The coordinate representation.
+        The coordinate representation in which to return samples.
 
     **defaults
         default arguments
