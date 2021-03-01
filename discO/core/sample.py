@@ -76,6 +76,9 @@ class PotentialSampler(CommonBase):
     representation_type: |Representation| or None (optional, keyword-only)
         The coordinate representation.
 
+    **defaults
+        default arguments
+
     Returns
     -------
     `PotentialSampler` or subclass
@@ -129,7 +132,7 @@ class PotentialSampler(CommonBase):
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         key: T.Union[ModuleType, str, None] = None,
-        **kwargs,
+        **defaults,
     ):
         # The class PotentialSampler is a wrapper for anything in its registry
         # If directly instantiating a PotentialSampler (not subclass) we must
@@ -167,7 +170,7 @@ class PotentialSampler(CommonBase):
                 key=None,
                 frame=frame,
                 representation_type=representation_type,
-                **kwargs,
+                **defaults,
             )
 
         elif key is not None:
@@ -187,7 +190,7 @@ class PotentialSampler(CommonBase):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
-        **kwargs,
+        **defaults,
     ) -> None:
         super().__init__()
         self._wrapper_potential = PotentialWrapper(
@@ -196,7 +199,7 @@ class PotentialSampler(CommonBase):
             representation_type=representation_type,
         )
         # keep the kwargs
-        self._kwargs = kwargs
+        self._kwargs: dict = defaults
 
     # /def
 
