@@ -77,7 +77,8 @@ class PotentialSampler(CommonBase):
         The coordinate representation in which to return samples.
 
     **defaults
-        default arguments
+        default arguments for sampling parameters. In ``run``, parameters with
+        default `None` will draw from these defaults.
 
     Returns
     -------
