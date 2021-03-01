@@ -72,9 +72,13 @@ class PotentialSampler(CommonBase):
         The potential object.
 
     frame: frame-like or None (optional, keyword-only)
-       The frame in which to sample.
+       The frame of the potential, in which to sample.
     representation_type: |Representation| or None (optional, keyword-only)
-        The coordinate representation.
+        The coordinate representation in which to return samples.
+
+    **defaults
+        default arguments for sampling parameters. In ``run``, parameters with
+        default `None` will draw from these defaults.
 
     Returns
     -------
@@ -129,7 +133,7 @@ class PotentialSampler(CommonBase):
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         key: T.Union[ModuleType, str, None] = None,
-        **kwargs,
+        **defaults,
     ):
         # The class PotentialSampler is a wrapper for anything in its registry
         # If directly instantiating a PotentialSampler (not subclass) we must
@@ -167,7 +171,7 @@ class PotentialSampler(CommonBase):
                 key=None,
                 frame=frame,
                 representation_type=representation_type,
-                **kwargs,
+                **defaults,
             )
 
         elif key is not None:
@@ -187,7 +191,7 @@ class PotentialSampler(CommonBase):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
-        **kwargs,
+        **defaults,
     ) -> None:
         super().__init__()
         self._wrapper_potential = PotentialWrapper(
@@ -195,6 +199,8 @@ class PotentialSampler(CommonBase):
             frame=frame,
             representation_type=representation_type,
         )
+        # keep the kwargs
+        self._kwargs: dict = defaults
 
     # /def
 
@@ -238,6 +244,7 @@ class PotentialSampler(CommonBase):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
+        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
         **kwargs,
     ) -> TH.SkyCoordType:
@@ -276,6 +283,7 @@ class PotentialSampler(CommonBase):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
+        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
         **kwargs,
     ) -> T.Union[TH.SkyCoordType, T.Sequence[TH.SkyCoordType]]:
@@ -302,6 +310,9 @@ class PotentialSampler(CommonBase):
            The frame of the samples.
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
+
+        total_mass : |Quantity| or None (optional)
+            overload the mass. Necessary if the potential has infinite mass.
 
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
@@ -349,6 +360,7 @@ class PotentialSampler(CommonBase):
                     n=N,
                     frame=frame,
                     representation_type=representation_type,
+                    total_mass=total_mass,
                     random=random,
                     **kwargs,
                 )

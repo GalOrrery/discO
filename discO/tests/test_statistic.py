@@ -16,7 +16,7 @@ import astropy.units as u
 import numpy as np
 
 # PROJECT-SPECIFIC
-from discO.core import statistic
+from discO import statistic
 from discO.utils.vectorfield import CartesianVectorField
 
 ##############################################################################

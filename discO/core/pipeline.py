@@ -17,6 +17,11 @@ import copy
 import typing as T
 import weakref
 
+# THIRD PARTY
+import astropy.coordinates as coord
+import numpy as np
+import typing_extensions as TE
+
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .fitter import PotentialFitter
@@ -223,7 +228,7 @@ class Pipeline:
         observable: T.Optional[str] = None,
         **kwargs,
     ) -> object:
-        """Run the pipeline.
+        """Run the pipeline for 1 iteration.
 
         Parameters
         ----------
@@ -241,9 +246,15 @@ class Pipeline:
         -------
         :class:`PipelineResult`
 
+        Notes
+        -----
+        This actually calls the more general function ``run``, with
+        ``niter`` pinned to 1.
+
         """
         # due to line length
         sample_and_fit_rep_type = sample_and_fit_representation_type
+        # run, with ``niter` pinned to 1.
         return self.run(
             n,
             niter=1,
@@ -262,17 +273,16 @@ class Pipeline:
 
     # /defs
 
-    def run(
+    def run_with_samples(
         self,
-        n: T.Union[int, T.Sequence[int]],
-        niter: int = 1,
+        samples,
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
         sample_and_fit_frame: TH.OptFrameType = None,
         sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
-        c_err: T.Optional[CERR_Type] = None,
+        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
         observer_frame: TH.OptFrameType = None,
         observer_representation_type: TH.OptRepresentationType = None,
         # fitter
@@ -291,6 +301,8 @@ class Pipeline:
 
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
+            In order that a sequence of samples is different in each element
+            we here resolve random seeds into a |RandomState|.
 
         observer_frame: frame-like or None or Ellipse (optional, keyword-only)
            The frame of the observational errors, ie the frame in which
@@ -313,6 +325,15 @@ class Pipeline:
         result = PipelineResult(self)
         # Now evaluate, passing around the output -> input
 
+        # TODO! resolve_randomstate(random)
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         # frame
         sample_and_fit_frame = (
             self.frame
@@ -330,25 +351,31 @@ class Pipeline:
         # ----------
         # 1) sample
 
-        samples: TH.SkyCoordType = self.sampler.run(
-            n,
-            niter=niter,
-            frame=sample_and_fit_frame,
-            representation_type=sample_and_fit_representation_type,
-            random=random,
-            **kwargs,
-        )
+        # first store,
         result._samples: TH.SkyCoordType = samples
+
+        # we are going to make an assumption that if `samples` is a list of
+        # SkyCoord, a la ``run(n=[list])``, that all the SC have the same
+        # frame
+        if sample_and_fit_frame is None:
+            if not isinstance(samples, coord.SkyCoord):
+                _frame = samples[0].frame.replicate_without_data()
+
+            else:
+                _frame = samples.frame.replicate_without_data()
+
+            sample_and_fit_frame = _frame
 
         # ----------
         # 2) measure
+        # optionally skip this step if c_err is False
 
-        if self.measurer is not None:
+        if self.measurer is not None and c_err is not False:
 
             samples: TH.SkyCoordType = self.measurer.run(
                 samples,
                 random=random,
-                # c_err=c_err,
+                c_err=c_err,
                 frame=observer_frame,
                 representation_type=observer_representation_type,
                 **kwargs,
@@ -362,7 +389,7 @@ class Pipeline:
 
         fit_pot: T.Any = self.fitter.run(
             samples,
-            frame=samples.frame,
+            frame=sample_and_fit_frame,
             representation_type=sample_and_fit_representation_type,
             **kwargs,
         )
@@ -376,7 +403,7 @@ class Pipeline:
 
             resid: T.Any = self.residualer.run(
                 fit_pot,
-                original_pot=self.potential,
+                original_potential=self.potential,
                 observable=observable,
                 **kwargs,
             )
@@ -398,9 +425,111 @@ class Pipeline:
 
     # /defs
 
-    def run_iter(
+    def run(
         self,
         n: T.Union[int, T.Sequence[int]],
+        niter: int = 1,
+        *,
+        random: T.Optional[RandomLike] = None,
+        # sampler
+        total_mass: TH.QuantityType = None,
+        sample_and_fit_frame: TH.OptFrameType = None,
+        sample_and_fit_representation_type: TH.OptRepresentationType = None,
+        # observer
+        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
+        observer_frame: TH.OptFrameType = None,
+        observer_representation_type: TH.OptRepresentationType = None,
+        # fitter
+        # residual
+        observable: T.Optional[str] = None,
+        **kwargs,
+    ) -> object:
+        """Call.
+
+        Parameters
+        ----------
+        n : int (optional)
+            number of sample points
+        niter : int (optional)
+            Number of iterations. Must be > 0.
+
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+            In order that a sequence of samples is different in each element
+            we here resolve random seeds into a |RandomState|.
+
+        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
+           The frame of the observational errors, ie the frame in which
+            the error function should be applied along each dimension.
+            None defaults to the value set at initialization.
+        observer_representation_type: representation-resolvable (optional, keyword-only)
+            The coordinate representation in which to resample along each
+            dimension.
+            None defaults to the value set at initialization.
+
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
+
+        Returns
+        -------
+        :class:`PipelineResult`
+
+        """
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
+        # frame
+        sample_and_fit_frame = (
+            self.frame
+            if sample_and_fit_frame is None
+            else sample_and_fit_frame
+        )  # NOTE! can still be None
+
+        # representation type
+        sf_rep_type = (
+            self.representation_type
+            if sample_and_fit_representation_type is None
+            else sample_and_fit_representation_type
+        )
+
+        # ----------
+        # 1) sample
+
+        samples: TH.SkyCoordType = self.sampler.run(
+            n,
+            niter=niter,
+            frame=sample_and_fit_frame,
+            representation_type=sf_rep_type,
+            total_mass=total_mass,
+            random=random,
+            **kwargs,
+        )
+
+        # ----------
+        # 2-5) resample, fit, residual, statistic
+
+        result = self.run_with_samples(
+            samples,
+            random=random,
+            sample_and_fit_frame=sample_and_fit_frame,
+            sample_and_fit_representation_type=sf_rep_type,
+            c_err=c_err,
+            observer_frame=observer_frame,
+            observer_representation_type=observer_representation_type,
+            observable=observable,
+        )
+        return result
+
+    # /defs
+
+    def run_iter(
+        self,
+        n: int,
         niter: int = 1,
         *,
         random: T.Optional[RandomLike] = None,
@@ -418,10 +547,19 @@ class Pipeline:
     ) -> object:
         """Run pipeline, yielding :class:`PipelineResult` over ``niter``.
 
+        .. todo::
+
+            - Fold this into just ``run`` with a flag ``sequential`` or something.
+            - See ``emcee`` for the backend.
+
         Parameters
         ----------
         n : int (optional)
             number of sample points
+
+            .. warning::
+
+                does not (yet) support a sequence of int
         niter : int (optional)
             Number of iterations. Must be > 0.
 
@@ -446,12 +584,20 @@ class Pipeline:
             For each of ``niter``
 
         """
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         # only for line length
         sample_and_fit_rep_type = sample_and_fit_representation_type
 
         # iterate over number of iterations
         for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
-            yield self(
+            yield self.run(
                 n=n,
                 random=random,
                 # sampler

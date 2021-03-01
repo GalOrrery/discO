@@ -169,7 +169,7 @@ class Test_GalpySCFPotentialFitter(
         """Setup fixtures for testing."""
         super().setup_class()
         cls.potential = gpot.SCFPotential
-        cls.inst = cls.obj(frame="galactocentric")
+        cls.inst = cls.obj(frame="galactocentric", Nmax=4, Lmax=3)
 
     # /def
 

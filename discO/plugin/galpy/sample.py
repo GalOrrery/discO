@@ -16,7 +16,6 @@ import typing as T
 # THIRD PARTY
 import astropy.coordinates as coord
 import galpy.df as gdf
-import galpy.potential as gpot
 import numpy as np
 
 # PROJECT-SPECIFIC
@@ -42,7 +41,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
     Parameters
     ----------
-    df : :class:`~galpy.df.df.df.df` or :class:`~galpy.potential.Potential`
+    pot : `~galpy.df.df` or `~galpy.potential.Potential` or `PotentialWrapper`
         Distribution Function holding the potential.
         If potential, ties to match to distribution function registry.
 
@@ -50,37 +49,58 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         The preferred frame in which to sample.
 
     **kwargs
-        Not used. Needed to absorb option from ``__new__``
+        Other parameters. Also needed to absorb option from ``__new__``.
+
+    Other Parameters
+    ----------------
+    df : :class:`~galpy.df.df.df.df` class
+        The DF class to use if `pot` is not already a DF.
 
     """
 
     def __init__(
         self,
-        df: T.Union[PotentialType, gdf.df.df],
+        pot: T.Union[PotentialType, gdf.df.df],
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ):
-        # need to pop from wrapper
-        if isinstance(df, PotentialWrapper):
-            frame = df.frame if frame is None else frame
+        # three input options:
+        # 1) wrapped potential
+        #    need to pop from wrapper
+        if isinstance(pot, PotentialWrapper):
+            frame = pot.frame if frame is None else frame
             representation_type = (
-                df.representation_type
+                pot.representation_type
                 if representation_type is None
                 else representation_type
             )
-            df = df.__wrapped__
+            pot = pot.__wrapped__
+            df = None
+        # 2) DF. need to pop potential from DF
+        elif isinstance(pot, gdf.df.df):
+            df = pot
+            pot = pot._pot
+        # 3) A raw potential object
+        else:
+            df = None
 
-        # potetntial -> DF
-        if isinstance(df, gpot.Potential):
-            df = DF_REGISTRY[df.__class__.__name__](df)
+        # There was no DF in the potential. Either get from kwargs or infer.
+        if df is None:
+            df_cls = (
+                kwargs.pop("df")  # get from kwargs...
+                if "df" in kwargs  # if exists...
+                else DF_REGISTRY[pot.__class__.__name__]  # else infer
+            )
+            df = df_cls(pot)
 
+        # initialize & store DF
         super().__init__(
-            df._pot,
+            pot,
             frame=frame,
             representation_type=representation_type,
-            **kwargs
+            **kwargs,
         )
         self._df: gdf.df.df = df
 
@@ -95,6 +115,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
+        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
         **kwargs
     ):
@@ -106,6 +127,10 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             number of samples
         frame : frame-like or None (optional)
             output frame of samples
+
+        total_mass : |Quantity| or None (optional)
+            overload the mass. Necessary if the potential has infinite mass.
+
         **kwargs
             ignored
 
@@ -117,6 +142,9 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         # Get preferred frames
         frame = self._infer_frame(frame)
         representation_type = self._infer_representation(representation_type)
+
+        # make sure physical is on
+        self._df._pot.turn_physical_on()
 
         # can't pass a random seed, set in context
         with self._random_context(random):
@@ -150,9 +178,18 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         # TODO! better storage of these properties, so stay when transform.
         samples.potential = self.potential
-        samples.mass = (  # AGAMA compatibility
-            np.ones(n) * self.potential.total_mass() / n
+
+        total_mass = (
+            total_mass
+            if total_mass is not None
+            else self._kwargs.pop("total_mass", None)
         )
+        total_mass = (
+            total_mass
+            if total_mass is not None
+            else self.potential.total_mass()
+        )
+        samples.mass = np.ones(n) * total_mass / n  # AGAMA compatibility
 
         return samples
 

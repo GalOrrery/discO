@@ -155,6 +155,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
       ``observer_representation_type``, ``sampler``, ``measurer``, ``fitter``,
       ``residualer``, ``statisticer``. [#45]
     + Add method ``run_iter`` to iteratively call pipeline. [#26]
+    + Add method ``run_with_samples`` to skip sampling step [#51]
 
 - ``PipelineResult`` store results of a pipe [#37]
 

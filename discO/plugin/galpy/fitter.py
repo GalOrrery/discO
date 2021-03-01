@@ -18,13 +18,14 @@ from types import MappingProxyType
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u
-from galpy.potential import SCFPotential
+from galpy.potential import SCFPotential, scf_compute_coeffs_nbody
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
-from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
+
+# from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
 from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
@@ -201,9 +202,9 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
         *,
-        Nmax: int = 10,
-        Lmax: int = 10,
-        scale_factor: TH.QuantityType = 1 * u.one,
+        Nmax: int = None,
+        Lmax: int = None,
+        scale_factor: TH.QuantityType = None,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
@@ -212,13 +213,17 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         .. todo::
 
-            amp != mass. Do this correctly.
+            - amp != mass. Do this correctly.
+            - work on ``n=[]`` array, not just niters
 
         Parameters
         ----------
         sample : |CoordinateFrame| or |SkyCoord|
         Nmax, Lmax : int
-            > 0.
+            The number of radial (N) and angular (L) coefficients.
+            Must be integers > 0.
+            If None (default) tries to draw from kwargs set at class
+            initialization. If None set, raises ValueError.
         scale_factor : scalar |Quantity|
             units of distance or dimensionless
 
@@ -239,7 +244,32 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
 
+        Raises
+        ------
+        ValueError
+            If `Nmax`, `Lmax` are None and no default set at initialization.
+
         """
+        # kwargs
+        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
+        kw.update(kwargs)
+
+        # get from defaults if not passed
+        _Nmax = kw.pop("Nmax", None)  # always try to pop
+        Nmax = Nmax if Nmax is not None else _Nmax
+        _Lmax = kw.pop("Lmax", None)  # always try to pop
+        Lmax = Lmax if Lmax is not None else _Lmax
+
+        if Nmax is None or Lmax is None:
+            raise ValueError(
+                "Nmax, Lmax have no default and must be specified.",
+            )
+
+        _scale_factor = kw.pop("scale_factor", 1 * u.one)
+        scale_factor = (
+            scale_factor if scale_factor is not None else _scale_factor
+        )
+
         # --------------
         # frame and representation
         # None -> default
@@ -276,12 +306,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if mass is None:
             mass = sample.mass
 
-        sample = sample.transform_to(frame)  # FIXME!
+        sample = sample.transform_to(frame)
         position = sample.represent_as(coord.CartesianRepresentation).xyz
-
-        # kwargs
-        kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
-        kw.update(kwargs)
 
         # a dimensionless scale factor is assigned the same units as the
         # positions, so that (r / a) does not introduce an inadvertent scaling
@@ -289,9 +315,22 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if scale_factor.unit == u.one:
             scale_factor = scale_factor.value * position.unit
 
-        # TODO confirm that it does actually return both Acos and Asin
+        # Acos, Asin = scf_compute_coeffs_nbody(
+        #     position,
+        #     mass=mass,
+        #     N=Nmax,
+        #     L=Lmax,
+        #     a=scale_factor,
+        #     **kw,
+        # )
+        # TODO don't do ``to_value`` when it supports units
         Acos, Asin = scf_compute_coeffs_nbody(
-            position, mass, N=Nmax, L=Lmax, a=scale_factor, **kw
+            position.to_value(position.unit),
+            mass=mass.to_value(1e12 * u.solMass),
+            N=Nmax,
+            L=Lmax,
+            a=scale_factor.to_value(position.unit),
+            **kw,
         )
 
         return GalpyPotentialWrapper(
