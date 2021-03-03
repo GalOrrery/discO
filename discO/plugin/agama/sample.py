@@ -45,7 +45,6 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
     def __call__(
         self,
         n: int = 1,
-        frame: T.Optional[TH.FrameLikeType] = None,
         representation_type: TH.OptRepresentationLikeType = None,
         random: RandomLike = None,
         **kwargs
@@ -67,7 +66,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
 
         """
         # Get preferred frame and representation
-        frame = self._infer_frame(frame)
+        frame = self.frame
         representation_type = self._infer_representation(representation_type)
 
         # TODO accepts a potential parameter. what does this do?

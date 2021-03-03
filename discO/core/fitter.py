@@ -18,11 +18,15 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
+import abc
 import typing as T
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import numpy as np
+
+# FIRST PARTY
+from discO.utils.pbar import get_progress_bar
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -75,8 +79,7 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls,
-        key: T.Union[str, ModuleType, None] = None,
+        cls, key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -90,10 +93,6 @@ class PotentialFitter(CommonBase):
             # get the registry on this (the parent) object
             # cls._key defined in super()
             cls.__bases__[0]._registry[cls._key] = cls
-
-        # TODO? insist that subclasses define a __call__ method
-        # this "abstractifies" the base-class even though it can be used
-        # as a wrapper class.
 
     # /defs
 
@@ -142,14 +141,10 @@ class PotentialFitter(CommonBase):
         *,
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
-        **kwargs,
+        **params,
     ):
         self._potential_cls: T.Any = potential_cls
-        self._frame: TH.OptFrameLikeType = (
-            frame
-            if (frame is None or frame is Ellipsis)
-            else resolve_framelike(frame)
-        )
+        self._frame: TH.FrameType = resolve_framelike(frame)
         self._representation_type: TH.OptRepresentationLikeType = (
             resolve_representationlike(representation_type)
             if representation_type not in (None, Ellipsis)
@@ -159,8 +154,8 @@ class PotentialFitter(CommonBase):
         # ----------------
         # kwargs
         # start by jettisoning baggage
-        kwargs.pop("key", None)
-        self._kwargs: T.Dict[str, T.Any] = kwargs
+        params.pop("key", None)
+        self._kwargs: T.Dict[str, T.Any] = params
 
     # /def
 
@@ -192,13 +187,11 @@ class PotentialFitter(CommonBase):
     #######################################################
     # Fitting
 
+    @abc.abstractmethod
     def __call__(
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
-        *,
-        frame: TH.OptFrameLikeType = None,
-        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> object:
         """Fit a potential given the data.
@@ -206,17 +199,6 @@ class PotentialFitter(CommonBase):
         Parameters
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
-
-        frame: frame-like or None (optional, keyword-only)
-            The frame of the fit potential.
-
-            .. warning::
-
-                Care should be taken that this matches the frame of the
-                sampling potential.
-
-        representation_type: |Representation| or None (optional, keyword-only)
-            The coordinate representation.
 
         **kwargs
             passed to fitting potential.
@@ -230,13 +212,75 @@ class PotentialFitter(CommonBase):
 
     # /def
 
-    def run(
+    def _run_iter(
         self,
         sample: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
         *,
-        frame: TH.OptFrameLikeType = None,
-        representation_type: TH.OptRepresentationLikeType = None,
+        progress: bool = True,
+        **kwargs,
+    ) -> object:
+        """Fit.
+
+        .. todo::
+
+            - Subclass SkyCoord and have metadata mass and potential that
+              carry-over. Or embed a SkyCoord in a table with the other
+              attributes. or something so that doesn't need continual
+              reassignment
+
+        Parameters
+        ----------
+        sample : :class:`~astropy.coordinates.SkyCoord` instance
+            can have shape (nsamp, ) or (nsamp, niter)
+
+        **kwargs
+            passed to fitting potential.
+
+        Returns
+        -------
+        Potential : object
+
+        """
+        if mass is None:
+            mass = sample.mass
+
+        N, *iterations = sample.shape
+
+        # get samples into the correct frame
+        sample = sample.transform_to(self.frame)
+        sample.mass = mass
+
+        # get # iterations (& reshape no-iteration samples)
+        if not iterations:  # only (N, ) -> (N, niter=1)
+            iterations = 1
+            sample = sample.reshape((-1, iterations))
+            sample.mass = mass.reshape((-1, iterations))
+        else:
+            iterations = iterations[0]  # TODO! check shape
+
+        # (iterations, N) -> iter on iterations
+        with get_progress_bar(progress, iterations) as pbar:
+
+            for samp, mass in zip(sample.T, sample.mass.T):
+                pbar.update(1)
+
+                # FIXME! need to assign these into sample
+                # sample.potential
+                samp.mass = mass
+
+                yield self(
+                    samp, mass=mass, **kwargs,
+                )
+
+    # /def
+
+    def _run_batch(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        *,
+        progress: bool = True,
         **kwargs,
     ) -> object:
         """Fit.
@@ -253,16 +297,37 @@ class PotentialFitter(CommonBase):
         sample : :class:`~astropy.coordinates.SkyCoord` instance
             can have shape (nsamp, ) or (nsamp, niter)
 
-        frame: frame-like or None or Ellipsis (optional, keyword-only)
-            The frame of the fit potential.
+        **kwargs
+            passed to fitting potential.
 
-            .. warning::
+        Returns
+        -------
+        Potential : object
 
-                Care should be taken that this matches the frame of the
-                sampling potential.
+        """
+        return np.array(
+            tuple(
+                self._run_iter(sample, mass=mass, progress=progress, **kwargs)
+            )
+        )
 
-        representation_type: representation-resolvable (optional, keyword-only)
-            The coordinate representation.
+    # /def
+
+    def run(
+        self,
+        sample: TH.CoordinateType,
+        mass: T.Optional[TH.QuantityType] = None,
+        *,
+        batch: bool = False,
+        progress: bool = True,
+        **kwargs,
+    ) -> object:
+        """Fit.
+
+        Parameters
+        ----------
+        sample : :class:`~astropy.coordinates.SkyCoord` instance
+            can have shape (nsamp, ) or (nsamp, niter)
 
         **kwargs
             passed to fitting potential.
@@ -272,34 +337,21 @@ class PotentialFitter(CommonBase):
         Potential : object
 
         """
-        if mass is None:
-            mass = sample.mass
+        run_func = self._run_batch if batch else self._run_iter
 
-        if len(sample.shape) == 1:  # (nsamp, ) -> (nsamp, niter=1)
-            potential = sample.potential
-            sample = sample.reshape((-1, 1))
-            sample.mass = mass.reshape((-1, 1))
-            sample.potential = potential
+        return run_func(sample, mass=mass, progress=progress, **kwargs)
 
-        # shape (niter, )
-        niter = sample.shape[1]
-        fits = np.empty(niter, dtype=sample.potential.__class__)
+    # /def
 
-        # (niter, nsamp) -> iter on niter
-        for i, (samp, mass) in enumerate(zip(sample.T, sample.mass.T)):
-            samp.mass, samp.potential = mass, sample.potential
-            fits[i] = self(
-                samp,
-                mass=mass,
-                frame=frame,
-                representation_type=representation_type,
-                **kwargs,
-            )
+    #######################################################
+    # Utils
 
-        if niter == 1:
-            return fits[0]
-        # else:
-        return fits
+    def __repr__(self):
+        s = super().__repr__()
+        s += f"\n\tframe: {self.frame}"
+        s += f"\n\tdefaults: {self._kwargs}"
+
+        return s
 
     # /def
 

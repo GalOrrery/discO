@@ -45,12 +45,13 @@ from types import ModuleType
 # THIRD PARTY
 import astropy.coordinates as coord
 import numpy as np
+from discO.utils.pbar import get_progress_bar
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
-from discO.utils import resolve_framelike, resolve_representationlike
+from discO.utils import resolve_representationlike
 from discO.utils.random import NumpyRNGContext, RandomLike
 
 ##############################################################################
@@ -68,13 +69,15 @@ class PotentialSampler(CommonBase):
 
     Parameters
     ----------
-    potential
-        The potential object.
+    potential : :class:`~discO.PotentialWrapper`
+        The potential object. Must have a frame.
 
-    frame: frame-like or None (optional, keyword-only)
-       The frame of the potential, in which to sample.
+    total_mass : |Quantity| or None (optional)
+        The total mass of the potential.
+        Necessary if the mass is divergent, must be None otherwise.
     representation_type: |Representation| or None (optional, keyword-only)
         The coordinate representation in which to return samples.
+        If None (default) uses representation type from `potential`.
 
     **defaults
         default arguments for sampling parameters. In ``run``, parameters with
@@ -94,8 +97,12 @@ class PotentialSampler(CommonBase):
     Raises
     ------
     ValueError
-        If directly instantiating a PotentialSampler (not subclass) and cannot
-        find the appropriate subclass, identified using ``key``.
+        - If directly instantiating a PotentialSampler (not subclass) and
+          cannot find the appropriate subclass, identified using ``key``.
+        - If the total mass of the potential is divergent and `total_mass`
+          is None.
+    TypeError
+        If `potential` is not :class:`~discO.PotentialWrapper`
 
     """
 
@@ -117,10 +124,6 @@ class PotentialSampler(CommonBase):
             # cls._key defined in super()
             cls.__bases__[0]._registry[cls._key] = cls
 
-        # TODO? insist that subclasses define a __call__ method
-        # this "abstractifies" the base-class even though it can be used
-        # as a wrapper class.
-
     # /def
 
     #################################################################
@@ -130,32 +133,21 @@ class PotentialSampler(CommonBase):
         cls,
         potential: T.Any,
         *,
-        frame: TH.OptFrameLikeType = None,
+        total_mass: T.Optional[TH.QuantityType] = None,
         representation_type: TH.OptRepresentationLikeType = None,
         key: T.Union[ModuleType, str, None] = None,
-        **defaults,
+        **other,
     ):
+        if not isinstance(potential, PotentialWrapper):
+            raise TypeError("potential must be a PotentialWrapper.")
+
         # The class PotentialSampler is a wrapper for anything in its registry
         # If directly instantiating a PotentialSampler (not subclass) we must
         # also instantiate the appropriate subclass. Error if can't find.
         if cls is PotentialSampler:
-            # if potential wrapper
-            if isinstance(potential, PotentialWrapper):
-                # frame
-                frame = potential.frame if frame is None else frame
-                # representation type
-                representation_type = (
-                    potential.representation_type
-                    if representation_type is None
-                    else representation_type
-                )
-                # potential
-                potential = potential.__wrapped__
-
-            # /if
-
             # infer the key, to add to registry
-            key = cls._infer_package(potential, key).__name__
+            # TODO! infer_package should return str
+            key = cls._infer_package(potential.wrapped, key).__name__
 
             if key not in cls._registry:
                 raise ValueError(
@@ -169,9 +161,9 @@ class PotentialSampler(CommonBase):
                 kls,
                 potential,
                 key=None,
-                frame=frame,
+                total_mass=total_mass,
                 representation_type=representation_type,
-                **defaults,
+                **other,
             )
 
         elif key is not None:
@@ -187,20 +179,40 @@ class PotentialSampler(CommonBase):
 
     def __init__(
         self,
-        potential: T.Any,
+        potential: PotentialWrapper,
         *,
-        frame: TH.OptFrameLikeType = None,
+        total_mass: T.Optional[TH.QuantityType] = None,
         representation_type: TH.OptRepresentationLikeType = None,
         **defaults,
     ) -> None:
         super().__init__()
+
+        # check that the mass is not divergent.
+        # and that the argument total_mass is correct
+        mtot = potential.total_mass()
+        if not np.isfinite(mtot):
+            raise ValueError(
+                "The potential`s mass is divergent, "
+                "the argument `total_mass` cannot be None."
+            )
+        elif total_mass is not None:  # mass is not divergent.
+            raise ValueError(
+                "The potential`s mass is not divergent, "
+                "the argument `total_mass` must be None."
+            )
+        else:  # not divergent and total_mass is None
+            total_mass = mtot
+
+        # potential is checked in __new__ as a PotentialWrapper
+        # we wrap again here to override the representation_type
         self._wrapper_potential = PotentialWrapper(
-            potential,
-            frame=frame,
-            representation_type=representation_type,
+            potential, representation_type=representation_type,
         )
+
+        self._total_mass: T.Optional[TH.QuantityType] = total_mass
+
         # keep the kwargs
-        self._kwargs: dict = defaults
+        self._defaults: dict = defaults
 
     # /def
 
@@ -216,7 +228,7 @@ class PotentialSampler(CommonBase):
     @property
     def _potential(self):
         """The wrapped potential."""
-        return self.potential.__wrapped__
+        return self.potential.wrapped
 
     # /def
 
@@ -242,9 +254,7 @@ class PotentialSampler(CommonBase):
         self,
         n: int = 1,
         *,
-        frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
-        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
         **kwargs,
     ) -> TH.SkyCoordType:
@@ -255,11 +265,8 @@ class PotentialSampler(CommonBase):
         n : int (optional)
             number of samples
 
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the samples.
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
-
         random : int or |RandomState| or None (optional, keyword-only)
             Random state.
         **kwargs
@@ -276,18 +283,18 @@ class PotentialSampler(CommonBase):
 
     # ---------------------------------------------------------------
 
-    def run(
+    def _run_iter(
         self,
         n: T.Union[int, T.Sequence[int]] = 1,
-        niter: int = 1,
+        iterations: int = 1,
         *,
-        frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
-        total_mass: TH.QuantityType = None,
         random: RandomLike = None,
+        # extra
+        progress: bool = True,
         **kwargs,
-    ) -> T.Union[TH.SkyCoordType, T.Sequence[TH.SkyCoordType]]:
-        """Sample the potential.
+    ) -> TH.SkyCoordType:
+        """Iteratively sample the potential.
 
         .. todo::
 
@@ -296,34 +303,30 @@ class PotentialSampler(CommonBase):
             attributes. or something so that doesn't need continual
             reassignment
 
-            - manage random here?
-
         Parameters
         ----------
-        n : int or sequence thereof (optional)
+        n : int (optional)
             Number of sample points.
-            Can be a sequence of number of sample points
-        niter : int (optional)
+        iterations : int (optional)
             Number of iterations. Must be > 0.
 
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the samples.
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation.
-
-        total_mass : |Quantity| or None (optional)
-            overload the mass. Necessary if the potential has infinite mass.
-
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
+        progress : bool (optional, keyword-only)
+            If True, a progress bar will be shown as the sampler progresses.
+            If a string, will select a specific tqdm progress bar - most
+            notable is 'notebook', which shows a progress bar suitable for
+            Jupyter notebooks. If False, no progress bar will be shown.
         **kwargs
             Passed to underlying instance
 
-        Returns
-        -------
-        |SkyCoord| or array of |SkyCoord|
-            singular if `n` is scalar, array if sequence.
-            The shape of the SkyCoord is ``(niter, len(n))``
+        Yields
+        ------
+        |SkyCoord|
+            If `sequential` is False.
+            The shape of the SkyCoord is ``(n, niter)``
             where a scalar `n` has length 1.
 
         Raises
@@ -332,95 +335,169 @@ class PotentialSampler(CommonBase):
             If number if iterations not greater than 0.
 
         """
-        # -----------
-        # setup
-
-        if not niter >= 1:
-            raise ValueError("# of iterations not > 0.")
-
-        if np.isscalar(n):
-            itersamp = (n,)
-        else:
-            itersamp = n
-
-        # -----------
-        # resampling
-
-        # premake array
-        samples = np.empty(len(itersamp), dtype=coord.SkyCoord)
-
-        # iterate thru number of samples
-        for i, N in enumerate(itersamp):
-            samps = [None] * niter  # premake array
-            mass = [None] * niter  # premake array
-
-            for j in range(0, niter):  # thru iterations
-                # call sampler
-                samp = self(
-                    n=N,
-                    frame=frame,
+        with get_progress_bar(progress, iterations) as pbar:
+            for i in range(0, iterations):  # thru iterations
+                pbar.update(1)
+                yield self(
+                    n=n,
                     representation_type=representation_type,
-                    total_mass=total_mass,
                     random=random,
                     **kwargs,
                 )
-                # store samples & mass
-                samps[j] = samp
-                mass[j] = samp.mass
 
-            # Now need to concatenate iterations
-            if j == 0:  # 0-dimensional doesn't need concat
-                sample = samps[0]
-            else:
-                sample = coord.concatenate(samps).reshape((N, niter))
-                sample.mass = np.vstack(mass).T
-                sample.potential = samp.potential  # all the same
+    # /def
 
-            # concat iters stored in nsamp array
-            samples[i] = sample
+    # ---------------------------------------------------------------
 
-        # -----------
+    def _run_batch(
+        self,
+        n: T.Union[int, T.Sequence[int]] = 1,
+        iterations: int = 1,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        random: RandomLike = None,
+        # extra
+        progress: bool = True,
+        **kwargs,
+    ) -> TH.SkyCoordType:
+        """Sample the potential.
 
-        if np.isscalar(n):  # nsamp scalar -> scalar
-            return samples[0]
+        Parameters
+        ----------
+        n : int (optional)
+            Number of sample points.
+        iterations : int (optional)
+            Number of iterations. Must be > 0.
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+        sequential : bool (optional, keyword-only)
+            Whether to batch sample or yield sequentially.
+        **kwargs
+            Passed to underlying instance
+
+        Return
+        ------
+        |SkyCoord|
+            If `sequential` is True.
+            The shape of the SkyCoord is ``(n,)``
+
+        Raises
+        ------
+        ValueError
+            If number if iterations not greater than 0.
+
+        """
+        samps = [None] * iterations  # premake array
+        mass = [None] * iterations  # premake array
+
+        run_gen = self._run_iter(
+            n=n,
+            iterations=iterations,
+            representation_type=representation_type,
+            random=random,
+            progress=progress,
+            **kwargs,
+        )
+
+        for j, samp in enumerate(run_gen):  # thru iterations
+            # store samples & mass
+            samps[j] = samp
+            mass[j] = samp.mass
+
+        # Now need to concatenate iterations
+        if j == 0:  # 0-dimensional doesn't need concat
+            sample = samps[0]
         else:
-            return samples
+            sample = coord.concatenate(samps).reshape((n, iterations))
+            sample.mass = np.vstack(mass).T
+            sample.potential = samp.potential  # all the same
+
+        return sample
+
+    # /def
+
+    def run(
+        self,
+        n: T.Union[int, T.Sequence[int]] = 1,
+        iterations: int = 1,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        random: RandomLike = None,
+        # extra
+        batch: bool = False,
+        progress: bool = True,
+        **kwargs,
+    ) -> TH.SkyCoordType:
+        """Iteratively sample the potential.
+
+        .. todo::
+
+            - Subclass SkyCoord and have metadata mass and potential that
+            carry-over. Or embed a SkyCoord in a table with the other
+            attributes. or something so that doesn't need continual
+            reassignment
+
+        Parameters
+        ----------
+        n : int (optional)
+            Number of sample points.
+        iterations : int (optional)
+            Number of iterations. Must be > 0.
+
+        representation_type: |Representation| or None (optional, keyword-only)
+            The coordinate representation.
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+        progress : bool (optional, keyword-only)
+            If True, a progress bar will be shown as the sampler progresses.
+            If a string, will select a specific tqdm progress bar - most
+            notable is 'notebook', which shows a progress bar suitable for
+            Jupyter notebooks. If False, no progress bar will be shown.
+        **kwargs
+            Passed to underlying instance
+
+        Yields
+        ------
+        |SkyCoord|
+            If `sequential` is False.
+            The shape of the SkyCoord is ``(n, niter)``
+            where a scalar `n` has length 1.
+
+        Raises
+        ------
+        ValueError
+            If number if iterations not greater than 0.
+
+        """
+        run_func = self._run_batch if batch else self._run_iter
+
+        # need to resolve RandomState
+        if not isinstance(random, np.random.RandomState):
+            random = np.random.RandomState(random)
+
+        if not iterations >= 1:
+            raise ValueError("# of iterations not > 0.")
+        elif not isinstance(n, int):
+            raise TypeError
+
+        return run_func(
+            n=n,
+            iterations=iterations,
+            representation_type=representation_type,
+            random=random,
+            progress=progress,
+            **kwargs,
+        )
 
     # /def
 
     #################################################################
     # utils
 
-    def _infer_frame(
-        self,
-        frame: T.Union[TH.FrameLikeType, None, TH.EllipsisType],
-    ) -> T.Optional[TH.FrameType]:
-        """Call `resolve_framelike`, but default to preferred frame.
-
-        For frame is None ``resolve_framelike`` returns the default
-        frame from the config file. Instead, we want the default
-        frame of the potential. If that's None, return that.
-
-        Parameters
-        ----------
-        frame : frame-like or None or Ellipsis
-
-        Returns
-        -------
-        `~astropy.coordinates.BaseCoordinateFrame` subclass instance
-            Has no data.
-
-        """
-        if frame is None:  # get default
-            frame = self.frame
-
-        return resolve_framelike(frame)
-
-    # /def
-
     def _infer_representation(
-        self,
-        representation_type: TH.OptRepresentationLikeType,
+        self, representation_type: TH.OptRepresentationLikeType,
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 
@@ -438,7 +515,7 @@ class PotentialSampler(CommonBase):
             representation_type = self.representation_type
 
         if representation_type is None:  # still None
-            return representation_type
+            return None
 
         return resolve_representationlike(representation_type)
 

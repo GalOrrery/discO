@@ -13,7 +13,6 @@ __all__ = [
 # IMPORTS
 
 # BUILT-IN
-import copy
 import typing as T
 import weakref
 
@@ -22,17 +21,16 @@ import astropy.coordinates as coord
 import numpy as np
 import typing_extensions as TE
 
+# FIRST PARTY
+from discO.utils.pbar import get_progress_bar
+
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler
 from .residual import ResidualMethod
 from .sample import PotentialSampler, RandomLike
-from discO.setup_package import tqdm
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from .wrapper import PotentialWrapper
 
 ##############################################################################
 # CODE
@@ -73,9 +71,6 @@ class Pipeline:
         fitter: T.Optional[PotentialFitter] = None,
         residualer: T.Optional[ResidualMethod] = None,
         statistic: T.Optional[T.Callable] = None,
-        *,
-        frame: TH.OptFrameLikeType = None,
-        representation_type: TH.OptRepresentationLikeType = None,
     ):
         # CAN set `fitter` without `measurer`
         if fitter is not None and measurer is None:
@@ -106,37 +101,23 @@ class Pipeline:
 
         self._result = None
 
-        # -------------------
-        # Frame and Representation type
-
-        self._frame: TH.OptFrameType = (
-            frame
-            if (frame is None or frame is Ellipsis)
-            else resolve_framelike(frame)
-        )
-        self._representation_type: TH.OptRepresentationType = (
-            representation_type
-            if representation_type in (None, Ellipsis)
-            else resolve_representationlike(representation_type)
-        )
-
     # /def
 
     # ---------------------------------------------------------------
 
-    @property
-    def frame(self) -> TH.OptFrameType:
-        """The frame or None or Ellipse."""
-        return self._frame
+    # @property
+    # def frame(self) -> TH.OptFrameType:
+    #     """The frame or None or Ellipse."""
+    #     return self._frame
 
-    # /def
+    # # /def
 
-    @property
-    def representation_type(self) -> TH.OptRepresentationLikeType:
-        """The representation type or None or Ellipse."""
-        return self._representation_type
+    # @property
+    # def representation_type(self) -> TH.OptRepresentationLikeType:
+    #     """The representation type or None or Ellipse."""
+    #     return self._representation_type
 
-    # /def
+    # # /def
 
     @property
     def sampler(self) -> PotentialSampler:
@@ -213,29 +194,24 @@ class Pipeline:
 
     def __call__(
         self,
-        n: int,
+        n_or_sample: T.Union[int, TH.SkyCoordType],
         *,
-        random: T.Optional[RandomLike] = None,
         # sampler
-        sample_and_fit_frame: TH.OptFrameType = None,
-        sample_and_fit_representation_type: TH.OptRepresentationType = None,
+        total_mass: TH.QuantityType = None,
         # observer
         c_err: T.Optional[CERR_Type] = None,
-        observer_frame: TH.OptFrameType = None,
-        observer_representation_type: TH.OptRepresentationType = None,
-        # fitter
         # residual
         observable: T.Optional[str] = None,
+        # extra
+        random: T.Optional[RandomLike] = None,
         **kwargs,
     ) -> object:
         """Run the pipeline for 1 iteration.
 
         Parameters
         ----------
-        n : int (optional)
+        n_or_sample : int or (N,) SkyCoord (optional)
             number of sample points
-        niter : int (optional)
-            Number of iterations. Must be > 0.
 
         observable : str or None (optional, keyword-only)
 
@@ -244,7 +220,7 @@ class Pipeline:
 
         Returns
         -------
-        :class:`PipelineResult`
+        (1,) :class:`PipelineResult`
 
         Notes
         -----
@@ -252,78 +228,8 @@ class Pipeline:
         ``niter`` pinned to 1.
 
         """
-        # due to line length
-        sample_and_fit_rep_type = sample_and_fit_representation_type
-        # run, with ``niter` pinned to 1.
-        return self.run(
-            n,
-            niter=1,
-            random=random,
-            sample_and_fit_frame=sample_and_fit_frame,
-            sample_and_fit_representation_type=sample_and_fit_rep_type,
-            # observer
-            c_err=c_err,
-            observer_frame=observer_frame,
-            observer_representation_type=observer_representation_type,
-            # fitter
-            # residual
-            observable=observable,
-            **kwargs,
-        )
-
-    # /defs
-
-    def run_with_samples(
-        self,
-        samples,
-        *,
-        random: T.Optional[RandomLike] = None,
-        # sampler
-        sample_and_fit_frame: TH.OptFrameType = None,
-        sample_and_fit_representation_type: TH.OptRepresentationType = None,
-        # observer
-        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
-        observer_frame: TH.OptFrameType = None,
-        observer_representation_type: TH.OptRepresentationType = None,
-        # fitter
-        # residual
-        observable: T.Optional[str] = None,
-        **kwargs,
-    ) -> object:
-        """Call.
-
-        Parameters
-        ----------
-        n : int (optional)
-            number of sample points
-        niter : int (optional)
-            Number of iterations. Must be > 0.
-
-        random : int or |RandomState| or None (optional, keyword-only)
-            Random state or seed.
-            In order that a sequence of samples is different in each element
-            we here resolve random seeds into a |RandomState|.
-
-        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-            None defaults to the value set at initialization.
-        observer_representation_type: representation-resolvable (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-            None defaults to the value set at initialization.
-
-        original_pot : object or None (optional, keyword-only)
-        observable : str or None (optional, keyword-only)
-
-        Returns
-        -------
-        :class:`PipelineResult`
-
-        """
         # We will make a pipeline result and then work thru it.
         result = PipelineResult(self)
-        # Now evaluate, passing around the output -> input
 
         # TODO! resolve_randomstate(random)
         # we need to resolve the random state now, so that an `int` isn't
@@ -334,37 +240,19 @@ class Pipeline:
             else random
         )
 
-        # frame
-        sample_and_fit_frame = (
-            self.frame
-            if sample_and_fit_frame is None
-            else sample_and_fit_frame
-        )  # NOTE! can still be None
-
-        # representation type
-        sample_and_fit_representation_type = (
-            self.representation_type
-            if sample_and_fit_representation_type is None
-            else sample_and_fit_representation_type
-        )
-
         # ----------
         # 1) sample
 
-        # first store,
-        result._samples: TH.SkyCoordType = samples
+        if isinstance(n_or_sample, int):
+            sample: TH.SkyCoordType = self.sampler(
+                n_or_sample, total_mass=total_mass, random=random, **kwargs,
+            )
+        elif isinstance(n_or_sample, coord.SkyCoord):
+            sample = n_or_sample
+        else:
+            raise TypeError
 
-        # we are going to make an assumption that if `samples` is a list of
-        # SkyCoord, a la ``run(n=[list])``, that all the SC have the same
-        # frame
-        if sample_and_fit_frame is None:
-            if not isinstance(samples, coord.SkyCoord):
-                _frame = samples[0].frame.replicate_without_data()
-
-            else:
-                _frame = samples.frame.replicate_without_data()
-
-            sample_and_fit_frame = _frame
+        result["sample"][0] = sample
 
         # ----------
         # 2) measure
@@ -372,28 +260,18 @@ class Pipeline:
 
         if self.measurer is not None and c_err is not False:
 
-            samples: TH.SkyCoordType = self.measurer.run(
-                samples,
-                random=random,
-                c_err=c_err,
-                frame=observer_frame,
-                representation_type=observer_representation_type,
-                **kwargs,
+            sample: TH.SkyCoordType = self.measurer(
+                sample, random=random, c_err=c_err, **kwargs,
             )
-            result._measured: TH.SkyCoordType = samples
+            result["measured"][0] = sample
 
         # ----------
         # 3) fit
         # we force the fit to be in the same frame & representation type
         # as the samples.
 
-        fit_pot: T.Any = self.fitter.run(
-            samples,
-            frame=sample_and_fit_frame,
-            representation_type=sample_and_fit_representation_type,
-            **kwargs,
-        )
-        result._fit: T.Any = fit_pot
+        fit_pot: T.Any = self.fitter(sample, **kwargs)
+        result["fit"][0] = fit_pot
 
         # ----------
         # 4) residual
@@ -401,13 +279,13 @@ class Pipeline:
 
         if self.residualer is not None:
 
-            resid: T.Any = self.residualer.run(
+            resid: T.Any = self.residualer(
                 fit_pot,
                 original_potential=self.potential,
                 observable=observable,
                 **kwargs,
             )
-            result._residual: T.Any = resid
+            result["residual"][0] = resid
 
         # ----------
         # 5) statistic
@@ -416,32 +294,118 @@ class Pipeline:
         if self.statisticer is not None:
 
             stat: T.Any = self.statisticer(resid, **kwargs)
-            result._statistic: T.Any = stat
+            result["statistic"][0] = stat
 
         # ----------
 
         self._result: PipelineResult = result  # link to most recent result
-        return result
+        return result[0]
 
     # /defs
 
-    def run(
+    # -----------------------------------------------------------------
+
+    def _run_iter(
         self,
-        n: T.Union[int, T.Sequence[int]],
-        niter: int = 1,
+        n_or_sample: T.Union[int, TH.SkyCoordType],
+        iterations: int = 1,
+        *,
+        # observer
+        c_err: T.Optional[CERR_Type] = None,
+        # residual
+        observable: T.Optional[str] = None,
+        # extra
+        random: T.Optional[RandomLike] = None,
+        progress: bool = True,
+        **kwargs,
+    ) -> object:
+        """Run pipeline, yielding :class:`PipelineResult` over ``iterations``.
+
+        .. todo::
+
+            - See ``emcee`` for the backend.
+
+        Parameters
+        ----------
+        n_or_sample : int (optional)
+            number of sample points
+
+        iterations : int (optional)
+            Number of iterations. Must be > 0.
+            Only used if `n_or_sample` is int.
+
+        random : int or |RandomState| or None (optional, keyword-only)
+            Random state or seed.
+
+        original_pot : object or None (optional, keyword-only)
+        observable : str or None (optional, keyword-only)
+
+        Yields
+        ------
+        :class:`PipelineResult`
+            For each of ``iterations``
+
+        """
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
+        # reshape n_or_sample
+        if isinstance(n_or_sample, int):
+            n_or_sample = [n_or_sample] * iterations
+        elif isinstance(n_or_sample, coord.SkyCoord):
+            if len(n_or_sample.shape) == 1:  # scalar
+                n_or_sample = [n_or_sample]
+            else:  # TODO! not use jank iterator
+
+                def jank_iter(samples, masses):
+                    for samp, mass in zip(samples, masses):
+                        samp.mass = mass
+                        yield samp
+
+                n_or_sample = jank_iter(n_or_sample.T, n_or_sample.mass.T)
+
+        # iterate over number of iterations
+        # for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
+        with get_progress_bar(progress, iterations) as pbar:
+
+            for arg in n_or_sample:
+                pbar.update(1)
+
+                yield self(
+                    arg,
+                    random=random,
+                    # observer
+                    c_err=c_err,
+                    # residual
+                    observable=observable,
+                    **kwargs,
+                )
+
+        # /with
+
+    # /def
+
+    # ---------------------------------------------------------------
+
+    def _run_batch(
+        self,
+        n_or_sample: T.Union[int, T.Sequence[int]],
+        iterations: int = 1,
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
         total_mass: TH.QuantityType = None,
-        sample_and_fit_frame: TH.OptFrameType = None,
-        sample_and_fit_representation_type: TH.OptRepresentationType = None,
         # observer
         c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
-        observer_frame: TH.OptFrameType = None,
-        observer_representation_type: TH.OptRepresentationType = None,
         # fitter
         # residual
         observable: T.Optional[str] = None,
+        progress: bool = False,
         **kwargs,
     ) -> object:
         """Call.
@@ -450,7 +414,7 @@ class Pipeline:
         ----------
         n : int (optional)
             number of sample points
-        niter : int (optional)
+        iterations : int (optional)
             Number of iterations. Must be > 0.
 
         random : int or |RandomState| or None (optional, keyword-only)
@@ -458,15 +422,6 @@ class Pipeline:
             In order that a sequence of samples is different in each element
             we here resolve random seeds into a |RandomState|.
 
-        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-            None defaults to the value set at initialization.
-        observer_representation_type: representation-resolvable (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-            None defaults to the value set at initialization.
-
         original_pot : object or None (optional, keyword-only)
         observable : str or None (optional, keyword-only)
 
@@ -475,241 +430,97 @@ class Pipeline:
         :class:`PipelineResult`
 
         """
-        # we need to resolve the random state now, so that an `int` isn't
-        # set as the same random state each time
-        random = (
-            np.random.RandomState(random)
-            if not isinstance(random, np.random.RandomState)
-            else random
-        )
+        # reshape n_or_sample
+        if isinstance(n_or_sample, coord.SkyCoord):
+            if len(n_or_sample.shape) == 1:  # scalar
+                iterations = 1
+            else:
+                iterations = n_or_sample.shape[1]
 
-        # frame
-        sample_and_fit_frame = (
-            self.frame
-            if sample_and_fit_frame is None
-            else sample_and_fit_frame
-        )  # NOTE! can still be None
+        # We will make a pipeline result and then work thru it.
+        results = np.recarray(
+            (iterations,),
+            dtype=[
+                ("sample", coord.SkyCoord),
+                ("measured", coord.SkyCoord),
+                ("fit", PotentialWrapper),
+                ("residual", object),
+                ("statistic", object),
+            ],
+        ).view(PipelineResult)
+        results._parent_ref = weakref.ref(self)
 
-        # representation type
-        sf_rep_type = (
-            self.representation_type
-            if sample_and_fit_representation_type is None
-            else sample_and_fit_representation_type
-        )
-
-        # ----------
-        # 1) sample
-
-        samples: TH.SkyCoordType = self.sampler.run(
-            n,
-            niter=niter,
-            frame=sample_and_fit_frame,
-            representation_type=sf_rep_type,
-            total_mass=total_mass,
+        run_gen = self._run_iter(
+            n_or_sample,
+            iterations,
             random=random,
+            total_mass=total_mass,
+            c_err=c_err,
+            observable=observable,
+            progress=progress,
             **kwargs,
         )
 
-        # ----------
-        # 2-5) resample, fit, residual, statistic
+        for i, result in enumerate(run_gen):
+            results[i] = result
 
-        result = self.run_with_samples(
-            samples,
-            random=random,
-            sample_and_fit_frame=sample_and_fit_frame,
-            sample_and_fit_representation_type=sf_rep_type,
-            c_err=c_err,
-            observer_frame=observer_frame,
-            observer_representation_type=observer_representation_type,
-            observable=observable,
-        )
-        return result
+        return results
 
     # /defs
 
-    def run_iter(
+    # ---------------------------------------------------------------
+
+    def run(
         self,
-        n: int,
-        niter: int = 1,
+        n_or_sample: T.Union[int, T.Sequence[int]],
+        iterations: int = 1,
         *,
         random: T.Optional[RandomLike] = None,
         # sampler
-        sample_and_fit_frame: TH.OptFrameType = None,
-        sample_and_fit_representation_type: TH.OptRepresentationType = None,
+        total_mass: TH.QuantityType = None,
         # observer
-        c_err: T.Optional[CERR_Type] = None,
-        observer_frame: TH.OptFrameType = None,
-        observer_representation_type: TH.OptRepresentationType = None,
-        # fitter
+        c_err: T.Union[CERR_Type, None, TE.Literal[False]] = None,
         # residual
         observable: T.Optional[str] = None,
+        # extra
+        batch: bool = False,
+        progress: bool = True,
         **kwargs,
     ) -> object:
-        """Run pipeline, yielding :class:`PipelineResult` over ``niter``.
-
-        .. todo::
-
-            - Fold this into just ``run`` with a flag ``sequential`` or something.
-            - See ``emcee`` for the backend.
+        """Call.
 
         Parameters
         ----------
         n : int (optional)
             number of sample points
-
-            .. warning::
-
-                does not (yet) support a sequence of int
-        niter : int (optional)
+        iterations : int (optional)
             Number of iterations. Must be > 0.
 
         random : int or |RandomState| or None (optional, keyword-only)
             Random state or seed.
-
-        observer_frame: frame-like or None or Ellipse (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-            None defaults to the value set at initialization.
-        observer_representation_type: representation-resolvable (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-            None defaults to the value set at initialization.
+            In order that a sequence of samples is different in each element
+            we here resolve random seeds into a |RandomState|.
 
         original_pot : object or None (optional, keyword-only)
         observable : str or None (optional, keyword-only)
 
-        Yields
-        ------
+        Returns
+        -------
         :class:`PipelineResult`
-            For each of ``niter``
 
         """
-        # we need to resolve the random state now, so that an `int` isn't
-        # set as the same random state each time
-        random = (
-            np.random.RandomState(random)
-            if not isinstance(random, np.random.RandomState)
-            else random
+        run_func = self._run_batch if batch else self._run_iter
+
+        return run_func(
+            n_or_sample,
+            iterations,
+            random=random,
+            total_mass=total_mass,
+            c_err=c_err,
+            observable=observable,
+            progress=progress,
+            **kwargs,
         )
-
-        # only for line length
-        sample_and_fit_rep_type = sample_and_fit_representation_type
-
-        # iterate over number of iterations
-        for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
-            yield self.run(
-                n=n,
-                random=random,
-                # sampler
-                sample_and_fit_frame=sample_and_fit_frame,
-                sample_and_fit_representation_type=sample_and_fit_rep_type,
-                # observer
-                c_err=c_err,
-                observer_frame=observer_frame,
-                observer_representation_type=observer_representation_type,
-                # fitter
-                # residual
-                observable=observable,
-                **kwargs,
-            )
-
-    # /def
-
-    #################################################################
-    # Pipeline
-
-    def __or__(
-        self,
-        other: T.Union[
-            MeasurementErrorSampler,
-            PotentialFitter,
-            ResidualMethod,
-            T.Callable,
-        ],
-    ):
-        """Combine ``other`` into a copy of Pipeline.
-
-        Parameters
-        ----------
-        other : object
-            Combine into Pipeline.
-
-        Returns
-        -------
-        :class:`Pipeline`
-            With `other` mixed in.
-
-        """
-        # copy  # TODO, manually?
-        pipe = copy.deepcopy(self)
-
-        # add in-place
-        pipe.__ior__(other)
-
-        return pipe
-
-    # /def
-
-    def __ior__(self, other):  # FIXME
-        """Combine ``other`` into Pipeline.
-
-        Parameters
-        ----------
-        other : object
-            Combine into Pipeline.
-
-        Returns
-        -------
-        :class:`Pipeline`
-            Current pipeline With `other` mixed in.
-
-        """
-        # For PotentialSampler
-        if self._sampler is None:  # a sanity check
-            raise Exception("sampler is None. Why'd you do that?")
-        elif isinstance(other, PotentialSampler):
-            raise TypeError("can't do that.")
-
-        # For MeasurementErrorSampler
-        elif isinstance(other, MeasurementErrorSampler):
-
-            if self._fitter is not None:
-                raise TypeError(
-                    "can't pass measurer when there's already a fitter",
-                )
-            elif self._measurer is not None:
-                raise ValueError("already have one of those")
-
-            self._measurer = other
-
-        elif isinstance(other, PotentialFitter):
-
-            if self._fitter is not None:
-                raise ValueError("already have one of those")
-
-            self._fitter = other
-
-        # elif isinstance(other, residual):  # TODO
-
-        #     if self._fitter is None:
-        #         raise TypeError(
-        #             "need a fitter"
-        #         )
-        #     elif self._residual is not None:
-        #         raise ValueError("already have one of those")
-
-        #     pipe = Pipeline(
-        #         sampler=self._sampler,
-        #         measurer=self._measurer,
-        #         fitter=self._residual,
-        #         residual=other,
-        #     )
-
-        else:
-
-            raise TypeError("'other' not one of supported types.")
-
-        return self
 
     # /def
 
@@ -744,27 +555,50 @@ class Pipeline:
 #####################################################################
 
 
-class PipelineResult:
-    """:class:`~discO.core.Pipeline` Evaluation Result."""
+class PipelineResult(np.recarray):
+    """Single :class:`~discO.core.Pipeline` Evaluation Result."""
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         pipe: Pipeline,
-        samples: T.Optional[TH.SkyCoordType] = None,
+        sample: T.Optional[TH.SkyCoordType] = None,
         measured: T.Optional[TH.SkyCoordType] = None,
         fit: T.Optional[T.Any] = None,
         residual: T.Optional[T.Any] = None,
         statistic: T.Optional[T.Any] = None,
     ):
-        # reference to parent
-        self._parent_ref = weakref.ref(pipe)
+        # Input array is an already formed ndarray instance
+        # We first cast to be our class type
+        obj = np.array(
+            [(sample, measured, fit, residual, statistic)],
+            dtype=[
+                ("sample", coord.SkyCoord),
+                ("measured", coord.SkyCoord),
+                ("fit", PotentialWrapper),
+                ("residual", object),
+                ("statistic", object),
+            ],
+        ).view(cls)[:]
+        # add the new attribute to the created instance
+        obj._parent_ref = weakref.ref(pipe)
+        # Finally, we must return the newly created object:
+        return obj
 
-        # results
-        self._samples: T.Optional[TH.SkyCoordType] = samples
-        self._measured: T.Optional[TH.SkyCoordType] = measured
-        self._fit: T.Optional[T.Any] = fit
-        self._residual: T.Optional[T.Any] = residual
-        self._statistic: T.Optional[T.Any] = statistic
+    # /def
+
+    def __array_finalize__(self, obj):
+        # see InfoArray.__array_finalize__ for comments
+        if obj is None:
+            return
+        self._parent_ref = getattr(obj, "_parent_ref", None)
+
+    # /def
+
+    def __repr__(self):
+        s = super().__repr__()
+        s = s.replace("rec.array", self.__class__.__name__)
+
+        return s
 
     # /def
 
@@ -777,70 +611,112 @@ class PipelineResult:
 
     # /def
 
-    @property
-    def samples(self) -> T.Optional[TH.SkyCoordType]:
-        """The samples."""
-        return self._samples
 
-    # /def
-
-    @property
-    def potential_frame(self):
-        return self.samples.frame
-
-    # /def
-
-    @property
-    def potential_representation_type(self):
-        return self.samples.representation_type
-
-    # /def
-
-    @property
-    def measured(self) -> T.Optional[TH.SkyCoordType]:
-        """The re-samples."""
-        return self._measured
-
-    # /def
-
-    @property
-    def observation_frame(self):
-        return self.measured.frame
-
-    # /def
-
-    @property
-    def observation_representation_type(self):
-        return self.measured.representation_type
-
-    # /def
-
-    @property
-    def fit(self) -> T.Optional[T.Any]:
-        """The fit potential."""
-        return self._fit
-
-    # /def
-
-    @property
-    def residual(self) -> T.Optional[T.Any]:
-        """The residual between the original and fit potential."""
-        return self._residual
-
-    # /def
-
-    @property
-    def statistic(self) -> T.Optional[T.Any]:
-        """The statistic on the residual."""
-        return self._statistic
-
-    # /def
-
-    #################################################################
-    # Plotting
+#################################################################
+# Plotting
 
 
 # /class
+
+
+# class PipelineResult:
+#     """:class:`~discO.core.Pipeline` Evaluation Result."""
+
+#     def __init__(
+#         self,
+#         pipe: Pipeline,
+#         samples: T.Optional[TH.SkyCoordType] = None,
+#         measured: T.Optional[TH.SkyCoordType] = None,
+#         fit: T.Optional[T.Any] = None,
+#         residual: T.Optional[T.Any] = None,
+#         statistic: T.Optional[T.Any] = None,
+#     ):
+#         # reference to parent
+#         self._parent_ref = weakref.ref(pipe)
+
+#         # results
+#         self._sample: T.Optional[TH.SkyCoordType] = samples
+#         self._measured: T.Optional[TH.SkyCoordType] = measured
+#         self._fit: T.Optional[T.Any] = fit
+#         self._residual: T.Optional[T.Any] = residual
+#         self._statistic: T.Optional[T.Any] = statistic
+
+#     # /def
+
+#     # -----------------
+#     # Properties
+
+#     @property
+#     def _parent(self):
+#         return self._parent_ref()
+
+#     # /def
+
+#     @property
+#     def sample(self) -> T.Optional[TH.SkyCoordType]:
+#         """The samples."""
+#         return self._sample
+
+#     # /def
+
+#     @property
+#     def potential_frame(self):
+#         return self.samples.frame
+
+#     # /def
+
+#     @property
+#     def potential_representation_type(self):
+#         return self.samples.representation_type
+
+#     # /def
+
+#     @property
+#     def measured(self) -> T.Optional[TH.SkyCoordType]:
+#         """The re-samples."""
+#         return self._measured
+
+#     # /def
+
+#     @property
+#     def observation_frame(self):
+#         return self.measured.frame
+
+#     # /def
+
+#     @property
+#     def observation_representation_type(self):
+#         return self.measured.representation_type
+
+#     # /def
+
+#     @property
+#     def fit(self) -> T.Optional[T.Any]:
+#         """The fit potential."""
+#         return self._fit
+
+#     # /def
+
+#     @property
+#     def residual(self) -> T.Optional[T.Any]:
+#         """The residual between the original and fit potential."""
+#         return self._residual
+
+#     # /def
+
+#     @property
+#     def statistic(self) -> T.Optional[T.Any]:
+#         """The statistic on the residual."""
+#         return self._statistic
+
+#     # /def
+
+#     #################################################################
+#     # Plotting
+
+
+# # /class
+
 
 ##############################################################################
 # END

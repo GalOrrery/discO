@@ -21,11 +21,14 @@ __all__ = [
 
 # BUILT-IN
 import abc
+from collections.abc import Sequence
 import typing as T
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import astropy.coordinates as coord
+from discO.utils.pbar import get_progress_bar
+import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -223,7 +226,7 @@ class ResidualMethod(CommonBase):
 
         Other Parameters
         ----------------
-        points : frame-like or |Representation| (optional, keyword-only)
+        points : frame-like or (optional, keyword-only)
             Not recommended, but allowed, to force the points on which the
             residual is calculated. The points can only be frame-like if the
             frame of the potentials is not :class:`~discO.UnFrame`.
@@ -250,13 +253,16 @@ class ResidualMethod(CommonBase):
             else self.representation_type
         )
 
+        # # change the points to the potential`s reference frame
+        # points = points.transform_to(potential.frame)
+
         # -----------------------
         # Evaluate
 
         # get class to evaluate
         evaluator_cls = PotentialWrapper(
             potential,
-            # frame=frame,
+            # frame=frame,  # inherit
             representation_type=representation_type,
         )
 
@@ -422,20 +428,22 @@ class ResidualMethod(CommonBase):
 
     # -----------------------------------------------------
 
-    def run(
+    def _run_iter(
         self,
-        fit_potential: T.Any,
+        fit_potential: T.Union[PotentialWrapper, T.Sequence[PotentialWrapper]],
         original_potential: T.Optional[T.Any] = None,
         observable: T.Optional[str] = None,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
+        # extra
+        progress: bool = True,
         **kwargs,
     ) -> object:
         """Calculate Residual.
 
         Parameters
         ----------
-        fit_potential : object or :class:`~PotentialWrapper`
+        fit_potential : :class:`~PotentialWrapper` or sequence thereof
             The fitted potential. If not already a PotentialWrapper, it is
             wrapped: this means that the frame is :class:`~discO.UnFrame`.
         original_potential : object or :class:`~PotentialWrapper` (optional)
@@ -470,11 +478,157 @@ class ResidualMethod(CommonBase):
             by the class at initialization.
 
         """
-        return self(
-            fit_potential=fit_potential,
+        if not isinstance(fit_potential, (Sequence, np.ndarray)):
+            fit_potential = [fit_potential]
+
+        iterations = len(fit_potential)
+
+        with get_progress_bar(progress, iterations) as pbar:
+
+            for fpot in fit_potential:
+                pbar.update(1)
+
+                yield self(
+                    fit_potential=fpot,
+                    original_potential=original_potential,
+                    observable=observable,
+                    representation_type=representation_type,
+                    **kwargs,
+                )
+
+    # /def
+
+    # -----------------------------------------------------
+
+    def _run_batch(
+        self,
+        fit_potential: T.Union[PotentialWrapper, T.Sequence[PotentialWrapper]],
+        original_potential: T.Optional[T.Any] = None,
+        observable: T.Optional[str] = None,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        # extra
+        progress: bool = True,
+        **kwargs,
+    ) -> object:
+        """Calculate Residual.
+
+        Parameters
+        ----------
+        fit_potential : :class:`~PotentialWrapper` or sequence thereof
+            The fitted potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+        original_potential : object or :class:`~PotentialWrapper` (optional)
+            The original potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+
+        observable : str or None (optional)
+            The quantity on which to calculate the residual.
+            Must be method of :class:`~discO.core.wrapper.PotentialWrapper`.
+            None (default) becomes the default value at initialization.
+
+        representation_type: representation-resolvable (optional, keyword-only)
+            The output representation type. If None (default), uses default
+            representation point.
+
+        **kwargs
+            Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
+
+        Returns
+        -------
+        residual : object
+            In `representation_type`.
+
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
+
+        """
+        resids = tuple(
+            self._run_iter(
+                fit_potential,
+                original_potential=original_potential,
+                observable=observable,
+                representation_type=representation_type,
+                progress=progress,
+                **kwargs,
+            )
+        )
+
+        if not isinstance(fit_potential, Sequence):
+            return resids[0]
+        else:
+            return np.array(resids, dtype=object)
+
+    # /def
+
+    # -----------------------------------------------------
+
+    def run(
+        self,
+        fit_potential: T.Union[PotentialWrapper, T.Sequence[PotentialWrapper]],
+        original_potential: T.Optional[T.Any] = None,
+        observable: T.Optional[str] = None,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        # extra
+        batch: bool = False,
+        progress: bool = True,
+        **kwargs,
+    ) -> object:
+        """Calculate Residual.
+
+        Parameters
+        ----------
+        fit_potential : :class:`~PotentialWrapper` or sequence thereof
+            The fitted potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+        original_potential : object or :class:`~PotentialWrapper` (optional)
+            The original potential. If not already a PotentialWrapper, it is
+            wrapped: this means that the frame is :class:`~discO.UnFrame`.
+
+        observable : str or None (optional)
+            The quantity on which to calculate the residual.
+            Must be method of :class:`~discO.core.wrapper.PotentialWrapper`.
+            None (default) becomes the default value at initialization.
+
+        representation_type: representation-resolvable (optional, keyword-only)
+            The output representation type. If None (default), uses default
+            representation point.
+
+        **kwargs
+            Passed to method in :class:`~PotentialWrapper`.
+            First mixed in with ``default_params`` (preferring ``kwargs``).
+
+        Returns
+        -------
+        residual : object
+            In `representation_type`.
+
+        Other Parameters
+        ----------------
+        points : frame-like or |Representation| (optional, keyword-only)
+            Not recommended, but allowed, to force the points on which the
+            residual is calculated. The points can only be frame-like if the
+            frame of the potentials is not :class:`~discO.UnFrame`.
+            If not specified, and it shouldn't be, uses points determined
+            by the class at initialization.
+
+        """
+        run_func = self._run_batch if batch else self._run_iter
+
+        return run_func(
+            fit_potential,
             original_potential=original_potential,
             observable=observable,
             representation_type=representation_type,
+            progress=progress,
             **kwargs,
         )
 
@@ -604,7 +758,7 @@ class GridResidual(ResidualMethod, key="grid"):
 
     Parameters
     ----------
-    grid : |Representation|
+    grid : |CoordinateFrame| or |SkyCoord|
         The grid on which to evaluate the residual. Mandatory.
 
     original_potential: object or :class:`~PotentialWrapper` or None (optional)
@@ -631,7 +785,7 @@ class GridResidual(ResidualMethod, key="grid"):
 
     def __init__(
         self,
-        grid: TH.RepresentationType,
+        grid: TH.CoordinateType,
         original_potential: T.Union[PotentialWrapper, T.Any, None] = None,
         observable: str = "acceleration",  # TODO make None and have config
         *,
