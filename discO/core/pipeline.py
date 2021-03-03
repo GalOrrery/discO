@@ -346,14 +346,6 @@ class Pipeline:
             For each of ``iterations``
 
         """
-        # we need to resolve the random state now, so that an `int` isn't
-        # set as the same random state each time
-        random = (
-            np.random.RandomState(random)
-            if not isinstance(random, np.random.RandomState)
-            else random
-        )
-
         # reshape n_or_sample
         if isinstance(n_or_sample, int):
             n_or_sample = [n_or_sample] * iterations
@@ -511,6 +503,14 @@ class Pipeline:
         """
         run_func = self._run_batch if batch else self._run_iter
 
+        # we need to resolve the random state now, so that an `int` isn't
+        # set as the same random state each time
+        random = (
+            np.random.RandomState(random)
+            if not isinstance(random, np.random.RandomState)
+            else random
+        )
+
         return run_func(
             n_or_sample,
             iterations,
@@ -556,7 +556,7 @@ class Pipeline:
 
 
 class PipelineResult(np.recarray):
-    """Single :class:`~discO.core.Pipeline` Evaluation Result."""
+    """:class:`~discO.core.Pipeline` Evaluation Result."""
 
     def __new__(
         cls,
@@ -611,111 +611,34 @@ class PipelineResult(np.recarray):
 
     # /def
 
+    # def _attr(self, name):
+    #     attr = super().__getattr__(name)
+    #     if len(self) == 1:
+    #         return attr[0]
+    #     return attr
 
-#################################################################
-# Plotting
+    # @property
+    # def sample(self):
+    #     return self._attr("sample")
 
+    # @property
+    # def measured(self):
+    #     return self._attr("measured")
 
-# /class
+    # @property
+    # def fit(self):
+    #     return self._attr("fit")
 
+    # @property
+    # def residual(self):
+    #     return self._attr("residual")
 
-# class PipelineResult:
-#     """:class:`~discO.core.Pipeline` Evaluation Result."""
+    # @property
+    # def statistic(self):
+    #     return self._attr("statistic")
 
-#     def __init__(
-#         self,
-#         pipe: Pipeline,
-#         samples: T.Optional[TH.SkyCoordType] = None,
-#         measured: T.Optional[TH.SkyCoordType] = None,
-#         fit: T.Optional[T.Any] = None,
-#         residual: T.Optional[T.Any] = None,
-#         statistic: T.Optional[T.Any] = None,
-#     ):
-#         # reference to parent
-#         self._parent_ref = weakref.ref(pipe)
-
-#         # results
-#         self._sample: T.Optional[TH.SkyCoordType] = samples
-#         self._measured: T.Optional[TH.SkyCoordType] = measured
-#         self._fit: T.Optional[T.Any] = fit
-#         self._residual: T.Optional[T.Any] = residual
-#         self._statistic: T.Optional[T.Any] = statistic
-
-#     # /def
-
-#     # -----------------
-#     # Properties
-
-#     @property
-#     def _parent(self):
-#         return self._parent_ref()
-
-#     # /def
-
-#     @property
-#     def sample(self) -> T.Optional[TH.SkyCoordType]:
-#         """The samples."""
-#         return self._sample
-
-#     # /def
-
-#     @property
-#     def potential_frame(self):
-#         return self.samples.frame
-
-#     # /def
-
-#     @property
-#     def potential_representation_type(self):
-#         return self.samples.representation_type
-
-#     # /def
-
-#     @property
-#     def measured(self) -> T.Optional[TH.SkyCoordType]:
-#         """The re-samples."""
-#         return self._measured
-
-#     # /def
-
-#     @property
-#     def observation_frame(self):
-#         return self.measured.frame
-
-#     # /def
-
-#     @property
-#     def observation_representation_type(self):
-#         return self.measured.representation_type
-
-#     # /def
-
-#     @property
-#     def fit(self) -> T.Optional[T.Any]:
-#         """The fit potential."""
-#         return self._fit
-
-#     # /def
-
-#     @property
-#     def residual(self) -> T.Optional[T.Any]:
-#         """The residual between the original and fit potential."""
-#         return self._residual
-
-#     # /def
-
-#     @property
-#     def statistic(self) -> T.Optional[T.Any]:
-#         """The statistic on the residual."""
-#         return self._statistic
-
-#     # /def
-
-#     #################################################################
-#     # Plotting
-
-
-# # /class
+    #################################################################
+    # Plotting
 
 
 ##############################################################################

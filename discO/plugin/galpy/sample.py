@@ -20,7 +20,6 @@ import numpy as np
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from .type_hints import PotentialType
 from discO.core.sample import PotentialSampler
 from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import RandomLike
