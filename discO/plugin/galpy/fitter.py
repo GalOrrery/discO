@@ -260,8 +260,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         # --------------
         # Validation
 
-        if Nmax <= 0 or Lmax <= 0:
-            raise ValueError("Nmax & Lmax must be >0.")
+        if Nmax < 0 or Lmax < 0:
+            raise ValueError("Nmax & Lmax must be >=0.")
 
         if scale_factor.unit.physical_type not in ("length", "dimensionless"):
             raise u.UnitsError(
