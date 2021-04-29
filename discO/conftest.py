@@ -18,7 +18,7 @@ import os
 import pytest
 
 # PROJECT-SPECIFIC
-from .setup_package import HAS_AGAMA, HAS_GALPY
+from .setup_package import HAS_AGAMA, HAS_GALA, HAS_GALPY
 
 try:
     # THIRD PARTY
@@ -47,6 +47,11 @@ collect_ignore = ["setup.py"]
 SKIP_NO_AGAMA = pytest.mark.skipif(not HAS_AGAMA, reason="needs agama")
 if not HAS_AGAMA:
     collect_ignore.append("plugin/agama/")
+
+# Gala
+SKIP_NO_AGAMA = pytest.mark.skipif(not HAS_GALA, reason="needs gala")
+if not HAS_GALA:
+    collect_ignore.append("plugin/gala/")
 
 # Galpy
 SKIP_NO_GALPY = pytest.mark.skipif(not HAS_GALPY, reason="needs galpy")
