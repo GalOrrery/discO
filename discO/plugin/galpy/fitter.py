@@ -13,7 +13,6 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
-from types import MappingProxyType
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -26,10 +25,7 @@ from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
 
 # from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
@@ -227,7 +223,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         """
         # --------------
-    
+
         if mass is None:
             mass = sample.mass
 
@@ -254,7 +250,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         # --------------
 
         representation_type = resolve_representationlike(
-            self.representation_type, error_if_not_type=False,
+            self.representation_type,
+            error_if_not_type=False,
         )
 
         # --------------
@@ -293,7 +290,10 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         return GalpyPotentialWrapper(
             self.potential_cls(
-                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor,
+                amp=mass.sum(),
+                Acos=Acos,
+                Asin=Asin,
+                a=scale_factor,
             ),
             frame=self.frame,
             representation_type=representation_type,

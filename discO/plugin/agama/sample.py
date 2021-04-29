@@ -10,9 +10,6 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
-import typing as T
-
 # THIRD PARTY
 import astropy.coordinates as coord
 import astropy.units as u

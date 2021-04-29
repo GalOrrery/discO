@@ -4,7 +4,7 @@
 
 Registering a Fitter
 ********************
-a
+TODO
 
 """
 
@@ -25,9 +25,6 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import numpy as np
 
-# FIRST PARTY
-from discO.utils.pbar import get_progress_bar
-
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .common import CommonBase
@@ -35,6 +32,7 @@ from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
 )
+from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
 # PARAMETERS
@@ -79,7 +77,8 @@ class PotentialFitter(CommonBase):
     _registry = FITTER_REGISTRY
 
     def __init_subclass__(
-        cls, key: T.Union[str, ModuleType, None] = None,
+        cls,
+        key: T.Union[str, ModuleType, None] = None,
     ) -> None:
         """Initialize subclass, adding to registry by `key`.
 
@@ -270,7 +269,9 @@ class PotentialFitter(CommonBase):
                 samp.mass = mass
 
                 yield self(
-                    samp, mass=mass, **kwargs,
+                    samp,
+                    mass=mass,
+                    **kwargs,
                 )
 
     # /def
@@ -307,8 +308,8 @@ class PotentialFitter(CommonBase):
         """
         return np.array(
             tuple(
-                self._run_iter(sample, mass=mass, progress=progress, **kwargs)
-            )
+                self._run_iter(sample, mass=mass, progress=progress, **kwargs),
+            ),
         )
 
     # /def

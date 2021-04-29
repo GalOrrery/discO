@@ -11,9 +11,11 @@ __credits__ = ["emcee"]
 ##############################################################################
 # IMPORTS
 
+# PROJECT-SPECIFIC
 from discO.setup_package import HAS_TQDM
 
 if HAS_TQDM:
+    # THIRD PARTY
     import tqdm
 
 ##############################################################################
@@ -66,7 +68,7 @@ def get_progress_bar(display, total):
         if not HAS_TQDM:
             logging.warning(
                 "You must install the tqdm library to use progress "
-                "indicators with emcee"
+                "indicators with emcee",
             )
             return _NoOpPBar()
         else:

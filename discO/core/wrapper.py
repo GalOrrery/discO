@@ -547,7 +547,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> T.Tuple[TH.CoordinateType, TH.QuantityType]:
-        """Evaluate the specific potential.
+        """Evaluate the potential.
 
         Parameters
         ----------

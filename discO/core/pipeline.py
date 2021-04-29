@@ -21,9 +21,6 @@ import astropy.coordinates as coord
 import numpy as np
 import typing_extensions as TE
 
-# FIRST PARTY
-from discO.utils.pbar import get_progress_bar
-
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .fitter import PotentialFitter
@@ -31,6 +28,7 @@ from .measurement import CERR_Type, MeasurementErrorSampler
 from .residual import ResidualMethod
 from .sample import PotentialSampler, RandomLike
 from .wrapper import PotentialWrapper
+from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
 # CODE
@@ -245,7 +243,10 @@ class Pipeline:
 
         if isinstance(n_or_sample, int):
             sample: TH.SkyCoordType = self.sampler(
-                n_or_sample, total_mass=total_mass, random=random, **kwargs,
+                n_or_sample,
+                total_mass=total_mass,
+                random=random,
+                **kwargs,
             )
         elif isinstance(n_or_sample, coord.SkyCoord):
             sample = n_or_sample
@@ -261,7 +262,10 @@ class Pipeline:
         if self.measurer is not None and c_err is not False:
 
             sample: TH.SkyCoordType = self.measurer(
-                sample, random=random, c_err=c_err, **kwargs,
+                sample,
+                random=random,
+                c_err=c_err,
+                **kwargs,
             )
             result["measured"][0] = sample
 

@@ -181,7 +181,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     # Representation
 
     def to_cartesian(self):
-        """Convert the differential to 3D rectangular cartesian coordinates.
+        """Convert the field to 3D rectangular cartesian coordinates.
 
         Returns
         -------

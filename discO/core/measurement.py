@@ -44,13 +44,13 @@ from astropy.coordinates import (
     concatenate,
 )
 from astropy.utils.decorators import classproperty
-from discO.utils.pbar import get_progress_bar
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .common import CommonBase
 from .sample import RandomLike  # TODO move to type-hints
 from discO.utils import resolve_framelike, resolve_representationlike
+from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
 # PARAMETERS
@@ -196,7 +196,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         # store frame. If not None, resolve it.
         self._frame = resolve_framelike(frame)
         self._representation_type = resolve_representationlike(
-            representation_type
+            representation_type,
         )
 
         # params (+ pop from ``__new__``)
@@ -326,7 +326,10 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
             # TODO validate c_err shape etc.
             yield self(
-                c, c_err=c_err, random=random, **kwargs,
+                c,
+                c_err=c_err,
+                random=random,
+                **kwargs,
             )
 
         # else:  # (Nsamples, Niter)
@@ -338,7 +341,10 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
             for samp, err in zip(c.T, c_errs):
                 pbar.update(1)
                 yield self(
-                    samp, c_err=err, random=random, **kwargs,
+                    samp,
+                    c_err=err,
+                    random=random,
+                    **kwargs,
                 )
 
     # /def
@@ -392,14 +398,19 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         # depends on the shape of "c": (Nsamples,) or (Nsamples, Niter)?
         if len(c.shape) == 1:  # (Nsamples, )
             # TODO validate c_err shape etc.
-            sample = self(c, c_err=c_err, random=random, **kwargs,)
+            sample = self(
+                c,
+                c_err=c_err,
+                random=random,
+                **kwargs,
+            )
 
         else:  # (Nsamples, Niter)
 
             samples = list(
                 self._run_iter(
                     c, c_err=c_err, random=random, progress=progress, **kwargs
-                )
+                ),
             )
 
             sample = concatenate(samples).reshape(c.shape)
@@ -469,7 +480,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
         # need to determine how c_err should be distributed.
         if isinstance(
-            c_err, (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
+            c_err,
+            (SkyCoord, BaseCoordinateFrame, BaseRepresentation),
         ):
             Nerr, *nerriter = c_err.shape
             nerriter = (nerriter or [1])[0]  # [] -> 1
@@ -501,7 +513,9 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     # /def
 
     def _parse_c_err(
-        self, c_err: T.Optional[CERR_Type], c: TH.CoordinateType,
+        self,
+        c_err: T.Optional[CERR_Type],
+        c: TH.CoordinateType,
     ) -> np.ndarray:
         """Parse ``c_err``, given ``c``.
 
@@ -812,7 +826,8 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         # get "cc" into the correct representation type
         rep = cc.data.represent_as(self.representation_type)
         cc = cc.realize_frame(
-            rep, representation_type=self.representation_type
+            rep,
+            representation_type=self.representation_type,
         )
 
         # for re-building
@@ -851,10 +866,14 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         )
         # make coordinate
         new_cc = self.frame.realize_frame(
-            new_rep, representation_type=self.representation_type,
+            new_rep,
+            representation_type=self.representation_type,
         )
         # make SkyCoord from new realization, preserving original shape
-        new_sc = SkyCoord(new_cc.reshape(c.shape), copy=False,)
+        new_sc = SkyCoord(
+            new_cc.reshape(c.shape),
+            copy=False,
+        )
 
         # need to transfer metadata.
         # TODO! more generally, probably need different method for new_c

@@ -21,13 +21,12 @@ __all__ = [
 
 # BUILT-IN
 import abc
-from collections.abc import Sequence
 import typing as T
+from collections.abc import Sequence
 from types import MappingProxyType, ModuleType
 
 # THIRD PARTY
 import astropy.coordinates as coord
-from discO.utils.pbar import get_progress_bar
 import numpy as np
 
 # PROJECT-SPECIFIC
@@ -38,6 +37,7 @@ from discO.utils.coordinates import (
     resolve_framelike,
     resolve_representationlike,
 )
+from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
 # PARAMETERS
@@ -558,7 +558,7 @@ class ResidualMethod(CommonBase):
                 representation_type=representation_type,
                 progress=progress,
                 **kwargs,
-            )
+            ),
         )
 
         if not isinstance(fit_potential, Sequence):

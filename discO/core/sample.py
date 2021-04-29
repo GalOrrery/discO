@@ -45,13 +45,13 @@ from types import ModuleType
 # THIRD PARTY
 import astropy.coordinates as coord
 import numpy as np
-from discO.utils.pbar import get_progress_bar
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
 from discO.utils import resolve_representationlike
+from discO.utils.pbar import get_progress_bar
 from discO.utils.random import NumpyRNGContext, RandomLike
 
 ##############################################################################
@@ -193,12 +193,12 @@ class PotentialSampler(CommonBase):
         if not np.isfinite(mtot):
             raise ValueError(
                 "The potential`s mass is divergent, "
-                "the argument `total_mass` cannot be None."
+                "the argument `total_mass` cannot be None.",
             )
         elif total_mass is not None:  # mass is not divergent.
             raise ValueError(
                 "The potential`s mass is not divergent, "
-                "the argument `total_mass` must be None."
+                "the argument `total_mass` must be None.",
             )
         else:  # not divergent and total_mass is None
             total_mass = mtot
@@ -206,7 +206,8 @@ class PotentialSampler(CommonBase):
         # potential is checked in __new__ as a PotentialWrapper
         # we wrap again here to override the representation_type
         self._wrapper_potential = PotentialWrapper(
-            potential, representation_type=representation_type,
+            potential,
+            representation_type=representation_type,
         )
 
         self._total_mass: T.Optional[TH.QuantityType] = total_mass
@@ -497,7 +498,8 @@ class PotentialSampler(CommonBase):
     # utils
 
     def _infer_representation(
-        self, representation_type: TH.OptRepresentationLikeType,
+        self,
+        representation_type: TH.OptRepresentationLikeType,
     ) -> T.Optional[TH.RepresentationType]:
         """Call `resolve_representation_typelike`, but default to preferred.
 
