@@ -249,6 +249,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             original_potential=None,
             observable=None,
             representation_type=None,
+            batch=True,
             **self.kwargs
         )
 
@@ -262,6 +263,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             original_potential=self.original_potential,
             observable=self.observable,
             representation_type="spherical",
+            batch=True,
         )
 
         assert resid == coord.SphericalRepresentation(0 * u.rad, 0 * u.rad, 0)

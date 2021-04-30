@@ -436,11 +436,11 @@ class Test_PipelineResult(object):
 
         assert isinstance(pr, pipeline.PipelineResult)
         assert pr._parent_ref() is pipe
-        assert pr._samples is None
-        assert pr._measured is None
-        assert pr._fit is None
-        assert pr._residual is None
-        assert pr._statistic is None
+        assert pr["sample"][0] is None
+        assert pr["measured"][0] is None
+        assert pr["fit"][0] is None
+        assert pr["residual"][0] is None
+        assert pr["statistic"][0] is None
 
         # ------------------
         # inits, values
@@ -457,64 +457,36 @@ class Test_PipelineResult(object):
 
     def test_samples(self):
         """Test method ``samples``."""
-        assert self.inst.samples is self.inst._samples
-        assert self.inst.samples == 1
-
-    # /def
-
-    def test_potential_frame(self):
-        """Test method ``potential_frame``."""
-        with pytest.raises(AttributeError):
-            self.inst.potential_frame
-
-    # /def
-
-    def test_potential_representation_type(self):
-        """Test method ``potential_representation_type``."""
-        with pytest.raises(AttributeError):
-            self.inst.potential_representation_type
+        # assert self.inst["sample"] is self.inst._samples
+        assert self.inst["sample"] == 1
 
     # /def
 
     def test_measured(self):
         """Test method ``measured``."""
-        assert self.inst.measured is self.inst._measured
-        assert self.inst.measured == "2"
-
-    # /def
-
-    def test_observation_frame(self):
-        """Test method ``observation_frame``."""
-        with pytest.raises(AttributeError):
-            self.inst.observation_frame
-
-    # /def
-
-    def test_observation_representation_type(self):
-        """Test method ``observation_representation_type``."""
-        with pytest.raises(AttributeError):
-            self.inst.potential_representation_type
+        # assert self.inst.measured is self.inst._measured
+        assert self.inst["measured"] == "2"
 
     # /def
 
     def test_fit(self):
         """Test method ``fit``."""
-        assert self.inst.fit is self.inst._fit
-        assert all(np.equal(self.inst._fit, [3, 3.0]))
+        # assert self.inst.fit is self.inst._fit
+        assert all(np.equal(self.inst["fit"][0], [3, 3.0]))
 
     # /def
 
     def test_residual(self):
         """Test method ``residual``."""
-        assert self.inst.residual is self.inst._residual
-        assert isinstance(self.inst.residual, object)
+        # assert self.inst.residual is self.inst._residual
+        assert isinstance(self.inst["residual"], object)
 
     # /def
 
     def test_statistic(self):
         """Test method ``statistic``."""
-        assert self.inst.statistic is self.inst._statistic
-        assert self.inst._statistic is NotImplemented
+        # assert self.inst.statistic is self.inst._statistic
+        assert self.inst["statistic"][0] is NotImplemented
 
     # /def
 

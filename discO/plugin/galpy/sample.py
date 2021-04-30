@@ -85,9 +85,9 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         )
         self._df: gdf.df.df = df
 
-        # make sure physical is on
-        self._potential.turn_physical_on()
-        self._df._pot.turn_physical_on()
+        # make sure physical is on  # TODO enfore more strictly
+        getattr(self._potential, "turn_physical_on", object)()
+        getattr(self._df._pot, "turn_physical_on", object)()
 
     # /def
 

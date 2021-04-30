@@ -615,32 +615,6 @@ class PipelineResult(np.recarray):
 
     # /def
 
-    # def _attr(self, name):
-    #     attr = super().__getattr__(name)
-    #     if len(self) == 1:
-    #         return attr[0]
-    #     return attr
-
-    # @property
-    # def sample(self):
-    #     return self._attr("sample")
-
-    # @property
-    # def measured(self):
-    #     return self._attr("measured")
-
-    # @property
-    # def fit(self):
-    #     return self._attr("fit")
-
-    # @property
-    # def residual(self):
-    #     return self._attr("residual")
-
-    # @property
-    # def statistic(self):
-    #     return self._attr("statistic")
-
     #################################################################
     # Plotting
 
