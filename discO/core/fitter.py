@@ -232,7 +232,8 @@ class PotentialFitter(CommonBase):
         ----------
         sample : :class:`~astropy.coordinates.SkyCoord` instance
             can have shape (nsamp, ) or (nsamp, niter)
-
+        mass : `~astropy.units.Quantity`
+            The mass.
         **kwargs
             passed to fitting potential.
 

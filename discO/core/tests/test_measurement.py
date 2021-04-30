@@ -14,6 +14,7 @@ __all__ = [
 
 # BUILT-IN
 from abc import abstractmethod
+from collections.abc import Generator
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -22,10 +23,12 @@ import astropy.units as u
 import numpy as np
 import pytest
 import scipy.stats
+from astropy.coordinates import concatenate
 
 # PROJECT-SPECIFIC
 from discO.core import measurement
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
+from discO.utils.coordinates import UnFrame
 
 ##############################################################################
 # TESTS
@@ -214,7 +217,11 @@ class Test_MeasurementErrorSampler(
 
         method, klass = tuple(self.obj._registry.items())[-1]
 
-        msamp = self.obj(c_err=self.c_err, method=method)
+        msamp = self.obj(
+            c_err=self.c_err,
+            method=method,
+            representation_type="cartesian",
+        )
 
         # test class type
         assert isinstance(msamp, klass)
@@ -236,23 +243,14 @@ class Test_MeasurementErrorSampler(
         # --------------------------
         # default
 
-        obj = self.obj(c_err=self.c_err, method="Gaussian")
-        obj.c_err == self.c_err
-        assert obj.frame is None
-        assert obj.representation_type is None
-        assert "method" not in obj.params
-
-        # --------------------------
-        # explicitly None
-
         obj = self.obj(
             c_err=self.c_err,
             method="Gaussian",
-            frame=None,
-            representation_type=None,
+            representation_type="cartesian",
         )
-        assert obj.frame is None
-        assert obj.representation_type is None
+        obj.c_err == self.c_err
+        assert isinstance(obj.frame, UnFrame)
+        assert obj.representation_type is coord.CartesianRepresentation
         assert "method" not in obj.params
 
         # --------------------------
@@ -281,90 +279,6 @@ class Test_MeasurementErrorSampler(
                 obj.representation_type == coord.CartesianRepresentation
             ), rep_type
             assert "method" not in obj.params
-
-    # /def
-
-    # -------------------------------
-
-    def test__resolve_frame(self):
-        """Test method ``_resolve_frame``."""
-        # ----------------------
-        # frame is not None
-
-        frame = self.inst._resolve_frame(coord.Galactocentric(), None)
-        assert frame == coord.Galactocentric()
-
-        frame = self.inst._resolve_frame(coord.Galactocentric, None)
-        assert frame == coord.Galactocentric()
-
-        frame = self.inst._resolve_frame("galactocentric", None)
-        assert frame == coord.Galactocentric()
-
-        # ----------------------
-        # frame is None, self frame is not
-
-        assert self.inst.frame is not None
-        frame = self.inst._resolve_frame(None, None)
-        assert frame == coord.ICRS()
-
-        # ----------------------
-        # frame is None, self frame is None, so it's c frame
-
-        old_frame = self.inst.frame
-        self.inst._frame = None
-        assert self.inst.frame is None
-
-        frame = self.inst._resolve_frame(None, self.c)
-        assert frame == coord.ICRS()
-        assert self.inst.frame is None
-
-        self.inst._frame = old_frame
-        assert self.inst.frame is old_frame
-
-    # /def
-
-    # -------------------------------
-
-    def test__resolve_representation_type(self):
-        """Test method ``_resolve_representation_type``."""
-        # ----------------------
-        # rep is not None
-
-        rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation((1, 2, 3)),
-            None,
-        )
-        assert rep == coord.CartesianRepresentation
-
-        rep = self.inst._resolve_representation_type(
-            coord.CartesianRepresentation,
-            None,
-        )
-        assert rep == coord.CartesianRepresentation
-
-        rep = self.inst._resolve_representation_type("cartesian", None)
-        assert rep == coord.CartesianRepresentation
-
-        # ----------------------
-        # rep is None, self rep is not
-
-        assert self.inst.representation_type is not None
-        rep = self.inst._resolve_representation_type(None, None)
-        assert rep == coord.SphericalRepresentation
-
-        # ----------------------
-        # rep is None, self rep is None, so it's c rep
-
-        old_rep = self.inst.representation_type
-        self.inst._representation_type = None
-        assert self.inst.representation_type is None
-
-        rep = self.inst._resolve_representation_type(None, self.c)
-        assert rep == coord.SphericalRepresentation
-        assert self.inst.representation_type is None
-
-        self.inst._representation_type = old_rep
-        assert self.inst.representation_type is old_rep
 
     # /def
 
@@ -540,13 +454,15 @@ class Test_MeasurementErrorSampler(
         # c_err = None
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(self.c, random=0)
+            tuple(self.inst.run(self.c, random=0))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # random
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(self.c, random=1)
+            tuple(self.inst.run(self.c, random=1))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # len(c.shape) == 1
@@ -554,49 +470,52 @@ class Test_MeasurementErrorSampler(
         assert len(self.c.shape) == 1
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(self.c, self.c_err, random=0)
+            tuple(self.inst.run(self.c, self.c_err, random=0))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # 2D array, SkyCoord, nerriter = 1
 
-        c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
+        c = concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(c, c_err=self.c_err, random=0)
+            tuple(self.inst.run(c, c_err=self.c_err, random=0))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # 2D array, SkyCoord, nerriter != niter
 
-        c_err = coord.concatenate(
+        c_err = concatenate(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.run(c, c_err)
+            tuple(self.inst.run(c, c_err))
+            # the tuple is for ``_run_iter`` version
 
         assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
 
-        c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
-            len(self.c),
-            -1,
-        )
+        c_err = concatenate([self.c_err, self.c_err]).reshape(len(self.c), -1)
         with pytest.raises(NotImplementedError):
-            self.inst.run(c, c_err=c_err, random=0)
+            tuple(self.inst.run(c, c_err=c_err, random=0))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(c, c_err=1 * u.percent, random=0)
+            tuple(self.inst.run(c, c_err=1 * u.percent, random=0))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # 2D array, other
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(self.c, NotImplementedError())
+            tuple(self.inst.run(self.c, NotImplementedError()))
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # in different frame
@@ -604,12 +523,15 @@ class Test_MeasurementErrorSampler(
         assert self.inst.frame != coord.Galactic()
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(
-                c,
-                c_err=10 * u.percent,
-                random=0,
-                frame=coord.Galactic(),
+            tuple(
+                self.inst.run(
+                    c,
+                    c_err=10 * u.percent,
+                    random=0,
+                    frame=coord.Galactic(),
+                ),
             )
+            # the tuple is for ``_run_iter`` version
 
         # ---------------
         # & in different representation
@@ -618,13 +540,16 @@ class Test_MeasurementErrorSampler(
         assert self.inst.representation_type != coord.CylindricalRepresentation
 
         with pytest.raises(NotImplementedError):
-            self.inst.run(
-                c,
-                c_err=10 * u.percent,
-                random=0,
-                frame=coord.Galactic(),
-                representation_type=coord.CylindricalRepresentation,
+            tuple(
+                self.inst.run(
+                    c,
+                    c_err=10 * u.percent,
+                    random=0,
+                    frame=coord.Galactic(),
+                    representation_type=coord.CylindricalRepresentation,
+                ),
             )
+            # the tuple is for ``_run_iter`` version
 
     # /def
 
@@ -781,7 +706,12 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # with method specified
 
         method, klass = tuple(self.obj.registry.items())[-1]
-        msamp = self.obj(rvs=self.rvs, c_err=self.c_err, method=method)
+        msamp = self.obj(
+            rvs=self.rvs,
+            c_err=self.c_err,
+            method=method,
+            representation_type="cartesian",
+        )
 
         # test class type
         assert isinstance(msamp, klass)
@@ -809,7 +739,12 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # --------------------------
         # default
 
-        self.obj(rvs=self.rvs, c_err=self.c_err, method="Gaussian")
+        self.obj(
+            rvs=self.rvs,
+            c_err=self.c_err,
+            method="Gaussian",
+            representation_type="cartesian",
+        )
 
         # --------------------------
         # explicitly None
@@ -819,10 +754,10 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
             c_err=self.c_err,
             method="Gaussian",
             frame=None,
-            representation_type=None,
+            representation_type="cartesian",
         )
-        assert obj.frame is None
-        assert obj.representation_type is None
+        assert isinstance(obj.frame, UnFrame)
+        assert obj.representation_type is coord.CartesianRepresentation
         assert "method" not in obj.params
 
         # --------------------------
@@ -865,15 +800,17 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
     # --------------------------------------------------------------
 
-    def test___call__(self):
+    @pytest.mark.parametrize("random", [0, "RandomState(0)"])
+    @pytest.mark.parametrize(
+        "c_err",
+        [
+            "self.c_err",
+            "self.c_err.frame",  # BaseCoordinateFrame, not SkyCoord
+            "self.c_err.represent_as(coord.SphericalRepresentation)",
+        ],
+    )
+    def test___call__set_random(self, c_err, random):
         """Test method ``__call__``."""
-        # --------------------------
-        # just "c", cannot predict "random"
-
-        res = self.inst(self.c)
-        assert res.frame.__class__ == self.c.frame.__class__  # same class
-
-        # --------------------------
         # test "random" by setting the seed
         # doing this here b/c want to control random for all the rest.
 
@@ -881,44 +818,22 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         expected_dec = [2.08003144, 3.5602674]
         expected_dist = [1.97873798, 0.02272212]
 
-        res = self.inst(self.c, random=0)
-        assert np.allclose(res.ra.deg, expected_ra)
-        assert np.allclose(res.dec.deg, expected_dec)
-        assert np.allclose(res.distance, expected_dist)
-
-        res = self.inst(self.c, random=np.random.RandomState(0))
-        assert np.allclose(res.ra.deg, expected_ra)
-        assert np.allclose(res.dec.deg, expected_dec)
-        assert np.allclose(res.distance, expected_dist)
-
-        # --------------------------
-        # "c" and "c_err" | random
-
-        res = self.inst(self.c, self.c_err, random=0)
-        assert np.allclose(res.ra.deg, expected_ra)
-        assert np.allclose(res.dec.deg, expected_dec)
-        assert np.allclose(res.distance, expected_dist)
-
-        # --------------------------
-        # "c" and "c_err", c_err is BaseCoordinateFrame, not SkyCoord | random
-
-        res = self.inst(self.c, self.c_err.frame, random=0)
-        assert np.allclose(res.ra.deg, expected_ra)
-        assert np.allclose(res.dec.deg, expected_dec)
-        assert np.allclose(res.distance, expected_dist)
-
-        # --------------------------
-        # "c" and "c_err", c_err is BaseRepresentation | random
-
-        res = self.inst(
-            self.c,
-            self.c_err.represent_as(coord.SphericalRepresentation),
-            random=0,
+        random = (
+            np.random.RandomState(0) if random == "RandomState(0)" else random
         )
 
+        res = self.inst(self.c, c_err=eval(c_err), random=random)  # TODO!
         assert np.allclose(res.ra.deg, expected_ra)
         assert np.allclose(res.dec.deg, expected_dec)
         assert np.allclose(res.distance, expected_dist)
+
+    def test___call__(self):
+        """Test method ``__call__``."""
+        # --------------------------
+        # just "c", cannot predict "random"
+
+        res = self.inst(self.c)
+        assert res.frame.__class__ == self.c.frame.__class__  # same class
 
         # --------------------------
         # "c" and c_err, c_err is scalar | random
@@ -944,6 +859,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # :fun:`~discO.core.measurement.xpercenterror_factory`
 
         xpercenterror = measurement.xpercenterror_factory(10 * u.percent)
+        expected_ra = [1.17640523, 2.44817864]
+        expected_dec = [2.08003144, 3.5602674]
         expected_dist = [1.0978738, 0.90227221]
 
         res = self.inst(self.c, xpercenterror, random=0)
@@ -972,40 +889,6 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
             self.inst(self.c, c_err=Exception(), random=0)
 
-        # --------------------------
-        # frame | random
-
-        assert self.inst.frame != coord.Galactic()
-
-        obj = self.inst(
-            self.c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-        )
-
-        assert np.allclose(obj.ra.deg, [9.67618154, 14.27986628])
-        assert np.allclose(obj.dec.deg, [6.3699466, 15.59857155])
-        assert np.allclose(obj.distance, [1.0978738, 0.90227221])
-
-        # --------------------------
-        # representation | random
-
-        assert self.inst.frame != coord.Galactic()
-        assert self.inst.representation_type != coord.CylindricalRepresentation
-
-        obj = self.inst(
-            self.c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-            representation_type=coord.CylindricalRepresentation,
-        )
-
-        assert np.allclose(obj.ra.deg, [0.84276637, 11.82694641])
-        assert np.allclose(obj.dec.deg, [9.45992248, 7.61985032])
-        assert np.allclose(obj.distance, [0.98367447, 1.13442758])
-
     # /def
 
     # --------------------------------------------------------------
@@ -1032,7 +915,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # c_err = None
 
-        res = self.inst.run(self.c, random=0)
+        res = self.inst.run(self.c, random=0, batch=True)
+        res = np.array(res) if isinstance(res, Generator) else res
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1041,7 +925,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # random
 
-        res2 = self.inst.run(self.c, random=1)
+        res2 = self.inst.run(self.c, random=1, batch=True)
         for c in res2.representation_component_names.keys():
             assert not np.allclose(getattr(res, c), getattr(res2, c))
         assert np.allclose(res2.ra.value, np.array([1.16243454, 181.78540628]))
@@ -1053,7 +937,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
 
         assert len(self.c.shape) == 1
 
-        res = self.inst.run(self.c, self.c_err, random=0)
+        res = self.inst.run(self.c, self.c_err, random=0, batch=True)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1062,114 +946,70 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # 2D array, SkyCoord, nerriter = 1
 
-        c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
+        c = concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
-        res = self.inst.run(c, c_err=self.c_err, random=0)
+        res = self.inst.run(c, c_err=self.c_err, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.17640523, 1.44817864], [2.17640523, 2.44817864]]),
+            np.array([[1.17640523, 1.44817864], [2.09500884, 2.0821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.08003144, 2.5602674], [3.08003144, 3.5602674]]),
+            np.array([[2.08003144, 2.5602674], [2.96972856, 3.04321307]]),
         )
 
         # ---------------
         # 2D array, SkyCoord, nerriter != niter
 
-        c_err = coord.concatenate(
+        c_err = concatenate(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.run(c, c_err)
+            self.inst.run(c, c_err, batch=True)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
 
-        c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
+        c_err = concatenate([self.c_err, self.c_err]).reshape(
             len(self.c),
             -1,
         )
-        res = self.inst.run(c, c_err=c_err, random=0)
+        res = self.inst.run(c, c_err=c_err, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.17640523, 1.22408932], [2.35281047, 2.44817864]]),
+            np.array([[1.17640523, 1.22408932], [2.19001768, 2.0821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.08003144, 2.3735116], [3.12004716, 3.5602674]]),
+            np.array([[2.08003144, 2.3735116], [2.95459284, 3.04321307]]),
         )
 
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
-        res = self.inst.run(c, c_err=1 * u.percent, random=0)
+        res = self.inst.run(c, c_err=1 * u.percent, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.01764052, 1.02240893], [2.03528105, 2.04481786]]),
+            np.array([[1.01764052, 1.02240893], [2.01900177, 2.00821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.00800314, 2.03735116], [3.01200472, 3.05602674]]),
+            np.array([[2.00800314, 2.03735116], [2.99545928, 3.00432131]]),
         )
 
         # ---------------
         # 2D array, other
 
         with pytest.raises(NotImplementedError) as e:
-            self.inst.run(self.c, NotImplementedError())
+            self.inst.run(self.c, NotImplementedError(), batch=True)
 
         assert "not yet supported." in str(e.value)
-
-        # ---------------
-        # in different frame
-
-        assert self.inst.frame != coord.Galactic()
-
-        res = self.inst.run(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-        )
-        assert res.shape == c.shape
-        assert np.allclose(
-            res.ra.value,
-            np.array([[9.67618154, 12.18642941], [11.24387323, 14.27986628]]),
-        )
-        assert np.allclose(
-            res.dec.value,
-            np.array([[6.3699466, 15.1213791], [7.05916298, 15.59857155]]),
-        )
-
-        # ---------------
-        # & in different representation
-
-        assert self.inst.frame != coord.Galactic()
-        assert self.inst.representation_type != coord.CylindricalRepresentation
-
-        res = self.inst.run(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-            representation_type=coord.CylindricalRepresentation,
-        )
-        assert res.shape == c.shape
-        assert np.allclose(
-            res.ra.value,
-            np.array([[0.84276637, 10.213238], [2.19911031, 11.82694641]]),
-        )
-        assert np.allclose(
-            res.dec.value,
-            np.array([[9.45992248, 6.90248339], [10.54173458, 7.61985032]]),
-        )
 
     # /def
 
@@ -1203,7 +1043,12 @@ class Test_GaussianMeasurementError(
         # ---------------
         # AOK
 
-        msamp = self.obj(rvs=self.rvs, c_err=self.c_err, method=None)
+        msamp = self.obj(
+            rvs=self.rvs,
+            c_err=self.c_err,
+            method=None,
+            representation_type="cartesian",
+        )
 
         assert self.obj is not measurement.MeasurementErrorSampler
         assert isinstance(msamp, self.obj)
@@ -1219,7 +1064,9 @@ class Test_GaussianMeasurementError(
         # --------------------------
         # default
 
-        self.obj(rvs=self.rvs, c_err=self.c_err)
+        self.obj(
+            rvs=self.rvs, c_err=self.c_err, representation_type="cartesian"
+        )
 
         # --------------------------
         # explicitly None
@@ -1228,10 +1075,10 @@ class Test_GaussianMeasurementError(
             rvs=self.rvs,
             c_err=self.c_err,
             frame=None,
-            representation_type=None,
+            representation_type="cartesian",
         )
-        assert obj.frame is None
-        assert obj.representation_type is None
+        assert isinstance(obj.frame, UnFrame)
+        assert obj.representation_type is coord.CartesianRepresentation
         assert "method" not in obj.params
 
         # --------------------------
@@ -1260,14 +1107,6 @@ class Test_GaussianMeasurementError(
             ), rep_type
             assert "method" not in obj.params
 
-        # --------------------------
-        # not normal
-
-        with pytest.raises(ValueError) as e:
-            self.obj(rvs=scipy.stats.alpha)
-
-        assert "rvs must be a Normal type." in str(e.value)
-
     # /def
 
     # --------------------------------------------------------------
@@ -1291,7 +1130,7 @@ class Test_GaussianMeasurementError(
         # ---------------
         # c_err = None
 
-        res = self.inst.run(self.c, random=0)
+        res = self.inst.run(self.c, random=0, batch=True)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1300,7 +1139,7 @@ class Test_GaussianMeasurementError(
         # ---------------
         # random
 
-        res2 = self.inst.run(self.c, random=1)
+        res2 = self.inst.run(self.c, random=1, batch=True)
         for c in res2.representation_component_names.keys():
             assert not np.allclose(getattr(res, c), getattr(res2, c))
         assert np.allclose(res2.ra.value, np.array([1.16243454, 181.78540628]))
@@ -1312,7 +1151,7 @@ class Test_GaussianMeasurementError(
 
         assert len(self.c.shape) == 1
 
-        res = self.inst.run(self.c, self.c_err, random=0)
+        res = self.inst.run(self.c, self.c_err, random=0, batch=True)
         assert res.shape == self.c.shape
         assert np.allclose(res.ra.value, np.array([1.17640523, 2.44817864]))
         assert np.allclose(res.dec.value, np.array([2.08003144, 3.5602674]))
@@ -1321,114 +1160,70 @@ class Test_GaussianMeasurementError(
         # ---------------
         # 2D array, SkyCoord, nerriter = 1
 
-        c = coord.concatenate([self.c, self.c]).reshape(len(self.c), -1)
+        c = concatenate([self.c, self.c]).reshape(len(self.c), -1)
 
-        res = self.inst.run(c, c_err=self.c_err, random=0)
+        res = self.inst.run(c, c_err=self.c_err, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.17640523, 1.44817864], [2.17640523, 2.44817864]]),
+            np.array([[1.17640523, 1.44817864], [2.09500884, 2.0821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.08003144, 2.5602674], [3.08003144, 3.5602674]]),
+            np.array([[2.08003144, 2.5602674], [2.96972856, 3.04321307]]),
         )
 
         # ---------------
         # 2D array, SkyCoord, nerriter != niter
 
-        c_err = coord.concatenate(
+        c_err = concatenate(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
         with pytest.raises(ValueError) as e:
-            self.inst.run(c, c_err)
+            self.inst.run(c, c_err, batch=True)
 
         assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
 
-        c_err = coord.concatenate([self.c_err, self.c_err]).reshape(
+        c_err = concatenate([self.c_err, self.c_err]).reshape(
             len(self.c),
             -1,
         )
-        res = self.inst.run(c, c_err=c_err, random=0)
+        res = self.inst.run(c, c_err=c_err, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.17640523, 1.22408932], [2.35281047, 2.44817864]]),
+            np.array([[1.17640523, 1.22408932], [2.19001768, 2.0821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.08003144, 2.3735116], [3.12004716, 3.5602674]]),
+            np.array([[2.08003144, 2.3735116], [2.95459284, 3.04321307]]),
         )
 
         # ---------------
         # 2D array, (Mapping, scalar, callable, %-unit)
 
-        res = self.inst.run(c, c_err=1 * u.percent, random=0)
+        res = self.inst.run(c, c_err=1 * u.percent, random=0, batch=True)
         assert res.shape == c.shape
         assert np.allclose(
             res.ra.value,
-            np.array([[1.01764052, 1.02240893], [2.03528105, 2.04481786]]),
+            np.array([[1.01764052, 1.02240893], [2.01900177, 2.00821197]]),
         )
         assert np.allclose(
             res.dec.value,
-            np.array([[2.00800314, 2.03735116], [3.01200472, 3.05602674]]),
+            np.array([[2.00800314, 2.03735116], [2.99545928, 3.00432131]]),
         )
 
         # ---------------
         # 2D array, other
 
         with pytest.raises(NotImplementedError) as e:
-            self.inst.run(self.c, NotImplementedError())
+            self.inst.run(self.c, NotImplementedError(), batch=True)
 
         assert "not yet supported." in str(e.value)
-
-        # ---------------
-        # in different frame
-
-        assert self.inst.frame != coord.Galactic()
-
-        res = self.inst.run(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-        )
-        assert res.shape == c.shape
-        assert np.allclose(
-            res.ra.value,
-            np.array([[9.67618154, 12.18642941], [11.24387323, 14.27986628]]),
-        )
-        assert np.allclose(
-            res.dec.value,
-            np.array([[6.3699466, 15.1213791], [7.05916298, 15.59857155]]),
-        )
-
-        # ---------------
-        # & in different representation
-
-        assert self.inst.frame != coord.Galactic()
-        assert self.inst.representation_type != coord.CylindricalRepresentation
-
-        res = self.inst.run(
-            c,
-            c_err=10 * u.percent,
-            random=0,
-            frame=coord.Galactic(),
-            representation_type=coord.CylindricalRepresentation,
-        )
-        assert res.shape == c.shape
-        assert np.allclose(
-            res.ra.value,
-            np.array([[0.84276637, 10.213238], [2.19911031, 11.82694641]]),
-        )
-        assert np.allclose(
-            res.dec.value,
-            np.array([[9.45992248, 6.90248339], [10.54173458, 7.61985032]]),
-        )
 
     # /def
 

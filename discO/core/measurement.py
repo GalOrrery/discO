@@ -4,7 +4,7 @@
 
 Registering a Measurement Sampler
 *********************************
-a
+TODO
 
 
 """
@@ -239,9 +239,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         c : :class:`~astropy.coordinates.SkyCoord` instance
         c_err : coord-like or callable or |Quantity| or None (optional)
 
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
         representation_type: |Representation| or None (optional, keyword-only)
             The coordinate representation in which to resample along each
             dimension.
@@ -286,14 +283,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         ----------
         c : :class:`~astropy.coordinates.SkyCoord` instance
         c_err : :class:`~astropy.coordinates.SkyCoord` instance
-
-        frame: frame-like or None (optional, keyword-only)
-           The frame of the observational errors, ie the frame in which
-            the error function should be applied along each dimension.
-        representation_type: |Representation| or None (optional, keyword-only)
-            The coordinate representation in which to resample along each
-            dimension.
-
         **kwargs
             passed to ``__call__``
 
@@ -306,6 +295,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         random : `~numpy.random.RandomState` or int (optional, keyword-only)
             The random number generator or generator seed.
             Unfortunately, scipy does not yet support `~numpy.random.Generator`
+        progress : bool (optional, keyword-only)
+            Whether to show a progress bar
 
         Notes
         -----
@@ -323,7 +314,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         # TODO! fold this into the "with_progress bar" bit
         # depends on the shape of "c": (Nsamples,) or (Nsamples, Niter)?
         if not iterations:  # only (Nsamples, )
-
             # TODO validate c_err shape etc.
             yield self(
                 c,
@@ -332,7 +322,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
                 **kwargs,
             )
 
-        # else:  # (Nsamples, Niter)
+            return  # prevent going to next thing
 
         iterations = iterations[0]  # TODO! check shape
         c_errs = self._distribute_c_err(c_err, iterations)
@@ -809,10 +799,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         # ----------------
         # Setup
 
-        # pop from params, and set as RandomState
-        # see 'RandomState' docs for details
-        _random = self.params.pop("random", None)
-        random = _random if random is None else random
+        # set as RandomState. see 'RandomState' docs for details
         if not isinstance(random, np.random.RandomState):
             random = np.random.RandomState(random)
 
@@ -924,6 +911,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         method: T.Optional[str] = None,
         **kwargs,
     ):
+        kwargs.pop("rvs", None)  # clear so no duplicate args
         return super().__new__(
             cls,
             rvs=scipy.stats.norm,
@@ -942,6 +930,7 @@ class GaussianMeasurementError(RVS_Continuous, method="Gaussian"):
         frame: TH.OptFrameLikeType = None,
         **params,
     ) -> None:
+        params.pop("rvs", None)  # clear so no duplicate args
         super().__init__(
             rvs=scipy.stats.norm,
             c_err=c_err,

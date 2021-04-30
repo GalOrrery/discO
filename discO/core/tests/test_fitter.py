@@ -12,6 +12,7 @@ __all__ = [
 
 # BUILT-IN
 from abc import abstractmethod
+from collections.abc import Generator
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -121,7 +122,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
         # make instance. It depends.
         if cls.obj is fitter.PotentialFitter:
-            cls.inst = cls.obj(cls.potential, key="unittest")
+            cls.inst = cls.obj(cls.potential, key="unittest", frame="icrs")
 
     # /def
 
@@ -321,6 +322,14 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # -------------------------------
 
+    def test_representation_type(self):
+        """Test property ``representation_type``."""
+        assert self.inst.representation_type is self.inst._representation_type
+
+    # /def
+
+    # -------------------------------
+
     def test_potential_kwargs(self):
         """Test attribute ``potential_kwargs``."""
         if hasattr(self.inst, "_instance"):
@@ -368,18 +377,24 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
     # /def
 
     # -------------------------------
-
     # TODO! with hypothesis
+
+    @pytest.mark.parametrize("batch", [False, True])
+    @pytest.mark.parametrize("mass", [None, 1e12 * u.solMass])
     @pytest.mark.parametrize("sample", [crd, multicrd])
-    def test_run(self, sample):
+    def test_run(self, sample, mass, batch):
         """Test method ``run``."""
         # for test need to assign correct potential type
         sample.potential = self.potential
 
-        pots = self.inst.run(sample)
+        pots = self.inst.run(sample, batch=batch)
+
+        if not batch:
+            assert isinstance(pots, Generator)
+            pots = np.array(tuple(pots))
 
         if len(sample.shape) == 1:
-            assert isinstance(pots.__wrapped__, sample.potential)
+            assert isinstance(pots[0].__wrapped__, sample.potential)
 
         else:
             assert isinstance(pots, np.ndarray)

@@ -160,10 +160,11 @@ class Test_Pipeline(object):
         # sampling a potential that lives in a galactocentric frame
         # and enforcing a Cartesian representation
         cls.sampler = PotentialSampler(
-            object(),  # TODO!
+            PotentialWrapper(object(), frame="galactocentric"),
             key="unittest",
             frame="galactocentric",
             representation_type="cartesian",
+            total_mass=10*u.solMass, 
         )
         # but when we measure, it's 1% errors in icrs, Spherical
         cls.measurer = MeasurementErrorSampler(
@@ -264,18 +265,6 @@ class Test_Pipeline(object):
             )
 
         assert "Can't set `statistic` without `residualer`" in str(e.value)
-
-    # /def
-
-    def test_frame(self):
-        """Test property ``frame``."""
-        assert self.inst.frame is self.inst._frame
-
-    # /def
-
-    def test_representation_type(self):
-        """Test property ``representation_type``."""
-        assert self.inst.representation_type is self.inst._representation_type
 
     # /def
 
