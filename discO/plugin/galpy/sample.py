@@ -129,7 +129,11 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         # can't pass a random seed, set in context
         with self._random_context(random):
             orbits = self._df.sample(
-                R=None, z=None, phi=None, n=n, return_orbit=True,
+                R=None,
+                z=None,
+                phi=None,
+                n=n,
+                return_orbit=True,
             )
 
         t = orbits.time()

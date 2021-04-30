@@ -164,7 +164,7 @@ class Test_Pipeline(object):
             key="unittest",
             frame="galactocentric",
             representation_type="cartesian",
-            total_mass=10*u.solMass, 
+            total_mass=10 * u.solMass,
         )
         # but when we measure, it's 1% errors in icrs, Spherical
         cls.measurer = MeasurementErrorSampler(
@@ -413,7 +413,7 @@ class Test_PipelineResult(object):
         cls.pipe = pipeline.Pipeline(object())
         cls.inst = pipeline.PipelineResult(
             cls.pipe,
-            samples=1,
+            sample=1,
             measured="2",
             fit=[3, 3.0],
             residual=object(),

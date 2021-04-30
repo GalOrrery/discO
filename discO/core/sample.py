@@ -189,19 +189,17 @@ class PotentialSampler(CommonBase):
 
         # check that the mass is not divergent.
         # and that the argument total_mass is correct
-        mtot = potential.total_mass()
-        if not np.isfinite(mtot):
+        mtot = potential.total_mass() if total_mass is None else total_mass
+        if not np.isfinite(mtot):  # divergent
             raise ValueError(
                 "The potential`s mass is divergent, "
                 "the argument `total_mass` cannot be None.",
             )
-        elif total_mass is not None:  # mass is not divergent.
+        if total_mass is not None and mtot != total_mass:
             raise ValueError(
                 "The potential`s mass is not divergent, "
                 "the argument `total_mass` must be None.",
             )
-        else:  # not divergent and total_mass is None
-            total_mass = mtot
 
         # potential is checked in __new__ as a PotentialWrapper
         # we wrap again here to override the representation_type
