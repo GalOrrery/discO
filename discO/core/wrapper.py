@@ -540,6 +540,54 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
     # -----------------------------------------------------
 
     @sharedmethod
+    def density(
+        self,
+        points: TH.PositionType,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs,
+    ) -> T.Tuple[TH.CoordinateType, TH.QuantityType]:
+        """Evaluate the density in the `potential`-density pair.
+
+        Parameters
+        ----------
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the density.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+            None means no representation is forced.
+        **kwargs
+            Arguments into the potential.
+
+        Returns
+        -------
+        points : |CoordinateFrame| or |SkyCoord|
+        values : |Quantity|
+
+        """
+        # if representation type is None, use default
+        representation_type = (
+            self.representation_type
+            if representation_type is None
+            else representation_type
+        )
+
+        return self.__class__.density(
+            self.__wrapped__,  # potential
+            points=points,
+            frame=self.frame,
+            representation_type=representation_type,
+            **kwargs,
+        )
+
+    # /def
+
+    # -----------------------------------------------------
+
+    @sharedmethod
     def potential(
         self,
         points: TH.PositionType,
