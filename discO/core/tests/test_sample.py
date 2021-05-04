@@ -229,7 +229,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
                 msamp = self.obj(
-                    PotentialWrapper(potential, total_mass=10*u.solMass),
+                    PotentialWrapper(potential),
+                    total_mass=10*u.solMass,
                     key=key
                 )
             else:
