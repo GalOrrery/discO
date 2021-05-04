@@ -18,7 +18,7 @@ import pytest
 from discO.core.tests.test_sample import (
     Test_PotentialSampler as PotentialSamplerTester,
 )
-from discO.plugin.agama import sample
+from discO.plugin.agama import AGAMAPotentialWrapper, sample
 
 ##############################################################################
 # TESTS
@@ -45,7 +45,7 @@ class Test_AGAMAPotentialSampler(
             cutoffStrength=0,
         )
 
-        cls.inst = cls.obj(cls.potential)
+        cls.inst = cls.obj(AGAMAPotentialWrapper(cls.potential))
 
     # /def
 

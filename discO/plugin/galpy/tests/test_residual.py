@@ -155,6 +155,7 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
             original_potential=None,
             observable=None,
             representation_type=None,
+            batch=True,
             **self.kwargs
         )
 
@@ -173,6 +174,7 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
             original_potential=self.original_potential,
             observable=self.observable,
             representation_type="spherical",
+            batch=True,
         )
 
         assert isinstance(resid, vectorfield.SphericalVectorField)

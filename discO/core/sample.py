@@ -208,7 +208,7 @@ class PotentialSampler(CommonBase):
             representation_type=representation_type,
         )
 
-        self._total_mass: T.Optional[TH.QuantityType] = total_mass
+        self._total_mass: T.Optional[TH.QuantityType] = mtot
 
         # keep the kwargs
         self._defaults: dict = defaults

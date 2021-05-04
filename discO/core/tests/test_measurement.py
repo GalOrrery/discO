@@ -1065,7 +1065,9 @@ class Test_GaussianMeasurementError(
         # default
 
         self.obj(
-            rvs=self.rvs, c_err=self.c_err, representation_type="cartesian"
+            rvs=self.rvs,
+            c_err=self.c_err,
+            representation_type="cartesian",
         )
 
         # --------------------------

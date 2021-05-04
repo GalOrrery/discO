@@ -20,7 +20,7 @@ from galpy.potential import HernquistPotential
 
 # PROJECT-SPECIFIC
 from discO.core.tests.test_sample import Test_PotentialSampler
-from discO.plugin.galpy import sample
+from discO.plugin.galpy import GalpyPotentialWrapper, sample
 
 ##############################################################################
 # TESTS
@@ -46,7 +46,7 @@ class Test_GalpyPotentialSampler(
         cls.df = isotropicHernquistdf(hernquist_pot)
         cls.df.turn_physical_on()
 
-        cls.inst = cls.obj(cls.df)
+        cls.inst = cls.obj(GalpyPotentialWrapper(cls.potential))
 
     # /def
 
@@ -122,7 +122,7 @@ class Test_GalpyPotentialSampler(
     )
     def test_run(self, n, frame, kwargs):
         """Test method ``run``."""
-        res = self.inst.run(n, frame=frame, **kwargs)
+        res = self.inst.run(n, frame=frame, batch=True, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
         assert res.potential.__wrapped__ == self.potential
