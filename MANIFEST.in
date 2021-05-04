@@ -11,6 +11,7 @@ include *.yml
 recursive-include discO *.py *.pyx *.c *.pxd *.cfg *.galpyrc
 recursive-include docs *
 recursive-include licenses *
+recursive-include notebooks *.ipynb
 recursive-include scripts *
 
 exclude discO/version.py
