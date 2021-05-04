@@ -228,13 +228,18 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             except KeyError:
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
-                msamp = self.obj(PotentialWrapper(potential), key=key)
+                msamp = self.obj(
+                    PotentialWrapper(potential, total_mass=10*u.solMass),
+                    key=key
+                )
             else:
                 msamp = self.obj(
-                    PotentialWrapper(self.potential),
-                    key=key,
-                    df=TestDF,
+                    PotentialWrapper(
+                        self.potential,
+                    ),
                     total_mass=10 * u.solMass,
+                    df=TestDF,
+                    key=key,
                 )
 
             # test class type
