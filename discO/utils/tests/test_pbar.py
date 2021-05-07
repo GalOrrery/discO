@@ -21,7 +21,6 @@ import pytest
 from discO.setup_package import HAS_TQDM
 from discO.utils import pbar
 
-
 ##############################################################################
 # PARAMETERS
 
@@ -44,7 +43,7 @@ class Test__NoOpProgressBar:
             assert pb is obj
 
     # /def
-    
+
     def test_update(self):
         """Test method ``update``."""
         obj = pbar._NoOpProgressBar()
@@ -59,21 +58,22 @@ class Test__NoOpProgressBar:
 # -------------------------------------------------------------------
 
 
-class Test_get_progress_bar():
+class Test_get_progress_bar:
     """Test :func:`~discO.utils.pbar.get_progress_bar`."""
 
     def test_noop(self):
         pb = pbar.get_progress_bar(display=False, total=2)
-        assert isinstance(pb, _NoOpProgressBar)
+        assert isinstance(pb, pbar._NoOpProgressBar)
 
     @pytest.mark.skipif(HAS_TQDM, reason="only if not has `tqdm`")
-    def test_noop(self, caplog):
+    def test_op_no_tqdm(self, caplog):
         pb = pbar.get_progress_bar(display=True, total=2)
-        assert isinstance(pb, _NoOpProgressBar)
+        assert isinstance(pb, pbar._NoOpProgressBar)
         assert "Install the tqdm library" in caplog.text
 
     @pytest.mark.skipif(not HAS_TQDM, reason="only if has `tqdm`")
-    def test_op(self):
+    def test_op_tqdm(self):
+        # THIRD PARTY
         import tqdm
 
         pb = pbar.get_progress_bar(display=True, total=2)

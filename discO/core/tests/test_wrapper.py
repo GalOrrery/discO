@@ -360,7 +360,7 @@ class Test_PotentialWrapper(ObjectTest, obj=wrapper.PotentialWrapper):
         assert isinstance(obj.frame, coord.Galactocentric)
 
     # /def
-    
+
     def test_default_representation(self):
         """Test method ``default_representation``."""
         obj = self.obj(self.potential, frame="galactocentric")

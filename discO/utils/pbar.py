@@ -58,7 +58,9 @@ def get_progress_bar(display, total):
     """
     if display:
         if not HAS_TQDM:
-            logging.warning("Install the tqdm library to use the progress bar.")
+            logging.warning(
+                "Install the tqdm library to use the progress bar.",
+            )
             return _NoOpProgressBar()
         else:
             if display is True:

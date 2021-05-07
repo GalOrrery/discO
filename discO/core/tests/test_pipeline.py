@@ -32,13 +32,7 @@ def setup_module(module):
     """Setup fixtures for module."""
 
     class SubClassUnitTest(PotentialSampler, key="unittest"):
-        def __call__(
-            self,
-            n,
-            *,
-            random=None,
-            **kwargs
-        ):
+        def __call__(self, n, *, random=None, **kwargs):
             representation_type = self.representation_type  # can be None
             if random is None:
                 random = np.random
@@ -257,7 +251,7 @@ class Test_Pipeline(object):
             )
 
         assert "Can't set `statistic` without `residualer`" in str(e.value)
-        
+
     def test___init__frame_mismatch(self):
 
         fitter = PotentialFitter(
@@ -381,7 +375,7 @@ class Test_Pipeline(object):
         assert isinstance(res, pipeline.PipelineResult)
         assert isinstance(res[0], np.record)
         assert isinstance(res[1], np.record)
-        
+
         assert len(res.sample) == 2
         assert len(res.sample[0]) == 10
         assert len(res.measured) == 2
