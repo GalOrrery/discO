@@ -196,6 +196,11 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """
         # there are no tests on super
         # super().test___new__()
+        # Need the "potential" argument
+
+        # potential must be a PotentialWrapper
+        with pytest.raises(TypeError, match="must be a PotentialWrapper"):
+            self.obj(object)
 
         # --------------------------
         if self.obj is sample.PotentialSampler:
@@ -310,6 +315,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """Test method ``__init__``."""
         # run tests on super
         super().test___init__()
+
+        if self.obj is not sample.PotentialSampler:
+
+            with pytest.raises(ValueError, match="mass is divergent"):
+                self.obj(
+                    PotentialWrapper(self.potential),
+                    total_mass=np.inf * u.solMass,
+                )
 
         # --------------------------
         pass  # for subclasses. The setup_class actually tests this for here.

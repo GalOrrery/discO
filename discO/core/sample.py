@@ -195,11 +195,11 @@ class PotentialSampler(CommonBase):
                 "The potential`s mass is divergent, "
                 "the argument `total_mass` cannot be None.",
             )
-        if total_mass is not None and mtot != total_mass:
-            raise ValueError(
-                "The potential`s mass is not divergent, "
-                "the argument `total_mass` must be None.",
-            )
+        # if total_mass is not None and mtot != total_mass:
+        #     raise ValueError(
+        #         "The potential`s mass is not divergent, "
+        #         "the argument `total_mass` must be None.",
+        #     )
 
         # potential is checked in __new__ as a PotentialWrapper
         # we wrap again here to override the representation_type
@@ -284,7 +284,7 @@ class PotentialSampler(CommonBase):
 
     def _run_iter(
         self,
-        n: T.Union[int, T.Sequence[int]] = 1,
+        n: int = 1,
         iterations: int = 1,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
@@ -350,7 +350,7 @@ class PotentialSampler(CommonBase):
 
     def _run_batch(
         self,
-        n: T.Union[int, T.Sequence[int]] = 1,
+        n: int = 1,
         iterations: int = 1,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
@@ -419,7 +419,7 @@ class PotentialSampler(CommonBase):
 
     def run(
         self,
-        n: T.Union[int, T.Sequence[int]] = 1,
+        n: int = 1,
         iterations: int = 1,
         *,
         representation_type: TH.OptRepresentationLikeType = None,
@@ -478,8 +478,6 @@ class PotentialSampler(CommonBase):
 
         if not iterations >= 1:
             raise ValueError("# of iterations not > 0.")
-        elif not isinstance(n, int):
-            raise TypeError
 
         return run_func(
             n=n,
