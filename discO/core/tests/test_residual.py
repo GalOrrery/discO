@@ -125,6 +125,22 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
 
     # /def
 
+    def test___new__(self):
+        """Test method ``__new__``."""
+        if self.obj is residual.ResidualMethod:
+            with pytest.raises(ValueError, match="has no registered"):
+                residual.ResidualMethod(method=None)
+
+            # doesn't fail
+            rm = residual.ResidualMethod(method="grid", grid=10)
+            assert isinstance(rm, residual.GridResidual)
+
+        else:
+            with pytest.raises(ValueError, match="only on ResidualMethod."):
+                self.obj(method="not in registry")
+
+    # /def
+
     @pytest.mark.parametrize(
         "representation_type, expected",
         [
@@ -249,6 +265,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             original_potential=None,
             observable=None,
             representation_type=None,
+            batch=True,
             **self.kwargs
         )
 
@@ -262,6 +279,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             original_potential=self.original_potential,
             observable=self.observable,
             representation_type="spherical",
+            batch=True,
         )
 
         assert resid == coord.SphericalRepresentation(0 * u.rad, 0 * u.rad, 0)

@@ -91,6 +91,12 @@ class NumpyRNGContext:
         deletes stored random state.
 
         """
+        # need to advance the random state by the same amount
+        # if it was a random state
+        if isinstance(self.seed, np.random.RandomState):
+            self.seed.set_state(np.random.get_state())
+
+        # reset global stat to starting value
         np.random.set_state(self.startstate)
 
         del self.seed

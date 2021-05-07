@@ -183,18 +183,23 @@ class Test_GalpySCFPotentialFitter(
         # -------------------
         # some errors
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(AttributeError) as e:
             self.inst(None, Nmax=0)
 
-        assert "Nmax & Lmax must be >0." in str(e.value)
+        assert "'NoneType' object has no attribute 'mass'" in str(e.value)
 
         with pytest.raises(ValueError) as e:
-            self.inst(None, Lmax=0)
+            self.inst(None, Nmax=-1, mass=1 * u.solMass)
 
-        assert "Nmax & Lmax must be >0." in str(e.value)
+        assert "Nmax & Lmax must be >=0." in str(e.value)
+
+        with pytest.raises(ValueError) as e:
+            self.inst(None, Lmax=-1, mass=1 * u.solMass)
+
+        assert "Nmax & Lmax must be >=0." in str(e.value)
 
         with pytest.raises(u.UnitsError) as e:
-            self.inst(None, scale_factor=2 * u.Hz)
+            self.inst(None, scale_factor=2 * u.Hz, mass=1 * u.solMass)
 
         assert (
             "scale factor must have units of length or be dimensionless"
@@ -202,7 +207,7 @@ class Test_GalpySCFPotentialFitter(
         )
 
         with pytest.raises(ValueError) as e:
-            self.inst(None, scale_factor=[1, 2] * u.km)
+            self.inst(None, scale_factor=[1, 2] * u.km, mass=1 * u.solMass)
 
         assert "scale factor must be a scalar." in str(e.value)
 

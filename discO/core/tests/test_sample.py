@@ -54,20 +54,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # register a unittest examples
         class SubClassUnitTest(cls.obj, key="unittest"):
-            def __call__(
-                self,
-                n,
-                *,
-                frame=None,
-                representation_type=None,
-                random=None,
-                **kwargs
-            ):
+            def __call__(self, n, *, random=None, **kwargs):
                 # Get preferred frames
-                frame = self._infer_frame(frame)
-                representation_type = self._infer_representation(
-                    representation_type,
-                )
+                frame = self.frame
+                representation_type = self.representation_type
 
                 if random is None:
                     random = np.random
@@ -99,7 +89,11 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # make instance. It depends.
         if cls.obj is sample.PotentialSampler:
-            cls.inst = cls.obj(cls.potential, key="unittest")
+            cls.inst = cls.obj(
+                PotentialWrapper(cls.potential),
+                key="unittest",
+                total_mass=10 * u.solMass,
+            )
 
     # /def
 
@@ -202,6 +196,11 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """
         # there are no tests on super
         # super().test___new__()
+        # Need the "potential" argument
+
+        # potential must be a PotentialWrapper
+        with pytest.raises(TypeError, match="must be a PotentialWrapper"):
+            self.obj(object)
 
         # --------------------------
         if self.obj is sample.PotentialSampler:
@@ -219,7 +218,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             # for object not in registry
 
             with pytest.raises(ValueError) as e:
-                self.obj(self.potential)
+                self.obj(PotentialWrapper(self.potential))
 
             assert (
                 "PotentialSampler has no registered sampler for key: builtins"
@@ -234,9 +233,20 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             except KeyError:
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
-                msamp = self.obj(potential, key=key)
+                msamp = self.obj(
+                    PotentialWrapper(potential),
+                    total_mass=10 * u.solMass,
+                    key=key,
+                )
             else:
-                msamp = self.obj(self.potential, key=key, df=TestDF)
+                msamp = self.obj(
+                    PotentialWrapper(
+                        self.potential,
+                    ),
+                    total_mass=10 * u.solMass,
+                    df=TestDF,
+                    key=key,
+                )
 
             # test class type
             assert isinstance(msamp, klass)
@@ -254,12 +264,17 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             except KeyError:
                 key, klass = tuple(self.obj._registry.items())[0]
                 potential = self.potential
-                msamp = self.obj(PotentialWrapper(potential), key=key)
+                msamp = self.obj(
+                    PotentialWrapper(potential),
+                    total_mass=10 * u.solMass,
+                    key=key,
+                )
             else:
                 msamp = self.obj(
                     PotentialWrapper(self.potential),
                     key=key,
                     df=TestDF,
+                    total_mass=10 * u.solMass,
                 )
 
             # test class type
@@ -276,14 +291,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             # Can't have the "key" argument
 
             with pytest.raises(ValueError) as e:
-                self.obj(self.potential, key="not None")
+                self.obj(PotentialWrapper(self.potential), key="not None")
 
             assert "Can't specify 'key'" in str(e.value)
 
             # ---------------
             # AOK
 
-            msamp = self.obj(self.potential, frame="icrs")
+            msamp = self.obj(PotentialWrapper(self.potential, frame="icrs"))
 
             assert self.obj is not sample.PotentialSampler
             assert isinstance(msamp, self.obj)
@@ -300,6 +315,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """Test method ``__init__``."""
         # run tests on super
         super().test___init__()
+
+        if self.obj is not sample.PotentialSampler:
+
+            with pytest.raises(ValueError, match="mass is divergent"):
+                self.obj(
+                    PotentialWrapper(self.potential),
+                    total_mass=np.inf * u.solMass,
+                )
 
         # --------------------------
         pass  # for subclasses. The setup_class actually tests this for here.
@@ -375,27 +398,22 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     # -------------------------------
 
     @pytest.mark.parametrize(
-        "n, niter, frame, representation, random, kwargs",
+        "n, niter, random, kwargs",
         [
-            (2, 1, None, None, None, {}),  # basic
-            (2, 1, "FK5", None, None, {}),  # specifying frame
-            (2, 1, None, None, None, {}),  # sample axis
-            (2, 1, None, None, np.random.default_rng(0), {}),  # random
-            (2, 1, None, None, None, dict(a=1, b=2)),  # adding kwargs
-            (2, 10, None, None, None, {}),  # larger niters
-            ((1, 2), 1, None, None, None, {}),  # array of n
-            ((1, 2), 2, None, None, None, {}),  # niters and array of n
+            (2, 1, None, {}),  # basic
+            (2, 1, None, {}),  # specifying frame
+            (2, 1, None, {}),  # sample axis
+            (2, 1, np.random.RandomState(0), {}),  # random
+            (2, 1, None, dict(a=1, b=2)),  # adding kwargs
+            (2, 10, None, {}),  # larger niters
+            # ((1, 2), 1, None, {}),  # array of n
+            # ((1, 2), 2, None, {}),  # niters and array of n
         ],
     )
-    def test_run(self, n, niter, frame, representation, random, kwargs):
+    def test_run(self, n, niter, random, kwargs):
         """Test method ``run``."""
         samples = self.inst.run(
-            n=n,
-            niter=niter,
-            frame=frame,
-            representation_type=representation,
-            random=random,
-            **kwargs
+            n=n, iterations=niter, random=random, batch=True, **kwargs
         )
         if isinstance(samples, np.ndarray):
             for s, n_ in zip(samples, n):
@@ -415,24 +433,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         """Test method ``run`` raises error."""
         with pytest.raises(ValueError):
             self.inst.run(10, 0)
-
-    # /def
-
-    # -------------------------------
-
-    def test__infer_frame(self):
-        """Test method ``_infer_frame``."""
-        # None -> own frame
-        assert self.inst._infer_frame(None) == self.inst.potential.frame
-
-        # own frame is passed through
-        assert (
-            self.inst._infer_frame(self.inst.potential.frame)
-            == self.inst.potential.frame
-        )
-
-        # "icrs"
-        assert self.inst._infer_frame("icrs") == coord.ICRS()
 
     # /def
 

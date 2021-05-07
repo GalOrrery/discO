@@ -6,6 +6,7 @@
 
 # Big Data Files
 /discO/data/sim_CC_100
+*.npy
 
 # scratch folder
 scratch/
@@ -22,6 +23,7 @@ envs/*/**
 
 # comment when done with public projects
 notebooks/**/*.png
+**/figures/*.html
 
 
 ###############################################################################

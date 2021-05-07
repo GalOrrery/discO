@@ -3,7 +3,7 @@
 """Fit a potential to data with :mod:`~galpy`."""
 
 __all__ = [
-    # "GalpyPotentialFitter",
+    "GalpyPotentialFitter",
     "GalpySCFPotentialFitter",
 ]
 
@@ -13,7 +13,6 @@ __all__ = [
 
 # BUILT-IN
 import typing as T
-from types import MappingProxyType
 
 # THIRD PARTY
 import astropy.coordinates as coord
@@ -26,10 +25,7 @@ from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter
 
 # from discO.extern.galpy_potentials import scf_compute_coeffs_nbody
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import resolve_representationlike
 
 ##############################################################################
 # PARAMETERS
@@ -102,13 +98,6 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
 
     # /def
 
-    @property
-    def potential_kwargs(self) -> MappingProxyType:
-        """Potential kwargs."""
-        return MappingProxyType(self._kwargs)
-
-    # /def
-
     #######################################################
     # Fitting
 
@@ -116,9 +105,6 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
         self,
         c: TH.CoordinateType,
         mass: T.Optional[TH.QuantityType] = None,
-        *,
-        frame: TH.OptFrameLikeType = None,
-        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Fit Potential given particles.
@@ -205,8 +191,6 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         Nmax: int = None,
         Lmax: int = None,
         scale_factor: TH.QuantityType = None,
-        frame: TH.OptFrameLikeType = None,
-        representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> TH.SkyCoordType:
         """Fit Potential given particles.
@@ -219,7 +203,8 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         Parameters
         ----------
         sample : |CoordinateFrame| or |SkyCoord|
-        Nmax, Lmax : int
+        mass : |QuantityType|
+        Nmax, Lmax : int or None (optional, keyword-only)
             The number of radial (N) and angular (L) coefficients.
             Must be integers > 0.
             If None (default) tries to draw from kwargs set at class
@@ -231,25 +216,17 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         -------
         :class:`~astropy.coordinates.SkyCoord`
 
-        Other Parameters
-        ----------------
-        frame: frame-like or None (optional, keyword-only)
-            The frame of the fit potential.
-
-            .. warning::
-
-                Care should be taken that this matches the frame of the
-                sampling potential.
-
-        representation_type: |Representation| or None (optional, keyword-only)
-            The coordinate representation.
-
         Raises
         ------
         ValueError
             If `Nmax`, `Lmax` are None and no default set at initialization.
 
         """
+        # --------------
+
+        if mass is None:
+            mass = sample.mass
+
         # kwargs
         kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType
         kw.update(kwargs)
@@ -271,28 +248,17 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         )
 
         # --------------
-        # frame and representation
-        # None -> default
 
-        frame = (
-            resolve_framelike(self.frame)
-            if frame is None
-            else resolve_framelike(frame)
-        )
-        representation_type = (
-            resolve_representationlike(
-                self.representation_type,
-                error_if_not_type=False,
-            )
-            if representation_type is None
-            else resolve_representationlike(representation_type)
+        representation_type = resolve_representationlike(
+            self.representation_type,
+            error_if_not_type=False,
         )
 
         # --------------
         # Validation
 
-        if Nmax <= 0 or Lmax <= 0:
-            raise ValueError("Nmax & Lmax must be >0.")
+        if Nmax < 0 or Lmax < 0:
+            raise ValueError("Nmax & Lmax must be >=0.")
 
         if scale_factor.unit.physical_type not in ("length", "dimensionless"):
             raise u.UnitsError(
@@ -303,10 +269,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         # --------------
 
-        if mass is None:
-            mass = sample.mass
-
-        sample = sample.transform_to(frame)
+        sample = sample.transform_to(self.frame)
         position = sample.represent_as(coord.CartesianRepresentation).xyz
 
         # a dimensionless scale factor is assigned the same units as the
@@ -315,15 +278,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         if scale_factor.unit == u.one:
             scale_factor = scale_factor.value * position.unit
 
-        # Acos, Asin = scf_compute_coeffs_nbody(
-        #     position,
-        #     mass=mass,
-        #     N=Nmax,
-        #     L=Lmax,
-        #     a=scale_factor,
-        #     **kw,
-        # )
-        # TODO don't do ``to_value`` when it supports units
+        # TODO don't do ``to_value`` when galpy supports units
         Acos, Asin = scf_compute_coeffs_nbody(
             position.to_value(position.unit),
             mass=mass.to_value(1e12 * u.solMass),
@@ -340,7 +295,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
                 Asin=Asin,
                 a=scale_factor,
             ),
-            frame=frame,
+            frame=self.frame,
             representation_type=representation_type,
         )
 
