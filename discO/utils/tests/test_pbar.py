@@ -79,8 +79,8 @@ class Test_get_progress_bar:
         pb = pbar.get_progress_bar(display=True, total=2)
         assert isinstance(pb, tqdm.tqdm)
 
-        pb = pbar.get_progress_bar(display="notebook", total=2)
-        assert isinstance(pb, tqdm.notebook.tqdm_notebook)
+        pb = pbar.get_progress_bar(display="gui", total=2)
+        assert isinstance(pb, tqdm.gui.tqdm)
 
 
 # /def
