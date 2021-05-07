@@ -213,6 +213,15 @@ class Test_MeasurementErrorSampler(
         ) in str(e.value)
 
         # ---------------
+        # Cant use "method" argument
+
+        if self.obj is not measurement.MeasurementErrorSampler:
+            with pytest.raises(ValueError) as e:
+                self.obj(method="Not None")
+
+            assert ("Can't specify 'method'") in str(e.value)
+
+        # ---------------
         # with method specified
 
         method, klass = tuple(self.obj._registry.items())[-1]

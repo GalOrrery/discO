@@ -408,6 +408,17 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     # /def
 
+    # -------------------------------
+
+    def test___repr__(self):
+        """Test method ``__repr__``."""
+        s = repr(self.inst)
+        assert self.inst.__class__.__name__ in s
+        assert "ICRS" in s
+        assert "defaults" in s
+
+    # /def
+
 
 ##############################################################################
 

@@ -85,11 +85,6 @@ class Pipeline:
                 raise ValueError(
                     "sampler and fitter must have the same frame.",
                 )
-            # nice, but not necessary
-            # if fitter.representation_type != sampler.representation_type:
-            #     raise ValueError(
-            #         "sampler and fitter must have the same representation.",
-            #     )
 
         self._sampler = sampler
         self._measurer = measurer
@@ -102,20 +97,6 @@ class Pipeline:
     # /def
 
     # ---------------------------------------------------------------
-
-    # @property
-    # def frame(self) -> TH.OptFrameType:
-    #     """The frame or None or Ellipse."""
-    #     return self._frame
-
-    # # /def
-
-    # @property
-    # def representation_type(self) -> TH.OptRepresentationLikeType:
-    #     """The representation type or None or Ellipse."""
-    #     return self._representation_type
-
-    # # /def
 
     @property
     def sampler(self) -> PotentialSampler:

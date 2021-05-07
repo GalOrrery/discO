@@ -36,34 +36,25 @@ def setup_module(module):
             self,
             n,
             *,
-            frame=None,
-            representation_type=None,
             random=None,
             **kwargs
         ):
-            # Get preferred frames
-            frame = self._infer_frame(frame)
-            representation_type = self._infer_representation(
-                representation_type,
-            )
-
+            representation_type = self.representation_type  # can be None
             if random is None:
                 random = np.random
             elif isinstance(random, int):
-                random = np.random.default_rng(random)
+                random = np.random.RandomState(random)
 
             # return
-            rep = coord.UnitSphericalRepresentation(
+            rep = coord.SphericalRepresentation(
                 lon=random.uniform(size=n) * u.deg,
                 lat=2 * random.uniform(size=n) * u.deg,
+                distance=10 * u.kpc,
             )
-
-            if representation_type is None:
-                representation_type = rep.__class__
             sample = coord.SkyCoord(
-                frame.realize_frame(
+                self.frame.realize_frame(
                     rep,
-                    representation_type=representation_type,
+                    representation_type=representation_type or rep.__class__,
                 ),
                 copy=False,
             )
@@ -105,7 +96,7 @@ def teardown_module(module):
 # -------------------------------------------------------------------
 
 
-class TestSampler(PotentialSampler):
+class MockSampler(PotentialSampler):
     """Dunder Sampler."""
 
     def __call__(
@@ -238,6 +229,7 @@ class Test_Pipeline(object):
         assert isinstance(pipe._statisticer, object)
         assert pipe._result is None
 
+    def test___init__cant_set_Y_without_X(self):
         # -------------------
         # can't set `residualer` without `fitter`
 
@@ -253,7 +245,7 @@ class Test_Pipeline(object):
         assert "Can't set `residualer` without `fitter`." in str(e.value)
 
         # -------------------
-        # can't set `residualer` without `fitter`
+        # can't set `statistic` without `residualer`
 
         with pytest.raises(ValueError) as e:
             pipeline.Pipeline(
@@ -265,6 +257,22 @@ class Test_Pipeline(object):
             )
 
         assert "Can't set `statistic` without `residualer`" in str(e.value)
+        
+    def test___init__frame_mismatch(self):
+
+        fitter = PotentialFitter(
+            object(),
+            key="unittest",
+            frame="icrs",
+            representation_type=self.sampler.representation_type,
+        )
+
+        with pytest.raises(ValueError, match="must have the same frame."):
+            pipeline.Pipeline(
+                sampler=self.sampler,
+                measurer=self.measurer,
+                fitter=fitter,
+            )
 
     # /def
 
@@ -336,7 +344,6 @@ class Test_Pipeline(object):
 
     # -----------------------------------------------------
 
-    @pytest.mark.skip("TODO")
     def test___call__(self):
         """Test method ``__call__``.
 
@@ -353,30 +360,32 @@ class Test_Pipeline(object):
             parametrize with itertools methods
 
         """
-        # make pipeline
-        # sampler = TestSampler(object())
-        assert False
+        res = self.inst(10)
+
+        assert isinstance(res, np.record)
+
+        assert isinstance(res.sample, coord.SkyCoord)
+        assert isinstance(res.sample.frame, coord.Galactocentric)
+        assert isinstance(res.sample.data, coord.SphericalRepresentation)
+
+        assert isinstance(res.measured, coord.SkyCoord)
+        assert isinstance(res.measured.frame, coord.ICRS)
+        assert isinstance(res.measured.data, coord.SphericalRepresentation)
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test_run(self):
         """Test method ``run``."""
-        assert False
+        res = self.inst.run(10, 2, batch=True)
 
-    # /def
-
-    @pytest.mark.skip("TODO")
-    def test___or__(self):
-        """Test method ``__or__``."""
-        assert False
-
-    # /def
-
-    @pytest.mark.skip("TODO")
-    def test___ior__(self):
-        """Test method ``__ior__``."""
-        assert False
+        assert isinstance(res, pipeline.PipelineResult)
+        assert isinstance(res[0], np.record)
+        assert isinstance(res[1], np.record)
+        
+        assert len(res.sample) == 2
+        assert len(res.sample[0]) == 10
+        assert len(res.measured) == 2
+        assert len(res.measured[1]) == 10
 
     # /def
 
