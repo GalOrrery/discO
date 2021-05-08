@@ -239,7 +239,10 @@ class Test_Pipeline(object):
         # -------------------
         # can't set `statistic` without `residualer`
 
-        with pytest.raises(ValueError, match="`statistic` without `residualer`"):
+        with pytest.raises(
+            ValueError,
+            match="`statistic` without `residualer`",
+        ):
             pipeline.Pipeline(
                 sampler=self.sampler,
                 measurer=self.measurer,
@@ -538,6 +541,7 @@ class Test_PipelineResult(object):
 
     def test_connection(self):
         assert self.inst._parent is self.pipe
+
 
 # /class
 

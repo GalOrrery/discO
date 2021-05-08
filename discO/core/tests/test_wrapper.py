@@ -165,42 +165,60 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
 
     def test_total_mass(self):
         """Test method ``total_mass``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.total_mass(self.potential)
 
     # /def
 
     def test_density(self):
         """Test method ``density``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.density(self.potential, self.points)
 
     # /def
 
     def test_potential(self):
         """Test method ``potential``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.potential(self.potential, self.points)
 
     # /def
 
     def test_specific_force(self):
         """Test method ``specific_force``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.specific_force(self.potential, self.points)
 
     # /def
 
     def test_acceleration(self):
         """Test method ``acceleration``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.acceleration(self.potential, self.points)
 
     # /def
 
     def test_coefficients(self):
         """Test method ``coefficients``."""
-        with pytest.raises(NotImplementedError, match="appropriate subpackage"):
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.coefficients(self.potential)
 
     # /def

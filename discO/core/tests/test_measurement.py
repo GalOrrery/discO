@@ -709,7 +709,10 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # bad "method" argument
 
-        with pytest.raises(ValueError, match="RVS_Continuous has no registered"):
+        with pytest.raises(
+            ValueError,
+            match="RVS_Continuous has no registered",
+        ):
             self.obj(rvs=scipy.stats.norm, method="not in registry")
 
     # /def

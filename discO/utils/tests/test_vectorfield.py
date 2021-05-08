@@ -146,6 +146,7 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # -------------------
         # another error is raised if the vectorfield re-uses a Representation
         with pytest.raises(ValueError) as e:
+
             class FailedVectorField(self.obj):
                 base_representation = self.rep_cls
 

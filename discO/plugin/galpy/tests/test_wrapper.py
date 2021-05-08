@@ -133,7 +133,6 @@ class Test_GalpyPotentialWrapperMeta(
 
     # /def
 
-
     def test_potential(self):
         """Test method ``potential``."""
         # ---------------
@@ -339,7 +338,7 @@ class Test_GalpyPotentialWrapper(
         assert np.allclose(self.inst.total_mass(), 1 * u.solMass)
 
     # /def
-    
+
     def test_density(self):
         """Test method ``specific_force``."""
         # ---------------
