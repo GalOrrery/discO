@@ -59,6 +59,61 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
 
     # -----------------------------------------------------
 
+    def density(
+        self,
+        potential: PotentialType,
+        points: TH.PositionType,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs
+    ) -> T.Tuple[TH.SkyCoordType, TH.QuantityType]:
+        """Evaluate the density.
+
+        Parameters
+        ----------
+        potential : `~agama.Potential`
+            The potential.
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the density.
+        frame : |CoordinateFrame| or None (optional, keyword-only)
+            The frame of the density. Potentials do not have an intrinsic
+            reference frame, but if one is assigned, then anything needs to be
+            converted to that frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+        **kwargs
+            Arguments into the density.
+
+        Returns
+        -------
+        points: :class:`~astropy.coordinates.CoordinateFrame`
+            The points.
+        values : :class:`~astropy.unit.Quantity`
+            Array of the specific-potential value at the points.
+
+        """
+        shape = points.shape[:]  # copy the shape
+
+        p, _ = self._convert_to_frame(points, frame, representation_type)
+        r = p.represent_as(coord.CartesianRepresentation)
+        r = r.reshape(-1)  # unfortunately can't flatten in-place
+
+        agama.setUnits(mass=1, length=1, velocity=1)  # TODO! bad
+        values = potential.density(r.xyz.T) * (u.solMass / u.pc ** 3)
+
+        # reshape
+        r.shape = shape
+        values.shape = shape
+
+        # TODO! ScalarField to package together
+        p, _ = self._convert_to_frame(p, frame, representation_type)
+        return p, values
+
+    # /def
+
+    # -----------------------------------------------------
+
     def potential(
         self,
         potential: PotentialType,
@@ -68,7 +123,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs
     ) -> T.Tuple[TH.SkyCoordType, TH.QuantityType]:
-        """Evaluate the specific potential.
+        """Evaluate the potential.
 
         Parameters
         ----------
