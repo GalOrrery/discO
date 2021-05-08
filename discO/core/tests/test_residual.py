@@ -207,10 +207,11 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
 
     def test_evaluate_potential(self):
         """Test method ``evaluate_potential``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="ppropriate subpackage.",
+        ):
             self.obj.evaluate_potential(self.inst, self.original_potential)
-
-        assert "Please use the appropriate subpackage." in str(e.value)
 
         # evaluate_potential
         assert (
@@ -223,6 +224,47 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
     # /def
 
     # -------------------------------
+
+    def test___call__no_observable(self):
+        """Test method ``__call__`` without a set observable."""
+        original = self.inst.observable
+        self.inst._observable = None
+
+        try:
+            with pytest.raises(ValueError, match="`observable` not set"):
+                self.inst(
+                    fit_potential=self.original_potential,
+                    observable=None,
+                )
+
+        except Exception:
+            raise
+        finally:
+            self.inst._observable = original
+
+    # /def
+
+    def test___call__no_original_potential(self):
+        """Test method ``__call__`` without a set original_potential."""
+        original = self.inst.original_potential
+        self.inst._original_potential = None
+
+        try:
+            with pytest.raises(
+                ValueError,
+                match="`original_potential` not set",
+            ):
+                self.inst(
+                    fit_potential=self.original_potential,
+                    original_potential=None,
+                )
+
+        except Exception:
+            raise
+        finally:
+            self.inst._original_potential = original
+
+    # /def
 
     def test___call__(self):
         """Test method ``__call__``."""

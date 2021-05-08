@@ -203,23 +203,14 @@ class Test_MeasurementErrorSampler(
         """Test method ``__new__``."""
         # ---------------
         # Need the "method" argument
-
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="no registered measurement"):
             self.obj()
-
-        assert (
-            "MeasurementErrorSampler has no "
-            "registered measurement resampler"
-        ) in str(e.value)
 
         # ---------------
         # Cant use "method" argument
-
         if self.obj is not measurement.MeasurementErrorSampler:
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="Can't specify 'method'"):
                 self.obj(method="Not None")
-
-            assert ("Can't specify 'method'") in str(e.value)
 
         # ---------------
         # with method specified
@@ -498,11 +489,9 @@ class Test_MeasurementErrorSampler(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="c & c_err shape mismatch"):
             tuple(self.inst.run(c, c_err))
             # the tuple is for ``_run_iter`` version
-
-        assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
@@ -588,7 +577,7 @@ class Test_MeasurementErrorSampler(
         assert np.allclose(d_pos, expected_dpos)
 
         # Now with the wrong representation type
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="matching `representation_type`"):
             self.inst._parse_c_err(
                 coord.ICRS(
                     r_err.to_cartesian(),
@@ -597,11 +586,6 @@ class Test_MeasurementErrorSampler(
                 self.c,
             )
 
-        assert (
-            "`c` & `c_err` must have matching `representation_type`."
-            in str(e.value)
-        )
-
         # --------------------------
         # BaseRepresentation
 
@@ -609,13 +593,8 @@ class Test_MeasurementErrorSampler(
         assert np.allclose(d_pos, expected_dpos)
 
         # Now with the wrong representation type
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="`c_err` must be the same"):
             self.inst._parse_c_err(r_err.to_cartesian(), self.c)
-
-        assert (
-            "`c_err` must be the same Representation type as in `c`."
-            in str(e.value)
-        )
 
         # --------------------------
         # Mapping
@@ -644,10 +623,8 @@ class Test_MeasurementErrorSampler(
         # --------------------------
         # unrecognized
 
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(NotImplementedError, match="is not yet supported."):
             self.inst._parse_c_err(NotImplementedError(), self.c)
-
-        assert "is not yet supported." in str(e.value)
 
     # /def
 
@@ -732,12 +709,11 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # bad "method" argument
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(
+            ValueError,
+            match="RVS_Continuous has no registered",
+        ):
             self.obj(rvs=scipy.stats.norm, method="not in registry")
-
-        assert (
-            "RVS_Continuous has no registered measurement resampler"
-        ) in str(e.value)
 
     # /def
 
@@ -975,10 +951,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="c & c_err shape mismatch"):
             self.inst.run(c, c_err, batch=True)
-
-        assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
@@ -1015,10 +989,8 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # ---------------
         # 2D array, other
 
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(NotImplementedError, match="not yet supported."):
             self.inst.run(self.c, NotImplementedError(), batch=True)
-
-        assert "not yet supported." in str(e.value)
 
     # /def
 
@@ -1044,10 +1016,8 @@ class Test_GaussianMeasurementError(
         # ---------------
         # Can't have the "method" argument
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="Can't specify 'method'"):
             self.obj(rvs=self.rvs, method="not None")
-
-        assert "Can't specify 'method'" in str(e.value)
 
         # ---------------
         # AOK
@@ -1191,10 +1161,8 @@ class Test_GaussianMeasurementError(
             [self.c_err, self.c_err, self.c_err],
         ).reshape(len(self.c), -1)
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="c & c_err shape mismatch"):
             self.inst.run(c, c_err, batch=True)
-
-        assert "c & c_err shape mismatch" in str(e.value)
 
         # ---------------
         # 2D array, SkyCoord, nerriter = niter
@@ -1231,10 +1199,8 @@ class Test_GaussianMeasurementError(
         # ---------------
         # 2D array, other
 
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(NotImplementedError, match="not yet supported."):
             self.inst.run(self.c, NotImplementedError(), batch=True)
-
-        assert "not yet supported." in str(e.value)
 
     # /def
 

@@ -84,12 +84,8 @@ class Test_AGAMAPotentialFitter(
             # --------------------------
             # for object not in registry
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="`potential_cls`: None"):
                 self.obj(potential_cls=None)
-
-            assert (
-                "PotentialFitter has no registered fitter for `potential_cls`: None"
-            ) in str(e.value)
 
             # ---------------
             # with return_specific_class
@@ -116,10 +112,8 @@ class Test_AGAMAPotentialFitter(
             # ---------------
             # Can't have the "key" argument
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="specify 'potential_cls'"):
                 self.obj(potential_cls=potential_cls, key="not None")
-
-            assert "Can't specify 'potential_cls'" in str(e.value)
 
             # ---------------
             # AOK

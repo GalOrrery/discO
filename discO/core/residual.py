@@ -349,6 +349,11 @@ class ResidualMethod(CommonBase):
         if observable is None:  # TODO get from config
             raise ValueError("`observable` not set. Need to pass.")
 
+        # potential
+        original_potential = original_potential or self.original_potential
+        if original_potential is None:  # both passed and init are None
+            raise ValueError("`original_potential` not set. Need to pass.")
+
         # representation type
         # None -> default. Everything is resolved here.
         # both potentials will use this representation type
@@ -360,11 +365,7 @@ class ResidualMethod(CommonBase):
             else self.representation_type
         )
 
-        # potential
-        original_potential = original_potential or self.original_potential
-        if original_potential is None:  # both passed and init are None
-            raise ValueError("`original_potential` not set. Need to pass.")
-
+        # now can make this a wrapped potential
         original_potential = PotentialWrapper(
             original_potential,
             # frame=frame,  # NOT SET ON PURPOSE

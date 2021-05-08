@@ -136,17 +136,12 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
         # -------------------
         # an error is raised if the vectorfield name already exists
-        with pytest.raises(ValueError) as e:
-
+        with pytest.raises(ValueError, match=f"'{self.klass_name}' already"):
             type(
                 self.klass_name,
                 (self.obj,),
                 dict(base_representation=self.rep_cls),
             )
-
-        assert f"VectorField class '{self.klass_name}' already exists." in str(
-            e.value,
-        )
 
         # -------------------
         # another error is raised if the vectorfield re-uses a Representation
@@ -154,6 +149,8 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
 
             class FailedVectorField(self.obj):
                 base_representation = self.rep_cls
+
+        print(e)
 
         # -------------------
         # check caches
@@ -198,19 +195,15 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         # -------------------
         # errors
         # if different units
-        with pytest.raises(u.UnitsError) as e:
+        with pytest.raises(u.UnitsError, match="equivalent units"):
             inp = [list(itm) for itm in self.kwargs.items()]
             inp[0][1] = 1 * u.one  # assign wrong unit
 
             self.klass(self.points, **dict(inp))
 
-        assert "components should have equivalent units." in str(e.value)
-
         # if not base-representation
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="<BaseRepresentation>"):
             self.klass(object(), **self.kwargs)
-
-        assert "points is not <BaseRepresentation>." in str(e.value)
 
     # /def
 
@@ -371,11 +364,9 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         inst = copy.deepcopy(self.inst)
         inst._points = self.inst.points * 2
 
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception, match="can't combine mismatching"):
 
             self.inst._combine_operation(operator.add, inst)
-
-        assert "can't combine mismatching points." in str(e.value)
 
     # /def
 

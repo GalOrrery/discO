@@ -60,35 +60,27 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         # ---------------
         # points is not SkyCoord, BaseCoordinateFrame or BaseRepresentation
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="<SkyCoord, CoordinateFrame, or"):
             self.subclass._convert_to_frame(self.points.data._values, None)
-
-        assert "<SkyCoord, CoordinateFrame, or Representation>" in str(e.value)
 
         # ---------------
         # frame is None and points is SkyCoord or CoordinateFrame
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="potential must have a frame"):
             self.subclass._convert_to_frame(self.points, None)
 
-        assert "the potential must have a frame." in str(e.value)
-
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="potential must have a frame"):
             self.subclass._convert_to_frame(self.points.frame, None)
-
-        assert "the potential must have a frame." in str(e.value)
 
         # ---------------
         # representation_type is wrong
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="Input representation must be"):
             self.subclass._convert_to_frame(
                 self.points.data,
                 None,
                 representation_type=TypeError,
             )
-
-        assert "Input representation must be" in str(e.value)
 
         # ---------------
         # frame is None and points is Representation
@@ -163,58 +155,71 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         # ---------------
         # TypeError
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="<SkyCoord, CoordinateFrame, or "):
             self.subclass._convert_to_frame(
                 TypeError,
                 coord.Galactocentric(),
             )
 
-        assert "<SkyCoord, CoordinateFrame, or Representation>" in str(e.value)
-
     # /def
 
     def test_total_mass(self):
         """Test method ``total_mass``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.total_mass(self.potential)
 
-        assert "Please use the appropriate subpackage." in str(e.value)
+    # /def
+
+    def test_density(self):
+        """Test method ``density``."""
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
+            self.subclass.density(self.potential, self.points)
 
     # /def
 
     def test_potential(self):
         """Test method ``potential``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.potential(self.potential, self.points)
-
-        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
     def test_specific_force(self):
         """Test method ``specific_force``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.specific_force(self.potential, self.points)
-
-        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
     def test_acceleration(self):
         """Test method ``acceleration``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.acceleration(self.potential, self.points)
-
-        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
     def test_coefficients(self):
         """Test method ``coefficients``."""
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(
+            NotImplementedError,
+            match="appropriate subpackage",
+        ):
             self.subclass.coefficients(self.potential)
-
-        assert "Please use the appropriate subpackage." in str(e.value)
 
     # /def
 
@@ -377,6 +382,22 @@ class Test_PotentialWrapper(ObjectTest, obj=wrapper.PotentialWrapper):
     # /def
 
     @abc.abstractmethod
+    def test_total_mass(self):
+        """Test method ``total_mass``."""
+        with pytest.raises(NotImplementedError):
+            self.inst.total_mass()
+
+    # /def
+
+    @abc.abstractmethod
+    def test_density(self):
+        """Test method ``density``."""
+        with pytest.raises(NotImplementedError):
+            self.inst.density(self.points)
+
+    # /def
+
+    @abc.abstractmethod
     def test_potential(self):
         """Test method ``potential``."""
         with pytest.raises(NotImplementedError):
@@ -406,10 +427,8 @@ class Test_PotentialWrapper(ObjectTest, obj=wrapper.PotentialWrapper):
         assert self.inst._infer_key(None, pytest) == "pytest"
         assert self.inst._infer_key(None, "pytest") == "pytest"
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="<module, str, or None>"):
             self.inst._infer_key(None, TypeError)
-
-        assert "package must be <module, str, or None>" in str(e.value)
 
     # /def
 

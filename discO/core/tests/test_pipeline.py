@@ -227,7 +227,7 @@ class Test_Pipeline(object):
         # -------------------
         # can't set `residualer` without `fitter`
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="`residualer` without `fitter`."):
             pipeline.Pipeline(
                 sampler=self.sampler,
                 measurer=self.measurer,
@@ -236,12 +236,13 @@ class Test_Pipeline(object):
                 statistic=self.statistic,
             )
 
-        assert "Can't set `residualer` without `fitter`." in str(e.value)
-
         # -------------------
         # can't set `statistic` without `residualer`
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(
+            ValueError,
+            match="`statistic` without `residualer`",
+        ):
             pipeline.Pipeline(
                 sampler=self.sampler,
                 measurer=self.measurer,
@@ -249,8 +250,6 @@ class Test_Pipeline(object):
                 # residualer=self.residualer,  # skipping residualer
                 statistic=object(),
             )
-
-        assert "Can't set `statistic` without `residualer`" in str(e.value)
 
     def test___init__frame_mismatch(self):
 
@@ -368,6 +367,44 @@ class Test_Pipeline(object):
 
     # /def
 
+    def test___call__with_sample(self):
+        """Test method ``__call__``.
+
+        Even though ``__call__`` just runs ``run`` with ``niter=1``,
+        it's still worth running through all the tests.
+
+        Since 3rd party packages provide the backend for the sampling
+        and fitting, we use dunder methods here and implement
+        pipeline tests in the plugins.
+
+        .. todo::
+
+            There are so many variables, this will need some pytest
+            parametrize with itertools methods
+
+        """
+        sample = self.inst.sampler(10)
+        res = self.inst(sample)
+
+        assert isinstance(res, np.record)
+
+        assert isinstance(res.sample, coord.SkyCoord)
+        assert isinstance(res.sample.frame, coord.Galactocentric)
+        assert isinstance(res.sample.data, coord.SphericalRepresentation)
+
+        assert isinstance(res.measured, coord.SkyCoord)
+        assert isinstance(res.measured.frame, coord.ICRS)
+        assert isinstance(res.measured.data, coord.SphericalRepresentation)
+
+    # /def
+
+    def test___call__error(self):
+        """Test method ``__call__`` with bad input"""
+        with pytest.raises(TypeError):
+            self.inst(TypeError)
+
+    # /def
+
     def test_run(self):
         """Test method ``run``."""
         res = self.inst.run(10, 2, batch=True)
@@ -383,11 +420,8 @@ class Test_Pipeline(object):
 
     # /def
 
-    @pytest.mark.skip("TODO")
     def test___repr__(self):
         """Test method ``__repr__``."""
-        assert False
-
         s = self.inst.__repr__()
 
         assert "Pipeline:" in s
@@ -493,8 +527,20 @@ class Test_PipelineResult(object):
 
     # /def
 
+    def test___repr__(self):
+        """Test method ``__repr__``."""
+        got = repr(self.inst)
+
+        expected = np.recarray.__repr__(self.inst)
+        expected = expected.replace("rec.array", self.inst.__class__.__name__)
+
+        assert got == expected
+
     #######################################################
     # Usage tests
+
+    def test_connection(self):
+        assert self.inst._parent is self.pipe
 
 
 # /class

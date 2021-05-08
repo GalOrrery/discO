@@ -193,6 +193,7 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything
       that works with ``resolve_framelike``. [#45]
     + ``total_mass`` function. [#45]
+    + ``density`` function [#56]
 
 
 discO.data

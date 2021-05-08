@@ -90,12 +90,8 @@ class Test_GalpyPotentialFitter(
             # --------------------------
             # for object not in registry
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="fitter for key: None"):
                 self.obj(potential_cls=None, key=None)
-
-            assert (
-                "PotentialFitter has no registered fitter for key: None"
-            ) in str(e.value)
 
             # ---------------
             # as wrapper
@@ -114,10 +110,8 @@ class Test_GalpyPotentialFitter(
             # ---------------
             # key is not None
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="Can't specify 'key'"):
                 self.obj.__new__(self.SubClassUnitTest, key="not None")
-
-            assert "Can't specify 'key'" in str(e.value)
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
@@ -144,10 +138,8 @@ class Test_GalpyPotentialFitter(
 
         if self.obj is fitter.GalpyPotentialFitter:
 
-            with pytest.raises(NotImplementedError) as e:
+            with pytest.raises(NotImplementedError, match="Implement in sub"):
                 self.obj.__call__(self.inst, None)
-
-            assert "Implement in subclass" in str(e.value)
 
         # TODO! actually run tests
 
@@ -183,33 +175,20 @@ class Test_GalpySCFPotentialFitter(
         # -------------------
         # some errors
 
-        with pytest.raises(AttributeError) as e:
+        with pytest.raises(AttributeError, match="has no attribute 'mass'"):
             self.inst(None, Nmax=0)
 
-        assert "'NoneType' object has no attribute 'mass'" in str(e.value)
-
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="Nmax & Lmax must be >=0."):
             self.inst(None, Nmax=-1, mass=1 * u.solMass)
 
-        assert "Nmax & Lmax must be >=0." in str(e.value)
-
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="Nmax & Lmax must be >=0."):
             self.inst(None, Lmax=-1, mass=1 * u.solMass)
 
-        assert "Nmax & Lmax must be >=0." in str(e.value)
-
-        with pytest.raises(u.UnitsError) as e:
+        with pytest.raises(u.UnitsError, match="length or be dimensionless"):
             self.inst(None, scale_factor=2 * u.Hz, mass=1 * u.solMass)
 
-        assert (
-            "scale factor must have units of length or be dimensionless"
-            in str(e.value)
-        )
-
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="scale factor must be a scalar."):
             self.inst(None, scale_factor=[1, 2] * u.km, mass=1 * u.solMass)
-
-        assert "scale factor must be a scalar." in str(e.value)
 
         # TODO! actually run tests
 

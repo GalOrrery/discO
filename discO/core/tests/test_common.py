@@ -129,10 +129,8 @@ class Test_CommonBase(ObjectTest, obj=common.CommonBase):
         """Test method ``__init__``."""
         if self.obj is common.CommonBase:
 
-            with pytest.raises(TypeError) as e:
+            with pytest.raises(TypeError, match="instantiate abstract class"):
                 self.obj()
-
-            assert "Can't instantiate abstract class" in str(e.value)
 
         # else: subclasses have to do their own.
 

@@ -58,6 +58,54 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
 
     # -----------------------------------------------------
 
+    def density(
+        self,
+        potential: PotentialType,
+        points: TH.PositionType,
+        *,
+        frame: TH.OptFrameLikeType = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs,
+    ) -> T.Tuple[TH.FrameType, TH.QuantityType]:
+        """Evaluate the density in the `potential`-density pair.
+
+        Parameters
+        ----------
+        potential : `~galpy.potential.Potential`
+            The potential.
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the density.
+        frame : |CoordinateFrame| or None (optional, keyword-only)
+            The frame of the potential. Potentials do not have an intrinsic
+            reference frame, but if one is assigned, then anything needs to be
+            converted to that frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+        **kwargs
+            Arguments into the potential.
+
+        Return
+        ------
+        points : |CoordinateFrame|
+            The points, in their original frame
+        values : |Quantity|
+            The density at `points`.
+
+        """
+        p, _ = self._convert_to_frame(points, frame, representation_type)
+        r = p.represent_as(coord.CylindricalRepresentation)
+
+        # TODO! be careful about phi definition!
+        values = potential.dens(r.rho, r.z, phi=r.phi, **kwargs)
+
+        # TODO! ScalarField to package together
+        p, _ = self._convert_to_frame(p, frame, representation_type)
+        return p, values
+
+    # /def
+
+    # -----------------------------------------------------
+
     def potential(
         self,
         potential: PotentialType,
@@ -67,7 +115,7 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         representation_type: TH.OptRepresentationLikeType = None,
         **kwargs,
     ) -> T.Tuple[TH.FrameType, TH.QuantityType]:
-        """Evaluate the specific potential.
+        """Evaluate the potential.
 
         Parameters
         ----------
@@ -89,7 +137,7 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
         points : |CoordinateFrame|
             The points, in their original frame
         values : |Quantity|
-            The specific potential at `points`.
+            The potential at `points`.
 
         """
         p, _ = self._convert_to_frame(points, frame, representation_type)
