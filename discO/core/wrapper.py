@@ -159,6 +159,37 @@ class PotentialWrapperMeta(ABCMeta):
     # /def
 
     @abstractmethod
+    def density(
+        self,
+        potential: T.Any,
+        points: TH.PositionType,
+        *,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **kwargs,
+    ) -> T.Tuple[TH.CoordinateType, TH.QuantityType]:
+        """Evaluate the density in the `potential`-density pair.
+
+        Parameters
+        ----------
+        points : coord-array or |Representation| or None (optional)
+            The points at which to evaluate the density.
+            Potentials do not have an intrinsic reference frame, but if we
+            have assigned one, then anything needs to be converted to that
+            frame.
+        representation_type : |Representation| or None (optional, keyword-only)
+            The representation type in which to return data.
+            None means no representation is forced.
+        **kwargs
+            Arguments into the potential.
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError("Please use the appropriate subpackage.")
+
+    @abstractmethod
     def potential(
         self,
         potential: T.Any,

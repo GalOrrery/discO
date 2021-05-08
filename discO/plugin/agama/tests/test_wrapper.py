@@ -69,10 +69,9 @@ class Test_AGAMAPotentialWrapperMeta(
         # ---------------
         # when there isn't a frame
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="must have a frame."):
             self.subclass.potential(self.potential, self.points)
 
-        assert "the potential must have a frame." in str(e.value)
         # ---------------
         # basic
 
@@ -137,10 +136,8 @@ class Test_AGAMAPotentialWrapperMeta(
         # ---------------
         # when there isn't a frame
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="must have a frame."):
             self.subclass.specific_force(self.potential, self.points)
-
-        assert "the potential must have a frame." in str(e.value)
 
         # ---------------
         # basic
@@ -281,14 +278,12 @@ class Test_AGAMAPotentialWrapper(
         # can't pass frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="multiple values for keyword"):
 
             points, values = self.inst.potential(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # ---------------
         # representation_type
@@ -341,14 +336,12 @@ class Test_AGAMAPotentialWrapper(
         # can't pass frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="multiple values for keyword"):
 
             points, values = self.inst(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # ---------------
         # representation_type
@@ -388,14 +381,12 @@ class Test_AGAMAPotentialWrapper(
         # frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="multiple values for keyword"):
 
             vf = self.inst.specific_force(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # TODO! test the specific values
 

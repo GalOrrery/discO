@@ -207,22 +207,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
             # ---------------
             # Need the "potential" argument
-            with pytest.raises(TypeError) as e:
+            with pytest.raises(TypeError, match="argument: 'potential'"):
                 self.obj()
-
-            assert (
-                "missing 1 required positional argument: 'potential'"
-            ) in str(e.value)
 
             # --------------------------
             # for object not in registry
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="key: builtins"):
                 self.obj(PotentialWrapper(self.potential))
-
-            assert (
-                "PotentialSampler has no registered sampler for key: builtins"
-            ) in str(e.value)
 
             # ---------------
             # with subclass
@@ -290,10 +282,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             # ---------------
             # Can't have the "key" argument
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="Can't specify 'key'"):
                 self.obj(PotentialWrapper(self.potential), key="not None")
-
-            assert "Can't specify 'key'" in str(e.value)
 
             # ---------------
             # AOK
@@ -373,10 +363,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         # raises error if called
         if self.obj is sample.PotentialSampler:
 
-            with pytest.raises(NotImplementedError) as e:
+            with pytest.raises(NotImplementedError, match="in subclass."):
                 self.obj.__call__(self.inst)
-
-            assert "Implemented in subclass." in str(e.value)
 
     # /def
 

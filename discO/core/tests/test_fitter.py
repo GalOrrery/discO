@@ -232,22 +232,14 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
             # ---------------
             # Need the "potential" argument
-            with pytest.raises(TypeError) as e:
+            with pytest.raises(TypeError, match="argument: 'potential_cls'"):
                 self.obj()
-
-            assert (
-                "missing 1 required positional argument: 'potential_cls'"
-            ) in str(e.value)
 
             # --------------------------
             # for object not in registry
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="key: builtins"):
                 self.obj(self.potential())
-
-            assert (
-                "PotentialFitter has no registered fitter for key: builtins"
-            ) in str(e.value)
 
             # ---------------
             # with return_specific_class
@@ -266,14 +258,12 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             # ---------------
             # Can't have the "key" argument
 
-            with pytest.raises(ValueError) as e:
+            with pytest.raises(ValueError, match="Can't specify 'key'"):
                 self.obj.__new__(
                     self.SubClassUnitTest,
                     potential_cls=None,
                     key="not None",
                 )
-
-            assert "Can't specify 'key'" in str(e.value)
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
@@ -360,10 +350,8 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
         if self.obj is fitter.PotentialFitter:
 
-            with pytest.raises(NotImplementedError) as e:
+            with pytest.raises(NotImplementedError, match="Implement in sub"):
                 self.obj.__call__(self.inst, None)
-
-            assert "Implement in subclass" in str(e.value)
 
     # /def
 

@@ -68,15 +68,79 @@ class Test_GalpyPotentialWrapperMeta(
 
     # /def
 
-    def test_potential(self):
-        """Test method ``specific_force``."""
+    def test_density(self):
+        """Test method ``density``."""
         # ---------------
         # when there isn't a frame
 
-        with pytest.raises(TypeError) as e:
-            self.subclass.potential(self.potential, self.points)
+        with pytest.raises(TypeError, match="must have a frame."):
+            self.subclass.density(self.potential, self.points)
 
-        assert "the potential must have a frame." in str(e.value)
+        # ---------------
+        # basic
+
+        points, values = self.subclass.density(
+            self.potential,
+            self.points.data,
+        )
+
+        # the points are unchanged
+        assert points is self.points.data
+        # check data types
+        assert isinstance(points, coord.BaseRepresentation)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.solMass / u.pc ** 3
+
+        # ---------------
+        # frame
+        # test the different inputs
+
+        for frame in (
+            coord.Galactocentric,
+            coord.Galactocentric(),
+            "galactocentric",
+        ):
+
+            points, values = self.subclass.density(
+                self.potential,
+                self.points,
+                frame=frame,
+            )
+            assert isinstance(points, coord.SkyCoord)
+            assert isinstance(points.frame, resolve_framelike(frame).__class__)
+            assert isinstance(values, u.Quantity)
+            assert values.unit == u.solMass / u.pc ** 3
+
+            # TODO! test the specific values
+
+        # ---------------
+        # representation_type
+
+        points, values = self.subclass.density(
+            self.potential,
+            self.points,
+            frame=self.points.frame.replicate_without_data(),
+            representation_type=coord.CartesianRepresentation,
+        )
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.frame)
+        assert isinstance(points.data, coord.CartesianRepresentation)
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.solMass / u.pc ** 3
+
+        # TODO! test the specific values
+
+    # /def
+
+
+    def test_potential(self):
+        """Test method ``potential``."""
+        # ---------------
+        # when there isn't a frame
+
+        with pytest.raises(TypeError, match="must have a frame."):
+            self.subclass.potential(self.potential, self.points)
 
         # ---------------
         # basic
@@ -142,10 +206,8 @@ class Test_GalpyPotentialWrapperMeta(
         # ---------------
         # when there isn't a frame
 
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError, match="must have a frame."):
             self.subclass.specific_force(self.potential, self.points)
-
-        assert "the potential must have a frame." in str(e.value)
 
         # ---------------
         # basic
@@ -277,9 +339,66 @@ class Test_GalpyPotentialWrapper(
         assert np.allclose(self.inst.total_mass(), 1 * u.solMass)
 
     # /def
+    
+    def test_density(self):
+        """Test method ``specific_force``."""
+        # ---------------
+        # basic
+
+        points, values = self.inst.density(self.points.data)
+
+        # check data types
+        assert isinstance(points, self.inst.frame.__class__)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.solMass / u.pc ** 3
+
+        # TODO! test the specific values
+
+        # ---------------
+        # with a frame
+
+        points, values = self.inst.density(self.points)
+
+        # check data types
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.inst.frame.__class__)
+        # and on the values
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.solMass / u.pc ** 3
+
+        # TODO! test the specific values
+
+        # ---------------
+        # can't pass frame
+        # test the different inputs
+
+        with pytest.raises(TypeError, match="keyword argument 'frame'"):
+            points, values = self.inst.potential(
+                self.points,
+                frame=coord.Galactocentric(),
+            )
+
+        # ---------------
+        # representation_type
+
+        points, values = self.inst.density(
+            self.points,
+            representation_type=coord.CartesianRepresentation,
+        )
+        assert points is not self.points
+        assert isinstance(points, coord.SkyCoord)
+        assert isinstance(points.frame, self.inst.frame.__class__)
+        assert isinstance(points.data, coord.CartesianRepresentation)
+        assert isinstance(values, u.Quantity)
+        assert values.unit == u.solMass / u.pc ** 3
+
+        # TODO! test the specific values
+
+    # /def
 
     def test_potential(self):
-        """Test method ``specific_force``."""
+        """Test method ``potential``."""
         # ---------------
         # basic
 
@@ -311,14 +430,11 @@ class Test_GalpyPotentialWrapper(
         # can't pass frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
-
+        with pytest.raises(TypeError, match="keyword argument 'frame'"):
             points, values = self.inst.potential(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # ---------------
         # representation_type
@@ -370,14 +486,11 @@ class Test_GalpyPotentialWrapper(
         # can't pass frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
-
+        with pytest.raises(TypeError, match="keyword argument 'frame'"):
             points, values = self.inst(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # ---------------
         # representation_type
@@ -417,14 +530,11 @@ class Test_GalpyPotentialWrapper(
         # frame
         # test the different inputs
 
-        with pytest.raises(TypeError) as e:
-
+        with pytest.raises(TypeError, match="keyword argument 'frame'"):
             vf = self.inst.specific_force(
                 self.points,
                 frame=coord.Galactocentric(),
             )
-
-        assert "multiple values for keyword argument 'frame'" in str(e.value)
 
         # TODO! test the specific values
 
