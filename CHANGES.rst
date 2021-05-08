@@ -234,10 +234,20 @@ discO.plugin.agama
 
 - ``AGAMAPotentialWrapper`` : for wrapping Potentials [#39]
 
-    + unified interface for the specific potential and specific force.
+    + unified interface for the potential and specific force.
     + all methods are both instance and static methods.
     + specific force returns a vector field.
     + ``total_mass`` function. [#45]
+
+
+discO.plugin.agama
+^^^^^^^^^^^^^^^^^^
+
+- ``AGAMAPotentialWrapper`` : for wrapping Potentials [#58]
+
+    + unified interface for the potential and specific force.
+    + all methods are both instance and static methods.
+    + specific force returns a vector field.
 
 
 discO.plugin.galpy
@@ -250,7 +260,7 @@ discO.plugin.galpy
 
 - ``GalpyPotentialWrapper`` : for wrapping Potentials [#39]
 
-    + unified interface for the specific potential and specific force.
+    + unified interface for the potential and specific force.
     + all methods are both instance and static methods.
     + specific force returns a vector field.
     + ``total_mass`` function. [#45]

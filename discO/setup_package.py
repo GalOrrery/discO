@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-__all__ = ["HAS_AGAMA", "HAS_GALPY", "HAS_TQDM"]
+__all__ = ["HAS_AGAMA", "HAS_GALA", "HAS_GALPY", "HAS_TQDM"]
 
 
 ##############################################################################
@@ -23,6 +23,18 @@ else:
     HAS_AGAMA = True
 
     agama.setUnits(mass=1, length=1, velocity=1)  # FIXME! bad
+
+# /try
+
+# -------------------------------------
+
+try:
+    # THIRD PARTY
+    import gala  # noqa: F401
+except ImportError:
+    HAS_GALA = False
+else:
+    HAS_GALA = True
 
 # /try
 
