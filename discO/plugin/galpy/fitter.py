@@ -290,10 +290,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
 
         return GalpyPotentialWrapper(
             self.potential_cls(
-                amp=mass.sum(),
-                Acos=Acos,
-                Asin=Asin,
-                a=scale_factor,
+                amp=mass.sum(), Acos=Acos, Asin=Asin, a=scale_factor,
             ),
             frame=self.frame,
             representation_type=representation_type,
