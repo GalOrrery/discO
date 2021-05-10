@@ -147,6 +147,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             (None, None),
             (Ellipsis, Ellipsis),
             (coord.CartesianRepresentation, coord.CartesianRepresentation),
+            (coord.CylindricalRepresentation, coord.CylindricalRepresentation),
             ("cartesian", coord.CartesianRepresentation),
         ],
     )
@@ -377,6 +378,7 @@ class Test_GridResidual(Test_ResidualMethod, obj=residual.GridResidual):
             (None, None),
             (Ellipsis, Ellipsis),
             (coord.CartesianRepresentation, coord.CartesianRepresentation),
+            (coord.CylindricalRepresentation, coord.CylindricalRepresentation),
             ("cartesian", coord.CartesianRepresentation),
         ],
     )

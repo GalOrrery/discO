@@ -198,11 +198,6 @@ class PotentialSampler(CommonBase):
                 "The potential`s mass is divergent, "
                 "the argument `total_mass` cannot be None.",
             )
-        # if total_mass is not None and mtot != total_mass:
-        #     raise ValueError(
-        #         "The potential`s mass is not divergent, "
-        #         "the argument `total_mass` must be None.",
-        #     )
 
         # potential is checked in __new__ as a PotentialWrapper
         # we wrap again here to override the representation_type
@@ -412,6 +407,7 @@ class PotentialSampler(CommonBase):
         if j == 0:  # 0-dimensional doesn't need concat
             sample = samps[0]
         else:
+            # breakpoint()
             sample = coord.concatenate(samps).reshape((n, iterations))
             sample.mass = np.vstack(mass).T
             sample.potential = samp.potential  # all the same

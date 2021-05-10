@@ -24,8 +24,8 @@ from discO.core.sample import MeshGridPotentialSampler
 from discO.core.tests.test_sample import (
     Test_PotentialSampler as PotentialSampler_Test,
 )
-from discO.tests.helper import ObjectTest
 from discO.plugin.galpy import GalpyPotentialWrapper, sample
+from discO.tests.helper import ObjectTest
 
 ##############################################################################
 # TESTS
@@ -172,7 +172,7 @@ class Test_MeshGridPositionDF(
                 np.linspace(-nyr0 / 2, nyr0 / 2, ny),
                 np.linspace(-nzr0 / 2, nzr0 / 2, nz),
                 indexing="ij",
-            )
+            ),
         )
         XYZ = coord.CartesianRepresentation(X, Y, Z, unit=u.kpc)
         cls.meshgrid = XYZ
@@ -186,6 +186,11 @@ class Test_MeshGridPositionDF(
 
     def test___init__(self):
         inst = self.obj(self.potential, meshgrid=self.meshgrid)
+
+        # THIRD PARTY
+        from galpy.df.df import df as DF
+
+        assert isinstance(inst, DF)
 
     # /def
 

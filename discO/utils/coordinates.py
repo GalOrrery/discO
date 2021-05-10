@@ -23,9 +23,9 @@ from astropy.coordinates import (
     BaseCoordinateFrame,
     BaseRepresentation,
     SkyCoord,
-    sky_coordinate_parsers,
 )
 from astropy.coordinates import representation as r
+from astropy.coordinates import sky_coordinate_parsers
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -39,8 +39,23 @@ from discO.config import conf
 class UnFrame(BaseCoordinateFrame):
     """Unconnected Coordinate Frame. Does not support transformations."""
 
-    default_representation = r.CartesianRepresentation
-    default_differential = r.CartesianDifferential
+    default_differential = None
+    default_representation = None
+
+    @property
+    def _default_representation(self):
+        if hasattr(self, "_data") and self._data is not None:
+            return self._data.__class__
+
+    @property
+    def representation_type(self):
+        rep = super().representation_type
+        rep = self.default_representation if rep is None else rep
+        return rep
+
+    @representation_type.setter
+    def representation_type(self, value):
+        self.set_representation_cls(value)
 
 
 # /class

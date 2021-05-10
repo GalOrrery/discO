@@ -277,9 +277,11 @@ class GalpyPotentialWrapper(
         representation_type: TH.OptRepresentationLikeType = None,
     ):
         super().__init__(
-            potential, frame=frame, representation_type=representation_type
+            potential,
+            frame=frame,
+            representation_type=representation_type,
         )
-        self.wrapped.turn_physical_on()
+        getattr(self.wrapped, "turn_physical_on", object)()
 
 
 # /class

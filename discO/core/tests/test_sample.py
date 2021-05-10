@@ -24,8 +24,8 @@ import pytest
 from discO.core import sample
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper
-from discO.utils.random import NumpyRNGContext
 from discO.setup_package import HAS_GALPY
+from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
 # TESTS
@@ -506,7 +506,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
 @pytest.mark.skipif(not HAS_GALPY, reason="needs real density function.")
 class Test_MeshGridPotentialSampler(
-    Test_PotentialSampler, obj=sample.MeshGridPotentialSampler
+    Test_PotentialSampler,
+    obj=sample.MeshGridPotentialSampler,
 ):
     @classmethod
     def setup_class(cls):
@@ -523,12 +524,13 @@ class Test_MeshGridPotentialSampler(
                     np.linspace(-nyr0 / 2, nyr0 / 2, ny),
                     np.linspace(-nzr0 / 2, nzr0 / 2, nz),
                     indexing="ij",
-                )
+                ),
             )
             * 1
         )
         XYZ = coord.CartesianRepresentation(X, Y, Z, unit=u.kpc)
 
+        # THIRD PARTY
         import galpy.potential as gpot
 
         cls.potential = gpot.HernquistPotential()
@@ -551,14 +553,17 @@ class Test_MeshGridPotentialSampler(
 
         with pytest.raises(ValueError, match="Can't specify 'key'"):
             self.obj(
-                PotentialWrapper(self.potential), self.meshgrid, key="not None"
+                PotentialWrapper(self.potential),
+                self.meshgrid,
+                key="not None",
             )
 
         # ---------------
         # AOK
 
         msamp = self.obj(
-            PotentialWrapper(self.potential, frame="icrs"), self.meshgrid
+            PotentialWrapper(self.potential, frame="icrs"),
+            self.meshgrid,
         )
 
         assert self.obj is not sample.PotentialSampler

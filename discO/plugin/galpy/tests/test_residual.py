@@ -66,6 +66,7 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
             (None, None),
             (Ellipsis, Ellipsis),
             (coord.CartesianRepresentation, coord.CartesianRepresentation),
+            (coord.CylindricalRepresentation, coord.CylindricalRepresentation),
             ("cartesian", coord.CartesianRepresentation),
         ],
     )
@@ -97,7 +98,9 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
 
         assert isinstance(val, vectorfield.CylindricalVectorField)
         assert u.allclose(
-            val.points._values.view(dtype=float),
+            val.represent_as(
+                coord.CylindricalRepresentation,
+            ).points._values.view(dtype=float),
             self.inst.points.represent_as(
                 coord.CylindricalRepresentation,
             )._values.view(dtype=float),
