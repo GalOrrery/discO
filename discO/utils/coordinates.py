@@ -25,9 +25,7 @@ from astropy.coordinates import (
     SkyCoord,
     sky_coordinate_parsers,
 )
-from astropy.coordinates.representation import (
-    REPRESENTATION_CLASSES as _REP_CLSs,
-)
+from astropy.coordinates import representation as r
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -40,6 +38,9 @@ from discO.config import conf
 
 class UnFrame(BaseCoordinateFrame):
     """Unconnected Coordinate Frame. Does not support transformations."""
+
+    default_representation = r.CartesianRepresentation
+    default_differential = r.CartesianDifferential
 
 
 # /class
@@ -126,7 +127,7 @@ def resolve_representationlike(
         representation = conf.default_representation_type
 
     if isinstance(representation, str):
-        representation = _REP_CLSs[representation]
+        representation = r.REPRESENTATION_CLASSES[representation]
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(

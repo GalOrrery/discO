@@ -4,6 +4,7 @@
 
 __all__ = [
     "Test_GalpyPotentialSampler",
+    "Test_MeshGridPositionDF",
 ]
 
 
@@ -19,7 +20,11 @@ from galpy.df import isotropicHernquistdf
 from galpy.potential import HernquistPotential
 
 # PROJECT-SPECIFIC
-from discO.core.tests.test_sample import Test_PotentialSampler
+from discO.core.sample import MeshGridPotentialSampler
+from discO.core.tests.test_sample import (
+    Test_PotentialSampler as PotentialSampler_Test,
+)
+from discO.tests.helper import ObjectTest
 from discO.plugin.galpy import GalpyPotentialWrapper, sample
 
 ##############################################################################
@@ -28,7 +33,7 @@ from discO.plugin.galpy import GalpyPotentialWrapper, sample
 
 
 class Test_GalpyPotentialSampler(
-    Test_PotentialSampler,
+    PotentialSampler_Test,
     obj=sample.GalpyPotentialSampler,
 ):
     @classmethod
@@ -141,7 +146,80 @@ class Test_GalpyPotentialSampler(
 # /class
 
 
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+
+class Test_MeshGridPositionDF(
+    ObjectTest,
+    obj=sample.MeshGridPositionDF,
+):
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        # make potential
+        cls.mass = 1e12 * u.solMass
+
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
+        hernquist_pot.turn_physical_on()  # force units
+        cls.potential = hernquist_pot
+
+        nx = ny = nz = 76  # must be int and even
+        nxr0 = nyr0 = nzr0 = 2.3 * 2
+
+        X, Y, Z = np.array(
+            np.meshgrid(
+                np.linspace(-nxr0 / 2, nxr0 / 2, nx),
+                np.linspace(-nyr0 / 2, nyr0 / 2, ny),
+                np.linspace(-nzr0 / 2, nzr0 / 2, nz),
+                indexing="ij",
+            )
+        )
+        XYZ = coord.CartesianRepresentation(X, Y, Z, unit=u.kpc)
+        cls.meshgrid = XYZ
+
+        cls.inst = cls.obj(cls.potential, meshgrid=cls.meshgrid)
+
+    # /def
+
+    #################################################################
+    # Method Tests
+
+    def test___init__(self):
+        inst = self.obj(self.potential, meshgrid=self.meshgrid)
+
+    # /def
+
+    def test__pot(self):
+        assert self.inst._pot is self.inst._sampler._wrapper_potential
+
+    # /def
+
+    def test_sample(self):
+        """Test method ``sample``.
+
+        The method just calls ``MeshGridPotentialSampler``, tested elsewhere.
+
+        """
+        comparison_sampler = MeshGridPotentialSampler(
+            GalpyPotentialWrapper(self.potential),
+            self.meshgrid,
+        )
+
+        self.inst.sample(10) == comparison_sampler(10)
+
+    # /def
+
+    #################################################################
+    # Usage Tests
+
+    @pytest.mark.skip(reason="TODO")
+    def test_use_as_galpy_DF(self):
+        assert False
+
+    # /def
+
+
+# /class
 
 
 ##############################################################################

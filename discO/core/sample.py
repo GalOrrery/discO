@@ -30,6 +30,7 @@ Let's do this for galpy
 
 __all__ = [
     "PotentialSampler",
+    "MeshGridPotentialSampler",
 ]
 
 
@@ -44,6 +45,7 @@ from types import ModuleType
 
 # THIRD PARTY
 import astropy.coordinates as coord
+import astropy.units as u
 import numpy as np
 
 # PROJECT-SPECIFIC
@@ -51,6 +53,7 @@ import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
 from discO.utils import resolve_representationlike
+from discO.utils.decorators import frompyfunc
 from discO.utils.pbar import get_progress_bar
 from discO.utils.random import NumpyRNGContext, RandomLike
 
@@ -534,6 +537,186 @@ class PotentialSampler(CommonBase):
             context = contextlib.suppress()
 
         return context
+
+    # /def
+
+
+# /class
+
+
+##############################################################################
+
+
+class MeshGridPotentialSampler(PotentialSampler):
+    """Mesh-Grid Position Distribution.
+
+    Parameters
+    ----------
+    pot : PotentialWrapper
+    meshgrid : coord-like
+        Should be "ij", not "xy" indexed.
+
+    """
+
+    def __new__(
+        cls,
+        potential: T.Any,
+        meshgrid: coord.BaseRepresentation,
+        *,
+        total_mass: T.Optional[TH.QuantityType] = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        key: T.Union[ModuleType, str, None] = None,
+        **other,
+    ):
+        return super().__new__(
+            cls,
+            potential,
+            total_mass=total_mass,
+            representation_type=representation_type,
+            key=key,
+            **other,
+        )
+
+    # /def
+
+    def __init__(
+        self,
+        pot,
+        meshgrid,
+        *,
+        total_mass: T.Optional[TH.QuantityType] = None,
+        representation_type: TH.OptRepresentationLikeType = None,
+        **defaults,
+    ):
+        super().__init__(
+            pot,
+            total_mass=total_mass,
+            representation_type=representation_type,
+            **defaults,
+        )
+
+        self._meshgrid = meshgrid
+        self._gridshape = np.shape(meshgrid)
+        self._dims = self._get_dimensions(meshgrid)
+
+        weight = self.potential.density(meshgrid)[1].flatten()
+        # distribution of flattened indices in [0, 1]
+        self._index_partition = np.cumsum(weight).value
+        self._normalization = np.sum(weight).value
+
+    # /def
+
+    @staticmethod
+    def _get_dimensions(meshgrid):
+        """Get dimensions.
+
+        TODO! handle uneven dimensions
+
+        Parameters
+        ----------
+        meshgrid : Representation
+
+        """
+        vals = meshgrid._values
+        keys = tuple(vals.dtype.fields.keys())
+
+        q1 = vals[keys[0]][1:, :, :] - vals[keys[0]][:-1, :, :]
+        if np.allclose(q1, q1[0, 0, 0]):
+            q1dim = q1[0, 0, 0] * meshgrid._units[keys[0]]
+        else:
+            raise NotImplementedError
+
+        q2 = vals[keys[1]][:, 1:, :] - vals[keys[1]][:, :-1, :]
+        if np.allclose(q2, q2[0, 0, 0]):
+            q2dim = q2[0, 0, 0] * meshgrid._units[keys[1]]
+        else:
+            raise NotImplementedError
+
+        q3 = vals[keys[2]][:, :, 1:] - vals[keys[2]][:, :, :-1]
+        if np.allclose(q3, q3[0, 0, 0]):
+            q3dim = q3[0, 0, 0] * meshgrid._units[keys[2]]
+        else:
+            raise NotImplementedError
+
+        return q1dim, q2dim, q3dim
+
+    # /def
+
+    @property
+    def _imapper(self):
+        @frompyfunc(nin=1, nout=1)
+        def imapper(uniform_draw):
+            iflat = np.where(
+                uniform_draw * self._normalization <= self._index_partition,
+            )[0][0]
+            i = np.unravel_index(iflat, self._gridshape)
+            return i
+
+        return imapper
+
+    # /def
+
+    def __call__(
+        self, n: int, rng: T.Optional[np.random.Generator] = None, **kw
+    ):
+        """Sample.
+
+        .. todo::
+
+            handle uneven voxels
+
+        Parameters
+        ----------
+        n : int
+            number of sample points
+        rng : `~numpy.random.Generator` or None
+        **kw : Any
+
+        Returns
+        -------
+        `~astropy.coordinates.BaseRepresentation`
+
+        """
+        _rng = np.random.default_rng() if rng is None else rng
+
+        us = _rng.uniform(0, 1, size=n)
+        indices = self._imapper(us)
+
+        if all((np.shape(x) == () for x in self._dims)):
+            # get voxel dims from meshgrid
+            rep = self._make_samples_in_even_sized_voxels(
+                indices,
+                self._meshgrid,
+                u.Quantity(self._dims),
+            )
+        else:
+            raise NotImplementedError
+
+        samples = coord.SkyCoord(self.frame.realize_frame(rep))
+
+        # TODO! better storage of these properties, so stay when transform.
+        samples.potential = self.potential
+        # from init if divergent mass, preloaded total_mass() otherwise.
+        samples.mass = np.ones(n) * self._total_mass / n  # AGAMA compatibility
+
+        return samples
+
+    # /def
+
+    def _make_samples_in_even_sized_voxels(
+        self,
+        indices: np.ndarray,
+        centers: coord.CartesianRepresentation,
+        dims: u.Quantity,
+        rng=None,
+    ):
+        rng = np.random.default_rng() if rng is None else rng
+        offset = rng.uniform(-1, 1, size=(len(indices), 3)) / 2 * dims
+
+        # TODO! vectorize
+        mids = centers.xyz.T
+        c = u.Quantity([mids[tuple(i)] for i in indices])
+        return coord.CartesianRepresentation((c + offset).T)
 
     # /def
 
