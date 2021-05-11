@@ -49,6 +49,7 @@ class UnFrame(BaseCoordinateFrame):
 
     @property
     def representation_type(self):
+        """The representation type of the data."""
         rep = super().representation_type
         rep = self.default_representation if rep is None else rep
         return rep
