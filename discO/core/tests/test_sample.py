@@ -80,8 +80,8 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                     ),
                     copy=False,
                 )
-                sample.mass = np.ones(n)
-                sample.potential = self.potential
+                sample.cache["mass"] = np.ones(n)
+                sample.cache["potential"] = self.potential
 
                 return sample
 

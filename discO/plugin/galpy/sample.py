@@ -125,10 +125,6 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         :class:`~astropy.coordinates.SkyCoord`
 
         """
-        # Get preferred frames
-        frame = self.frame
-        representation_type = self._infer_representation(representation_type)
-
         # can't pass a random seed, set in context
         with self._random_context(random):
             orbits = self._df.sample(
@@ -138,13 +134,12 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
                 n=n,
                 return_orbit=True,
             )
-        if isinstance(orbits, coord.BaseCoordinateFrame):
-            orbits = coord.SkyCoord(
-                orbits,
-                copy=False,
-            )
-        if isinstance(orbits, coord.SkyCoord):
-            return orbits
+
+        if isinstance(orbits, (coord.BaseCoordinateFrame, coord.SkyCoord)):
+            return coord.SkyCoord(orbits, copy=False)
+        # else: need to turn an orbit into a SkyCoord
+        # this uses the galpy GC info and then the astropy machinery,
+        # to better control which galactocentric parameters are used.
 
         t = orbits.time()
         dif = coord.CartesianDifferential(
@@ -159,17 +154,22 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             differentials=dict(s=dif),
         )
 
-        if representation_type is None:
-            representation_type = rep.__class__
         samples = coord.SkyCoord(
-            frame.realize_frame(rep, representation_type=representation_type),
+            self.frame.realize_frame(
+                rep,
+                representation_type=(
+                    self._infer_representation(representation_type)
+                    or rep.__class__
+                ),
+            ),
             copy=False,
         )
 
         # TODO! better storage of these properties, so stay when transform.
-        samples.potential = self.potential
+        samples.cache["potential"] = self.potential
         # from init if divergent mass, preloaded total_mass() otherwise.
-        samples.mass = np.ones(n) * self._total_mass / n  # AGAMA compatibility
+        samples.cache["mass"] = np.ones(n) * self._total_mass / n
+        # AGAMA compatibility
 
         return samples
 

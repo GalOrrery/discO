@@ -405,8 +405,8 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
             sample = concatenate(samples).reshape(c.shape)
             # transfer mass & potential # TODO! better
-            sample.mass = getattr(c, "mass", None)
-            sample.potential = getattr(c, "potential", None)
+            sample.cache["mass"] = c.cache.get("mass", None)
+            sample.cache["potential"] = c.cache.get("potential", None)
 
         # /if
 
@@ -864,8 +864,8 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # need to transfer metadata.
         # TODO! more generally, probably need different method for new_c
-        new_sc.potential = getattr(c, "potential", None)
-        new_sc.mass = getattr(c, "mass", None)
+        new_sc.cache["potential"] = c.cache.get("potential", None)
+        new_sc.cache["mass"] = c.cache.get("mass", None)
 
         return new_sc
 

@@ -341,10 +341,13 @@ class Pipeline:
 
                 def jank_iter(samples, masses):
                     for samp, mass in zip(samples, masses):
-                        samp.mass = mass
+                        samp.cache["mass"] = mass
                         yield samp
 
-                n_or_sample = jank_iter(n_or_sample.T, n_or_sample.mass.T)
+                n_or_sample = jank_iter(
+                    n_or_sample.T,
+                    n_or_sample.cache["mass"].T,
+                )
 
         # iterate over number of iterations
         # for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):

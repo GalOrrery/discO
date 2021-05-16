@@ -401,7 +401,7 @@ class PotentialSampler(CommonBase):
         for j, samp in enumerate(run_gen):  # thru iterations
             # store samples & mass
             samps[j] = samp
-            mass[j] = samp.mass
+            mass[j] = samp.cache["mass"]
 
         # Now need to concatenate iterations
         if j == 0:  # 0-dimensional doesn't need concat
@@ -409,8 +409,8 @@ class PotentialSampler(CommonBase):
         else:
             # breakpoint()
             sample = coord.concatenate(samps).reshape((n, iterations))
-            sample.mass = np.vstack(mass).T
-            sample.potential = samp.potential  # all the same
+            sample.cache["mass"] = np.vstack(mass).T
+            sample.cache["potential"] = samp.cache["potential"]  # all the same
 
         return sample
 
@@ -691,9 +691,10 @@ class MeshGridPotentialSampler(PotentialSampler):
         samples = coord.SkyCoord(self.frame.realize_frame(rep))
 
         # TODO! better storage of these properties, so stay when transform.
-        samples.potential = self.potential
+        samples.cache["potential"] = self.potential
         # from init if divergent mass, preloaded total_mass() otherwise.
-        samples.mass = np.ones(n) * self._total_mass / n  # AGAMA compatibility
+        samples.cache["mass"] = np.ones(n) * self._total_mass / n
+        # AGAMA compatibility
 
         return samples
 

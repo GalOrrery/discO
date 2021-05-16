@@ -73,10 +73,10 @@ crd = coord.SkyCoord(
         * u.kpc,
     ),
 )
-crd.mass = np.ones(10) * u.solMass
+crd.cache["mass"] = np.ones(10) * u.solMass
 
 multicrd = crd.reshape((5, 2))
-multicrd.mass = crd.mass.reshape((5, 2))
+multicrd.cache["mass"] = crd.cache["mass"].reshape((5, 2))
 
 
 class FitterSubClass(fitter.PotentialFitter, key="test_discO"):
@@ -373,7 +373,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
     def test_run(self, sample, mass, batch):
         """Test method ``run``."""
         # for test need to assign correct potential type
-        sample.potential = self.potential
+        sample.cache["potential"] = self.potential
 
         pots = self.inst.run(sample, batch=batch)
 
@@ -382,17 +382,20 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             pots = np.array(tuple(pots))
 
         if len(sample.shape) == 1:
-            assert isinstance(pots[0].__wrapped__, sample.potential)
+            assert isinstance(pots[0].__wrapped__, sample.cache["potential"])
 
         else:
             assert isinstance(pots, np.ndarray)
             assert len(pots) == sample.shape[1]
             assert all(
-                [isinstance(p.__wrapped__, sample.potential) for p in pots],
+                [
+                    isinstance(p.__wrapped__, sample.cache["potential"])
+                    for p in pots
+                ],
             )
 
         # and then cleanup
-        del sample.potential
+        del sample.cache["potential"]
 
     # /def
 

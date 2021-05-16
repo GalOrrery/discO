@@ -179,7 +179,7 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
 
         # --------------
         if mass is None:
-            mass = sample.mass
+            mass = sample.cache.get("mass")
 
         sample = sample.transform_to(frame)  # FIXME!
         position = sample.represent_as(coord.CartesianRepresentation).xyz.T

@@ -93,10 +93,10 @@ class Test_GalpyPotentialSampler(
         )
         assert res.__class__ == coord.SkyCoord
 
-        assert res.potential.__wrapped__ == self.potential
-        assert len(res.mass) == n
+        assert res.cache["potential"].__wrapped__ == self.potential
+        assert len(res.cache["mass"]) == n
 
-        got = res.mass.sum()
+        got = res.cache["mass"].sum()
         if hasattr(got, "unit"):
             got = got.to_value(u.solMass)
 
@@ -130,12 +130,12 @@ class Test_GalpyPotentialSampler(
         res = self.inst.run(n, frame=frame, batch=True, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
-        assert res.potential.__wrapped__ == self.potential
-        assert len(res.mass) == n
+        assert res.cache["potential"].__wrapped__ == self.potential
+        assert len(res.cache["mass"]) == n
         # FIXME!
         # assert np.isclose(
-        #     res.mass.sum(), self.mass
-        # ), f"{res.mass.sum()} != {self.mass}"
+        #     res.cache["mass"].sum(), self.mass
+        # ), f"{res.cache["mass"].sum()} != {self.mass}"
 
         # TODO! value tests when https://github.com/jobovy/galpy/pull/443
         # assert np.allclose(res.ra.deg, [126.10132346, 214.92637031])

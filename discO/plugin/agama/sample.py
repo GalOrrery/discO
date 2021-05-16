@@ -89,8 +89,8 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
             frame.realize_frame(rep, representation_type=representation_type),
             copy=False,
         )
-        samples.mass = masses * u.solMass
-        samples.potential = self.potential
+        samples.cache["mass"] = masses * u.solMass
+        samples.cache["potential"] = self.potential
 
         return samples
 
