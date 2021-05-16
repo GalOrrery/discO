@@ -42,21 +42,32 @@ class UnFrame(BaseCoordinateFrame):
     default_differential = None
     default_representation = None
 
-    @property
-    def _default_representation(self):
+    def __init__(
+        self,
+        *args,
+        copy=True,
+        representation_type=None,
+        differential_type=None,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            copy=copy,
+            representation_type=representation_type,
+            differential_type=differential_type,
+            **kwargs,
+        )
+
+        # set the representation and differential default type info from the
+        # initialized values.
         if hasattr(self, "_data") and self._data is not None:
-            return self._data.__class__
+            self._default_representation = self._data.__class__
+            self.representation_type = self._data.__class__
 
-    @property
-    def representation_type(self):
-        """The representation type of the data."""
-        rep = super().representation_type
-        rep = self.default_representation if rep is None else rep
-        return rep
+            if "s" in self.data.differentials:
+                self.differential_type = self.data.differentials["s"].__class__
 
-    @representation_type.setter
-    def representation_type(self, value):
-        self.set_representation_cls(value)
+    # /def
 
 
 # /class
