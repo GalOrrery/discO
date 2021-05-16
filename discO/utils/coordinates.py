@@ -23,11 +23,9 @@ from astropy.coordinates import (
     BaseCoordinateFrame,
     BaseRepresentation,
     SkyCoord,
-    sky_coordinate_parsers,
 )
-from astropy.coordinates.representation import (
-    REPRESENTATION_CLASSES as _REP_CLSs,
-)
+from astropy.coordinates import representation as r
+from astropy.coordinates import sky_coordinate_parsers
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
@@ -40,6 +38,36 @@ from discO.config import conf
 
 class UnFrame(BaseCoordinateFrame):
     """Unconnected Coordinate Frame. Does not support transformations."""
+
+    default_differential = None
+    default_representation = None
+
+    def __init__(
+        self,
+        *args,
+        copy=True,
+        representation_type=None,
+        differential_type=None,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            copy=copy,
+            representation_type=representation_type,
+            differential_type=differential_type,
+            **kwargs,
+        )
+
+        # set the representation and differential default type info from the
+        # initialized values.
+        if hasattr(self, "_data") and self._data is not None:
+            self._default_representation = self._data.__class__
+            self.representation_type = self._data.__class__
+
+            if "s" in self.data.differentials:
+                self.differential_type = self.data.differentials["s"].__class__
+
+    # /def
 
 
 # /class
@@ -126,7 +154,7 @@ def resolve_representationlike(
         representation = conf.default_representation_type
 
     if isinstance(representation, str):
-        representation = _REP_CLSs[representation]
+        representation = r.REPRESENTATION_CLASSES[representation]
     elif isinstance(representation, BaseRepresentation):
         representation = representation.__class__
     elif inspect.isclass(representation) and issubclass(

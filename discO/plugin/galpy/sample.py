@@ -4,6 +4,7 @@
 
 __all__ = [
     "GalpyPotentialSampler",
+    "MeshGridPositionDF",
 ]
 
 
@@ -17,10 +18,12 @@ import typing as T
 import astropy.coordinates as coord
 import galpy.df as gdf
 import numpy as np
+from galpy.df.df import df as DF
 
 # PROJECT-SPECIFIC
 import discO.type_hints as TH
-from discO.core.sample import PotentialSampler
+from .wrapper import GalpyPotentialWrapper
+from discO.core.sample import MeshGridPotentialSampler, PotentialSampler
 from discO.core.wrapper import PotentialWrapper
 from discO.utils.random import RandomLike
 
@@ -135,6 +138,13 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
                 n=n,
                 return_orbit=True,
             )
+        if isinstance(orbits, coord.BaseCoordinateFrame):
+            orbits = coord.SkyCoord(
+                orbits,
+                copy=False,
+            )
+        if isinstance(orbits, coord.SkyCoord):
+            return orbits
 
         t = orbits.time()
         dif = coord.CartesianDifferential(
@@ -162,6 +172,57 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
         samples.mass = np.ones(n) * self._total_mass / n  # AGAMA compatibility
 
         return samples
+
+    # /def
+
+
+# /class
+
+
+##############################################################################
+
+
+class MeshGridPositionDF(DF):
+    """Mesh-Grid Position Distribution.
+
+    Parameters
+    ----------
+    pot : PotentialWrapper
+    meshgrid : coord-like
+
+    """
+
+    def __init__(self, pot, meshgrid):
+        self._sampler = MeshGridPotentialSampler(
+            GalpyPotentialWrapper(pot),
+            meshgrid,
+        )
+
+    # /def
+
+    @property
+    def _pot(self):
+        return self._sampler._wrapper_potential
+
+    # /def
+
+    def sample(
+        self, n: int, rng: T.Optional[np.random.Generator] = None, **kw
+    ):
+        """Sample.
+
+        .. todo::
+
+            handle uneven voxels
+
+        Parameters
+        ----------
+        n : int
+            number of sample points
+        rng : `~numpy.random.Generator` or None
+
+        """
+        return self._sampler(n, rng=rng, **kw)
 
     # /def
 

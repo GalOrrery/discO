@@ -24,6 +24,7 @@ import pytest
 from discO.core import sample
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper
+from discO.setup_package import HAS_GALPY
 from discO.utils.random import NumpyRNGContext
 
 ##############################################################################
@@ -232,9 +233,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 )
             else:
                 msamp = self.obj(
-                    PotentialWrapper(
-                        self.potential,
-                    ),
+                    PotentialWrapper(self.potential),
                     total_mass=10 * u.solMass,
                     df=TestDF,
                     key=key,
@@ -441,7 +440,10 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         old_representation_type = self.inst.representation_type
         self.inst.potential._representation_type = None
-        assert self.inst._infer_representation(None) is None
+        assert (
+            self.inst._infer_representation(None)
+            == self.inst.frame.default_representation
+        )
         self.inst.potential._representation_type = old_representation_type
 
         # ----------------
@@ -500,6 +502,95 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
 
 # -------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not HAS_GALPY, reason="needs real density function.")
+class Test_MeshGridPotentialSampler(
+    Test_PotentialSampler,
+    obj=sample.MeshGridPotentialSampler,
+):
+    @classmethod
+    def setup_class(cls):
+        """Setup fixtures for testing."""
+        super().setup_class()
+
+        nx = ny = nz = 76  # must be int and even
+        nxr0 = nyr0 = nzr0 = 2.3 * 2
+
+        X, Y, Z = (
+            np.array(
+                np.meshgrid(
+                    np.linspace(-nxr0 / 2, nxr0 / 2, nx),
+                    np.linspace(-nyr0 / 2, nyr0 / 2, ny),
+                    np.linspace(-nzr0 / 2, nzr0 / 2, nz),
+                    indexing="ij",
+                ),
+            )
+            * 1
+        )
+        XYZ = coord.CartesianRepresentation(X, Y, Z, unit=u.kpc)
+
+        # THIRD PARTY
+        import galpy.potential as gpot
+
+        cls.potential = gpot.HernquistPotential()
+        cls.meshgrid = XYZ
+
+        cls.inst = cls.obj(
+            PotentialWrapper(cls.potential),
+            cls.meshgrid,
+            total_mass=10 * u.solMass,
+        )
+
+    #################################################################
+    # Method Tests
+
+    def test___new__(self):
+        """Test method ``__new__``."""
+
+        # ---------------
+        # Can't have the "key" argument
+
+        with pytest.raises(ValueError, match="Can't specify 'key'"):
+            self.obj(
+                PotentialWrapper(self.potential),
+                self.meshgrid,
+                key="not None",
+            )
+
+        # ---------------
+        # AOK
+
+        msamp = self.obj(
+            PotentialWrapper(self.potential, frame="icrs"),
+            self.meshgrid,
+        )
+
+        assert self.obj is not sample.PotentialSampler
+        assert isinstance(msamp, self.obj)
+        assert isinstance(msamp, sample.PotentialSampler)
+        assert not hasattr(msamp, "_instance")
+        assert msamp._potential == self.potential
+
+    # /def
+
+    # -------------------------------
+
+    @abc.abstractmethod
+    def test___init__(self):
+        """Test method ``__init__``."""
+
+        with pytest.raises(ValueError, match="mass is divergent"):
+            self.obj(
+                PotentialWrapper(self.potential),
+                meshgrid=self.meshgrid,
+                total_mass=np.inf * u.solMass,
+            )
+
+    # /def
+
+
+# /class
 
 
 ##############################################################################

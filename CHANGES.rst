@@ -92,6 +92,8 @@ subclasses must override the ``_registry`` and ``__call__`` methods.
     + ``frame`` and ``representation_type`` can be None or Ellipse or anything
       that works with ``resolve_framelike``. [#45]
 
+- ``MeshGridSampler`` : sample an arbitrary potential with a weighted grid [#59]
+
 
 **discO.core.fitter**
 
@@ -240,7 +242,7 @@ discO.plugin.agama
     + ``total_mass`` function. [#45]
 
 
-discO.plugin.agama
+discO.plugin.gala
 ^^^^^^^^^^^^^^^^^^
 
 - ``AGAMAPotentialWrapper`` : for wrapping Potentials [#58]
@@ -257,6 +259,9 @@ discO.plugin.galpy
 
     + Sample from ``galpy`` potentials with a corresponding distribution function.
     + stores the mass and potential as attributes on the returned ``SkyCoord``
+
+- ``MeshGridPositionDF`` : mimics a galpy DF [#59]
+    For sampling positions using a disco ``MeshGridSampler``.
 
 - ``GalpyPotentialWrapper`` : for wrapping Potentials [#39]
 
