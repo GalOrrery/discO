@@ -52,8 +52,8 @@ def setup_module(module):
                 ),
                 copy=False,
             )
-            sample.mass = np.ones(n)
-            sample.potential = object()
+            sample.cache["mass"] = np.ones(n)
+            sample.cache["potential"] = object()
 
             return sample
 
@@ -118,8 +118,8 @@ class MockSampler(PotentialSampler):
             frame.realize_frame(rep, representation_type=representation_type),
             copy=False,
         )
-        sample.mass = np.ones(n)
-        sample.potential = object()
+        sample.cache["mass"] = np.ones(n)
+        sample.cache["potential"] = object()
 
         return sample
 

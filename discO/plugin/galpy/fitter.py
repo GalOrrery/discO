@@ -225,7 +225,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
         # --------------
 
         if mass is None:
-            mass = sample.mass
+            mass = sample.cache.get("mass")
 
         # kwargs
         kw = dict(self.potential_kwargs.items())  # deepcopy MappingProxyType

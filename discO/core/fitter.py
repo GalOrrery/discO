@@ -243,31 +243,31 @@ class PotentialFitter(CommonBase):
 
         """
         if mass is None:
-            mass = sample.mass
+            mass = sample.cache.get("mass")
 
         N, *iterations = sample.shape
 
         # get samples into the correct frame
         sample = sample.transform_to(self.frame)
-        sample.mass = mass
+        sample.cache["mass"] = mass
 
         # get # iterations (& reshape no-iteration samples)
         if not iterations:  # only (N, ) -> (N, niter=1)
             iterations = 1
             sample = sample.reshape((-1, iterations))
-            sample.mass = mass.reshape((-1, iterations))
+            sample.cache["mass"] = mass.reshape((-1, iterations))
         else:
             iterations = iterations[0]  # TODO! check shape
 
         # (iterations, N) -> iter on iterations
         with get_progress_bar(progress, iterations) as pbar:
 
-            for samp, mass in zip(sample.T, sample.mass.T):
+            for samp, mass in zip(sample.T, sample.cache["mass"].T):
                 pbar.update(1)
 
                 # FIXME! need to assign these into sample
-                # sample.potential
-                samp.mass = mass
+                # sample.cache["potential"]
+                samp.cache["mass"] = mass
 
                 yield self(
                     samp,

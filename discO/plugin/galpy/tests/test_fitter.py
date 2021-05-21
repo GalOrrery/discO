@@ -175,7 +175,7 @@ class Test_GalpySCFPotentialFitter(
         # -------------------
         # some errors
 
-        with pytest.raises(AttributeError, match="has no attribute 'mass'"):
+        with pytest.raises(AttributeError, match="has no attribute 'cache'"):
             self.inst(None, Nmax=0)
 
         with pytest.raises(ValueError, match="Nmax & Lmax must be >=0."):
