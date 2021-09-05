@@ -18,6 +18,8 @@ __all__ = [
     "fit_gaussian_process",
     "fit_support_vector",
     "fit_linear",
+    # querying
+    "query_and_fit_patch_set",
 ]
 
 
@@ -26,18 +28,24 @@ __all__ = [
 
 # BUILT-IN
 import argparse
+import pickle
 import typing as T
 import warnings
 
 # THIRD PARTY
+import astropy.coordinates as coord
+import astropy.units as u
 import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from astropy import table
 from astroquery.gaia import Gaia
+from scipy.stats import gaussian_kde
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
@@ -58,7 +66,10 @@ _VERBOSE: int = 0  # Degree of logfile verbosity
 
 
 def fit_kernel_ridge(
-    X: npt.NDArray, y: npt.NDArray, train_size: int, random_state: RandomStateType = None
+    X: npt.NDArray,
+    y: npt.NDArray,
+    train_size: int,
+    random_state: RandomStateType = None,
 ) -> (npt.NDArray, KernelRidge):
     """Kernel-Ridge Regression code.
 
@@ -77,7 +88,10 @@ def fit_kernel_ridge(
     # construct grid-search for optimal parameters
     kr = GridSearchCV(
         KernelRidge(alpha=1, kernel="linear", gamma=0.1),
-        param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3], "gamma": np.logspace(-2, 2, 5)},
+        param_grid={
+            "alpha": [1e0, 0.1, 1e-2, 1e-3],
+            "gamma": np.logspace(-2, 2, 5),
+        },
     )
 
     # randomize the data order
@@ -91,7 +105,7 @@ def fit_kernel_ridge(
             np.ones(100) * np.median(X[:, 0]),  # ra
             np.ones(100) * np.median(X[:, 1]),  # dec
             np.linspace(X[:, 2].min(), X[:, 2].max(), 100),  # p
-        ]
+        ],
     ).T
     ykr = kr.predict(Xp)
 
@@ -101,41 +115,47 @@ def fit_kernel_ridge(
 # /def
 
 
-def fit_gaussian_process(
-    X: npt.NDArray, y: npt.NDArray, train_size: int, random_state: RandomStateType = None
-) -> (npt.NDArray, GaussianProcessRegressor):
-    """Gaussian-Process Regression code.
-
-    Parameters
-    ----------
-    X : ndarray
-    y : ndarray
-    train_size : int
-    random_state : `numpy.random.Generator`, `numpy.random.RandomState`, int, or None (optional)
-
-    Returns
-    -------
-    ykr : ndarray
-    kr : `~sklearn.gaussian_process.GaussianProcessRegressor`
-    """
-    # estimator
-    gpr = GaussianProcessRegressor(kernel=None)
-
-    # randomize the data order
-    idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
-
-    # fit
-    gpr.fit(X[idx], y[idx])
-    ygp = gpr.predict(Xp)
-
-    return ygp, gpr
-
-
-# /def
+# def fit_gaussian_process(
+#     X: npt.NDArray,
+#     y: npt.NDArray,
+#     train_size: int,
+#     random_state: RandomStateType = None,
+# ) -> (npt.NDArray, GaussianProcessRegressor):
+#     """Gaussian-Process Regression code.
+# 
+#     Parameters
+#     ----------
+#     X : ndarray
+#     y : ndarray
+#     train_size : int
+#     random_state : `numpy.random.Generator`, `numpy.random.RandomState`, int, or None (optional)
+# 
+#     Returns
+#     -------
+#     ykr : ndarray
+#     kr : `~sklearn.gaussian_process.GaussianProcessRegressor`
+#     """
+#     # estimator
+#     gpr = GaussianProcessRegressor(kernel=None)
+# 
+#     # randomize the data order
+#     idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
+# 
+#     # fit
+#     gpr.fit(X[idx], y[idx])
+#     ygp = gpr.predict(Xp)
+# 
+#     return ygp, gpr
+# 
+# 
+# # /def
 
 
 def fit_support_vector(
-    X: npt.NDArray, y: npt.NDArray, train_size: int, random_state: RandomStateType = None
+    X: npt.NDArray,
+    y: npt.NDArray,
+    train_size: int,
+    random_state: RandomStateType = None,
 ) -> (npt.NDArray, SVR):
     """support-vector regression.
 
@@ -167,7 +187,7 @@ def fit_support_vector(
             np.ones(100) * np.median(X[:, 0]),  # ra
             np.ones(100) * np.median(X[:, 1]),  # dec
             np.linspace(X[:, 2].min(), X[:, 2].max(), 100),  # p
-        ]
+        ],
     ).T
     ysv = svr.predict(Xp)
 
@@ -181,7 +201,7 @@ def fit_linear(
     X: npt.NDArray,
     y: npt.NDArray,
     train_size: int,
-    weight: bool = True,
+    weight: T.Union[bool, npt.NDArray] = True,
     random_state: RandomStateType = None,
 ) -> (npt.NDArray, LinearRegression):
     """Linear regression model.
@@ -191,7 +211,7 @@ def fit_linear(
     X : ndarray
     y : ndarray
     train_size : int
-    weight : bool, optional
+    weight : bool or ndarray, optional
     random_state : `numpy.random.Generator`, `numpy.random.RandomState`, int, or None (optional)
 
     Returns
@@ -205,10 +225,11 @@ def fit_linear(
     idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
 
     # fit, optionally with weights
-    if weight == True:
-        xy = np.vstack([X[:, 2], y])
-        kde = gaussian_kde(xy)(xy)
-        lr.fit(X[idx], y[idx], sample_weight=(1 / kde)[idx])
+    if weight is True or isinstance(weight, np.ndarray):  # True or kde
+        if weight is True:
+            xy = np.vstack([X[:, 2], y])
+            weight = gaussian_kde(xy)(xy)
+        lr.fit(X[idx], y[idx], sample_weight=(1 / weight)[idx])
     else:
         lr.fit(X[idx], y[idx])
 
@@ -218,7 +239,7 @@ def fit_linear(
             np.ones(100) * np.median(X[:, 0]),  # ra
             np.ones(100) * np.median(X[:, 1]),  # dec
             np.linspace(X[:, 2].min(), X[:, 2].max(), 100),  # p
-        ]
+        ],
     ).T
     ylr = lr.predict(Xp)
 
@@ -239,6 +260,7 @@ def plot_parallax_prediction(
     ypred2: npt.NDArray,
     ypred3: npt.NDArray,
     fids,
+    ax=None
 ) -> plt.Figure:
     """Plot predicted parallax.
 
@@ -256,11 +278,16 @@ def plot_parallax_prediction(
     -------
     `matplotlib.pyplot.Figure`
     """
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(
-        xlabel=r"$\log_{10}$ parallax [mas]",
-        ylabel=r"$\log_{10}$ parallax fractional error",
-    )
+    if ax is None:
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot()
+    else:
+        fig = ax.figure
+
+    ax.set_xlabel(r"$\log_{10}$ parallax [mas]")
+    ax.set_ylabel(r"$\log_{10}$ parallax fractional error")
+    ax.set_title(f"Patch={fids}")
+
     # distance label
     secax = ax.secondary_xaxis(
         "top",
@@ -276,14 +303,13 @@ def plot_parallax_prediction(
             np.ones(100) * np.median(Xtrue[:, 0]),  # ra
             np.ones(100) * np.median(Xtrue[:, 1]),  # dec
             np.linspace(Xtrue[:, 2].min(), Xtrue[:, 2].max(), 100),  # p
-        ]
+        ],
     ).T
 
     ax.scatter(Xtrue[:, -1], ytrue, s=5, label="data", alpha=0.3, c=kde)
     ax.scatter(Xpred[:, -1], ypred1, s=5, label="kernel-ridge")
     ax.scatter(Xpred[:, -1], ypred2, s=5, label="linear model: density-weighting")
     ax.scatter(Xpred[:, -1], ypred3, s=5, label="linear model: no density weight")
-    ax.set_title(str(fids))
 
     ax.set_ylim(-3, 3)
     ax.invert_xaxis()
@@ -295,93 +321,135 @@ def plot_parallax_prediction(
 # /def
 
 
-def plot_mollview(setofids, nside):
-
+def plot_mollview(patch_ids, order, fig=None):
+    """Plot Mollweide view with patches on sky."""
+    nside = hp.order2nside(order)
     npix = hp.nside2npix(nside)
-    m = np.arange(npix)
-    m[setofids[0] : setofids[-1]] = m.max()
 
+    # background plot
+    m = np.arange(npix)
+    alpha = np.zeros_like(m) + 0.5
+    alpha[patch_ids[0] : patch_ids[-1]] = 1
     hp.mollview(
         m,
-        title="Mollview image RING",
         nest=True,
         coord=["C"],
         cbar=False,
-        cmap=cm,
+        cmap="inferno",
+        fig=fig,
+        alpha=alpha,
     )
 
+    # patch plot
+    m[patch_ids[0] : patch_ids[-1]] = 3 * npix // 4
+    alpha[:patch_ids[0]] = 0
+    alpha[patch_ids[-1]:] = 0
+    hp.mollview(
+        m,
+        title=f"Mollview image (RING, order={order})\nPatches {patch_ids}",
+        nest=True,
+        coord=["C"],
+        cbar=False,
+        cmap="Greens",
+        fig=fig,
+        reuse_axes=True,
+        alpha=alpha,
+    )
     fig = plt.gcf()
+
     return fig
 
 
-def query_and_fit_patch_set():
+def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
     """Query and fit a set of sky patches.
 
     Parameters
     ----------
-    
-    """
+    patch_ids : tuple[int]
+        Set of patch ids (int).
+    order : int
+        The healpix order.  See :func:`healpy.order2nside`
 
+    """
+    # create Gaia query
+    hpl = f"healpix{order}"  # column name
     job = Gaia.launch_job_async(
         f"""
     SELECT
-    source_id, GAIA_HEALPIX_INDEX(4, source_id) AS healpix4,
+    source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
     parallax AS parallax, parallax_error AS parallax_error,
     ra, ra_error AS ra_err,
     dec, dec_error AS dec_err
 
     FROM gaiadr2.gaia_source
 
-    WHERE GAIA_HEALPIX_INDEX(4, source_id) IN {setofids}
-    AND parallax >= 0
+    WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
+    AND parallax > 0
     AND random_index < 1000000
     """,
         dump_to_file=False,
         verbose=False,
     )
+    # perform query and
+    r = table.QTable(job.get_results(), copy=False)
+    rgr = r.group_by(hpl)  # group stars by patch
 
-    r = job.get_results()
-    rgr = r.group_by("healpix4")
+    # plot the patches
+    if plot:
+        fig = plot_mollview(patch_ids, order)
+        fig.savefig(f"figures/mollview-{'-'.join(map(str, patch_ids))}.pdf")
 
-    plot_mollview(setofids, opts.nside)
+    # parallax plot
+    if plot:
+        rows, remainder = np.divmod(len(patch_ids), 4)
+        if rows == 0:
+            width = remainder
+        else:
+            width = 4
+        if remainder > 0:
+            rows += 1
+        fig, axs = plt.subplots(rows, width, figsize=(5 * width, 5 * rows))
+    else:
+        axs = np.zeros(len(rgr.groups))
 
-    for j in range(0, len(setofids)):
-        rg = rgr[rgr["healpix4"] == setofids[j]]
+    key: table.Row
+    group: table.Table
+    for grp, ax in zip(rgr.groups, axs.flat):
+        patch_id: int = grp[hpl][0]
 
-        print(setofids[j], len(rg))
-
-        # DOING STUFF HERE
-        # with catch_warnings(UserWarning):
-        df = table.QTable(rg)
-
-        df = df[np.isfinite(df["parallax"])]  # filter out NaN
-        df = df[df["parallax"] > 0]  # positive parallax
-
+        grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
+        # group = group[group["parallax"] > 0]  # positive parallax
+        
         # add the fractional error
-        df["parallax_frac_error"] = df["parallax_error"] / df["parallax"]
+        grp["parallax_frac_error"] = grp["parallax_error"] / grp["parallax"]
 
         X = np.array(
             [
-                df["ra"].to_value(u.deg),
-                df["dec"].to_value(u.deg),
-                np.log10(df["parallax"].to_value(u.mas)),
-            ]
+                grp["ra"].to_value(u.deg),
+                grp["dec"].to_value(u.deg),
+                np.log10(grp["parallax"].to_value(u.mas)),
+            ],
         ).T
-        y = np.log10(df["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
+        y = np.log10(grp["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
 
         xy = np.vstack([X[:, 2], y])
         kde = gaussian_kde(xy)(xy)
 
-        ykr, kr = kernel_ridge(X, y, train_size=int(len(rg) * 0.8))
-        # ygp, gpr = Gauss_process(X,y, train_size)
-        ysv, svr = support_vector(X, y, train_size=int(len(rg) * 0.8))
-        yreg, reg = linear(X, y, train_size=int(len(rg) * 0.8))
-        yreg1, reg1 = linear(X, y, train_size=int(len(rg) * 0.8), weight=False)
+        # fit a few different ways
+        ykr, kr = fit_kernel_ridge(X, y, train_size=int(len(grp) * 0.8))
+        ysv, svr = fit_support_vector(X, y, train_size=int(len(grp) * 0.8))
+        yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
+        yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
 
-        with open("pk_reg/pk_" + str(setofids[j]) + ".pkl", mode="wb") as f:
-            pickle.dump(reg, f)
+        with open("pk_reg/pk_" + str(patch_id) + ".pkl", mode="wb") as f:
+            pickle.dump(reg, f)  # the weighted linear regression
 
-        plot_parallax_prediction(X, y, kde, ykr, yreg, yreg1, setofids[j])
+        if plot:
+            plot_parallax_prediction(X, y, kde, ykr, yreg, yreg1, patch_id, ax=ax)
+
+    if plot:
+        plt.tight_layout()
+        fig.savefig(f"figures/parallax-{'-'.join(map(str, patch_ids))}.pdf")
 
 
 ##############################################################################
@@ -390,7 +458,8 @@ def query_and_fit_patch_set():
 
 
 def make_parser(
-    *, inheritable: bool = False, plot: bool = _PLOT, verbose: int = _VERBOSE
+    *, inheritable: bool = False, plot: bool = _PLOT,
+    # verbose: int = _VERBOSE
 ) -> argparse.ArgumentParser:
     """Expose ArgumentParser for ``main``.
 
@@ -426,11 +495,23 @@ def make_parser(
         conflict_handler="resolve" if not inheritable else "error",
     )
 
+    # order
+    parser.add_argument("-o", "--order", action="store", default=4, type=int)
+
+    # patches are done in batches. Need to decide the size
+    parser.add_argument("batch_size", action="store", type=int)
+
+    # which patches
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--allsky", action="store_true")
+    # group.add_argument()  # TODO! option to specify a list of patches
+    # group.add_argument()  # TODO! option to specify a start/stop patch index 
+
     # plot or not
     parser.add_argument("--plot", action="store", default=_PLOT, type=bool)
 
-    # script verbosity
-    parser.add_argument("-v", "--verbose", action="store", default=0, type=int)
+    # # script verbosity
+    # parser.add_argument("-v", "--verbose", action="store", default=0, type=int)
 
     return parser
 
@@ -472,16 +553,15 @@ def main(
 
     # /if
 
-    if hasattr(opts, "norder"):
-        norder = opts.norder
-        opts.nside = hp.order2nside(norder)  # converts norder to nside
-
     breakpoint()
+
+    # construct the list of batches of sky patches
+    # [ (patch_1, patch_2, ...),  (patch_i, patch_i+1, ...)]
 
     return
 
-    for setofids in tqdm.tqdm(groups_of_setofids):
-        query_and_fit_patch_set(setofids)
+    for batch in tqdm.tqdm(list_of_batches):
+        query_and_fit_patch_set(batch, order=opts.order, plot=opts.plot)
 
 
 # /def
