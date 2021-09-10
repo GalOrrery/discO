@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 
 # THIRD PARTY
@@ -19,7 +19,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 from galpy.potential import SCFPotential, scf_compute_coeffs_nbody
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .wrapper import GalpyPotentialWrapper
 from discO.core.fitter import PotentialFitter

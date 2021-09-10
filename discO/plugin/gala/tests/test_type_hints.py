@@ -13,7 +13,7 @@ __all__ = [
 # THIRD PARTY
 from gala.potential import PotentialBase
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.plugin.gala import type_hints
 from discO.tests.helper import TypeVarTests
 

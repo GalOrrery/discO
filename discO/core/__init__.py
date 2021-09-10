@@ -12,7 +12,7 @@ __all__ = [
 # IMPORTS
 # flatten structure
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import fitter, measurement, pipeline, residual, sample
 from .fitter import *  # noqa: F401, F403
 from .measurement import *  # noqa: F401, F403

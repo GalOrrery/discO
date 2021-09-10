@@ -14,7 +14,7 @@ __all__ = [
 # THIRD PARTY
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 
 ##############################################################################

@@ -14,7 +14,7 @@ __all__ = [
 import agama
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core.tests.test_sample import Test_PotentialSampler as PotentialSamplerTester
 from discO.plugin.agama import AGAMAPotentialWrapper, sample
 

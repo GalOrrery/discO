@@ -19,7 +19,7 @@ import pytest
 from galpy.df import isotropicHernquistdf
 from galpy.potential import HernquistPotential
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core.sample import MeshGridPotentialSampler
 from discO.core.tests.test_sample import Test_PotentialSampler as PotentialSampler_Test
 from discO.plugin.galpy import GalpyPotentialWrapper, sample

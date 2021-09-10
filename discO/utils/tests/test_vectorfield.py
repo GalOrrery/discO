@@ -17,7 +17,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import copy
 import operator
 
@@ -26,7 +26,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.tests.helper import ObjectTest
 from discO.utils import vectorfield
 

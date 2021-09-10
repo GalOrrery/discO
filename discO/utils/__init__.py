@@ -16,7 +16,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import vectorfield
 from .coordinates import UnFrame, resolve_framelike, resolve_representationlike
 from .random import NumpyRNGContext

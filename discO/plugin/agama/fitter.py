@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 from types import MappingProxyType
 
@@ -19,7 +19,7 @@ from types import MappingProxyType
 import agama
 import astropy.coordinates as coord
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .wrapper import AGAMAPotentialWrapper
 from discO.core.fitter import PotentialFitter

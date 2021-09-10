@@ -16,7 +16,7 @@ import astropy.units as u
 import pytest
 from galpy import potential as gpot
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core.tests.test_fitter import Test_PotentialFitter as PotentialFitterTester
 from discO.plugin.galpy import GalpyPotentialWrapper, fitter
 

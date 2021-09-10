@@ -16,7 +16,7 @@ import astropy.units as u
 import numpy as np
 from astropy.coordinates import SkyCoord
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
 from discO.utils.random import RandomLike

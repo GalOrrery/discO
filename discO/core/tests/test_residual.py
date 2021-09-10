@@ -8,7 +8,7 @@ __all__ = ["Test_ResidualMethod", "Test_GridResidual"]
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -17,7 +17,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import residual
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper

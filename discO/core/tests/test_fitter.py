@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from abc import abstractmethod
 from collections.abc import Generator
 from types import MappingProxyType
@@ -21,7 +21,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import fitter
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper

@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import inspect
 import typing as T
 from abc import ABCMeta, abstractmethod
@@ -22,7 +22,7 @@ import typing_extensions as TE
 from astropy.utils import sharedmethod
 from astropy.utils.misc import indent
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from discO.utils import resolve_framelike, resolve_representationlike
 from discO.utils.coordinates import UnFrame

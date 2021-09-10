@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.config import conf
 from discO.tests.helper import ConfigNamespacTests
 

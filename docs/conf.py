@@ -27,7 +27,7 @@ be accessible, and the documentation will not build correctly.
 
 """
 
-# BUILT-IN
+# STDLIB
 import datetime
 import os
 import sys

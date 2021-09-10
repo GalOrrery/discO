@@ -19,7 +19,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import typing as T
 from collections.abc import Sequence
@@ -29,7 +29,7 @@ from types import MappingProxyType, ModuleType
 import astropy.coordinates as coord
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper

@@ -12,7 +12,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from abc import abstractmethod
 from collections.abc import Generator
 from types import MappingProxyType
@@ -25,7 +25,7 @@ import pytest
 import scipy.stats
 from astropy.coordinates import concatenate
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import measurement
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.utils.coordinates import UnFrame

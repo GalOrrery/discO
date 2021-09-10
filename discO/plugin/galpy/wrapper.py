@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 
 # THIRD PARTY
@@ -20,7 +20,7 @@ import astropy.units as u
 import galpy.potential as gpot
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .type_hints import PotentialType
 from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta

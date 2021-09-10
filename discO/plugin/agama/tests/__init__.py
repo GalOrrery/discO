@@ -14,7 +14,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import test_fitter as fitter_tests
 from . import test_sample as sample_tests
 from . import test_type_hints as type_hints_tests

@@ -11,13 +11,13 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import logging
 
 # THIRD PARTY
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.setup_package import HAS_TQDM
 from discO.utils import pbar
 

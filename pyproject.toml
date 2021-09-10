@@ -13,10 +13,10 @@ sections = [ "FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER",]
 known_third_party = ["agama", "astropy", "erfa", "extension_helpers", "gala", "galpy", "numpy", "pytest", "scipy", "setuptools", "typing_extensions"]
 known_firstparty = [ "astronat", "utilipy",]
 known_localfolder = "discO"
-import_heading_stdlib = "BUILT-IN"
+import_heading_stdlib = "STDLIB"
 import_heading_thirdparty = "THIRD PARTY"
 import_heading_firstparty = "FIRST PARTY"
-import_heading_localfolder = "PROJECT-SPECIFIC"
+import_heading_localfolder = "LOCAL"
 
 [tool.black]
 line-length = 100

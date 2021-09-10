@@ -14,7 +14,7 @@ __all__ = [
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.tests.helper import ObjectTest
 from discO.utils import random
 

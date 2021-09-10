@@ -16,7 +16,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.config import conf
 from discO.utils.coordinates import UnFrame, resolve_framelike, resolve_representationlike
 

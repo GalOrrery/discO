@@ -27,7 +27,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import functools
 import inspect
 import operator
@@ -45,7 +45,7 @@ from astropy.coordinates.representation import (
 )
 from erfa import ufunc as erfa_ufunc
 
-# PROJECT-SPECIFIC
+# LOCAL
 from .coordinates import resolve_framelike
 from discO.type_hints import FrameLikeType, FrameType, QuantityType, RepresentationType
 

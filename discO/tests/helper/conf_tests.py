@@ -13,7 +13,7 @@ __all__ = [
 # THIRD PARTY
 from astropy import config as _config
 
-# PROJECT-SPECIFIC
+# LOCAL
 from .objecttest import ObjectTest
 
 ##############################################################################

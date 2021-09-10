@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 
 # THIRD PARTY
@@ -20,7 +20,7 @@ import galpy.df as gdf
 import numpy as np
 from galpy.df.df import df as DF
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .wrapper import GalpyPotentialWrapper
 from discO.core.sample import MeshGridPotentialSampler, PotentialSampler

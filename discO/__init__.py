@@ -27,7 +27,7 @@ __all__ = [
 from ._astropy_init import *  # noqa: F401, F403  # isort:skip
 from ._astropy_init import __version__  # noqa: F401  # isort:skip
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import core, data, plugin
 from .config import conf
 from .core import *  # noqa: F401, F403

@@ -15,7 +15,7 @@ __all__ = [
 import agama
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core.tests.test_fitter import Test_PotentialFitter as PotentialFitterTester
 from discO.plugin.agama import fitter
 

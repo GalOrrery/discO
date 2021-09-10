@@ -17,7 +17,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import pipeline
 from discO.core.fitter import PotentialFitter
 from discO.core.measurement import MeasurementErrorSampler

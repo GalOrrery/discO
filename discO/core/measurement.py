@@ -23,7 +23,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import copy
 import inspect
@@ -40,7 +40,7 @@ import scipy.stats
 from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, SkyCoord, concatenate
 from astropy.utils.decorators import classproperty
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from .sample import RandomLike  # TODO move to type-hints

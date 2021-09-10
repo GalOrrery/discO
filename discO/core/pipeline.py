@@ -12,7 +12,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 import weakref
 
@@ -21,7 +21,7 @@ import astropy.coordinates as coord
 import numpy as np
 import typing_extensions as TE
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .fitter import PotentialFitter
 from .measurement import CERR_Type, MeasurementErrorSampler

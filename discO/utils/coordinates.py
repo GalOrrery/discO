@@ -14,7 +14,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import inspect
 import typing as T
 
@@ -23,7 +23,7 @@ from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, SkyCoor
 from astropy.coordinates import representation as r
 from astropy.coordinates import sky_coordinate_parsers
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from discO.config import conf
 

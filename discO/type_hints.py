@@ -56,7 +56,7 @@ __credits__ = ["Astropy"]
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 
 # THIRD PARTY

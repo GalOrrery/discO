@@ -13,7 +13,7 @@ __all__ = [
 # THIRD PARTY
 from galpy import potential
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.plugin.galpy import type_hints
 from discO.tests.helper import TypeVarTests
 

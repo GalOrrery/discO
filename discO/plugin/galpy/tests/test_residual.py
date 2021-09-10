@@ -15,7 +15,7 @@ import galpy.potential as gpot
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import residual
 from discO.core.tests.test_residual import Test_GridResidual as GridResidual_Test
 from discO.plugin.galpy.wrapper import GalpyPotentialWrapper

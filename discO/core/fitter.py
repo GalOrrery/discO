@@ -17,7 +17,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import typing as T
 from types import MappingProxyType, ModuleType
@@ -25,7 +25,7 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from discO.utils.coordinates import resolve_framelike, resolve_representationlike
