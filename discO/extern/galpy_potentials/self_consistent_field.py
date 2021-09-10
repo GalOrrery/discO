@@ -53,8 +53,7 @@ def _C(xi, N, L, alpha=lambda x: 2 * x + 3.0 / 2):
                 CC[n][ll] = 2.0 * a * xi
             if n + 1 != N:
                 CC[n + 1][ll] = (n + 1.0) ** -1.0 * (
-                    2 * (n + a) * xi * CC[n][ll]
-                    - (n + 2 * a - 1) * CC[n - 1][ll]
+                    2 * (n + a) * xi * CC[n][ll] - (n + 2 * a - 1) * CC[n - 1][ll]
                 )
     return CC
 
@@ -116,14 +115,10 @@ def scf_compute_coeffs_nbody(
                 cosmphi = np.cos(phi * mm)
                 sinmphi = np.sin(phi * mm)
 
-                Ylm = (
-                    np.sqrt(
-                        (2.0 * ll + 1)
-                        * gamma(ll - mm + 1)
-                        / gamma(ll + mm + 1),
-                    )
-                    * Plm
-                )[None, :] * np.array([cosmphi, sinmphi])
+                Ylm = (np.sqrt((2.0 * ll + 1) * gamma(ll - mm + 1) / gamma(ll + mm + 1)) * Plm)[
+                    None,
+                    :,
+                ] * np.array([cosmphi, sinmphi])
                 Ylm = np.nan_to_num(Ylm)
 
                 C = gegenbauer(nn, 2.0 * ll + 1.5)
@@ -133,15 +128,11 @@ def scf_compute_coeffs_nbody(
                     ),
                 )
 
-                phinlm = (
-                    -np.power(ra, ll) / np.power(ra + 1, (2.0 * ll + 1)) * Cn
-                )[None, :] * Ylm
+                phinlm = (-np.power(ra, ll) / np.power(ra + 1, (2.0 * ll + 1)) * Cn)[None, :] * Ylm
 
                 Sum = np.sum(mass[None, :] * phinlm, axis=1)
 
-                Knl = 0.5 * nn * (nn + 4.0 * ll + 3.0) + (ll + 1) * (
-                    2.0 * ll + 1.0
-                )
+                Knl = 0.5 * nn * (nn + 4.0 * ll + 3.0) + (ll + 1) * (2.0 * ll + 1.0)
                 Inl = (
                     -Knl
                     * 4.0

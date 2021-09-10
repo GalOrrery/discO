@@ -157,9 +157,7 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         assert self.klass_name in vectorfield._VECTORFIELD_CLASSES
         assert vectorfield._VECTORFIELD_CLASSES[self.klass_name] is self.klass
         assert self.rep_cls in vectorfield.VECTORFIELD_REPRESENTATIONS
-        assert (
-            vectorfield.VECTORFIELD_REPRESENTATIONS[self.rep_cls] is self.klass
-        )
+        assert vectorfield.VECTORFIELD_REPRESENTATIONS[self.rep_cls] is self.klass
 
         # -------------------
         # Check attributes
@@ -529,9 +527,7 @@ class Test_CylindricalVectorField(
 
     def test_attributes(self):
         """Test class attributes."""
-        assert (
-            self.klass.base_representation is coord.CylindricalRepresentation
-        )
+        assert self.klass.base_representation is coord.CylindricalRepresentation
 
         assert self.inst.rho == self.points.rho
         assert self.inst.phi == self.points.phi
@@ -617,10 +613,7 @@ class Test_PhysicsSphericalVectorField(
 
     def test_attributes(self):
         """Test class attributes."""
-        assert (
-            self.klass.base_representation
-            is coord.PhysicsSphericalRepresentation
-        )
+        assert self.klass.base_representation is coord.PhysicsSphericalRepresentation
 
         assert self.inst.phi == self.points.phi
         assert self.inst.theta == self.points.theta

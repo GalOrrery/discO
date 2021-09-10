@@ -19,11 +19,7 @@ import inspect
 import typing as T
 
 # THIRD PARTY
-from astropy.coordinates import (
-    BaseCoordinateFrame,
-    BaseRepresentation,
-    SkyCoord,
-)
+from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, SkyCoord
 from astropy.coordinates import representation as r
 from astropy.coordinates import sky_coordinate_parsers
 

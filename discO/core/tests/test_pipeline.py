@@ -93,9 +93,7 @@ def teardown_module(module):
 class MockSampler(PotentialSampler):
     """Dunder Sampler."""
 
-    def __call__(
-        self, n, *, frame=None, representation_type=None, random=None, **kwargs
-    ):
+    def __call__(self, n, *, frame=None, representation_type=None, random=None, **kwargs):
         # Get preferred frames
         frame = self._infer_frame(frame)
         representation_type = self._infer_representation(representation_type)
@@ -289,10 +287,7 @@ class Test_Pipeline(object):
 
     def test_potential_representation_type(self):
         """Test property ``potential_representation_type``."""
-        assert (
-            self.inst.potential_representation_type
-            is self.inst.sampler.representation_type
-        )
+        assert self.inst.potential_representation_type is self.inst.sampler.representation_type
 
     # /def
 
@@ -310,10 +305,7 @@ class Test_Pipeline(object):
 
     def test_observer_representation_type(self):
         """Test property ``observer_representation_type``."""
-        assert (
-            self.inst.observer_representation_type
-            is self.inst.measurer.representation_type
-        )
+        assert self.inst.observer_representation_type is self.inst.measurer.representation_type
 
     # /def
 

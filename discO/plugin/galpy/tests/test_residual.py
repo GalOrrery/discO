@@ -17,9 +17,7 @@ import pytest
 
 # PROJECT-SPECIFIC
 from discO.core import residual
-from discO.core.tests.test_residual import (
-    Test_GridResidual as GridResidual_Test,
-)
+from discO.core.tests.test_residual import Test_GridResidual as GridResidual_Test
 from discO.plugin.galpy.wrapper import GalpyPotentialWrapper
 from discO.utils import vectorfield
 

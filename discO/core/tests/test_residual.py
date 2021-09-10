@@ -197,10 +197,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
 
     def test_representation_type(self):
         """Test property ``representation_type``."""
-        assert (
-            self.inst.representation_type
-            is self.inst.original_potential.representation_type
-        )
+        assert self.inst.representation_type is self.inst.original_potential.representation_type
 
     # /def
 
