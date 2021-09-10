@@ -28,6 +28,7 @@ __all__ = [
 
 # BUILT-IN
 import argparse
+import pathlib
 import pickle
 import typing as T
 import warnings
@@ -39,12 +40,14 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+import tqdm  # TODO! make optional
 from astropy import table
 from astroquery.gaia import Gaia
 from scipy.stats import gaussian_kde
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics._regression import UndefinedMetricWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
@@ -57,8 +60,12 @@ RandomStateType = T.Union[None, int, np.random.RandomState, np.random.Generator]
 # General
 _PLOT: bool = True  # Whether to plot the output
 
-# Log file
-_VERBOSE: int = 0  # Degree of logfile verbosity
+THIS_DIR = pathlib.Path(__file__).parent
+PLOT_DIR = THIS_DIR / "figures"
+PLOT_DIR.mkdir(exist_ok=True)
+
+DATA_DIR = THIS_DIR / "pk_reg"
+DATA_DIR.mkdir(exist_ok=True)
 
 ##############################################################################
 # CODE
@@ -360,7 +367,7 @@ def plot_mollview(patch_ids, order, fig=None):
     return fig
 
 
-def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
+def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, random_index: T.Optional[int]=1000000) -> None:
     """Query and fit a set of sky patches.
 
     Parameters
@@ -373,8 +380,7 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
     """
     # create Gaia query
     hpl = f"healpix{order}"  # column name
-    job = Gaia.launch_job_async(
-        f"""
+    query = f"""
     SELECT
     source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
     parallax AS parallax, parallax_error AS parallax_error,
@@ -384,9 +390,13 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
     FROM gaiadr2.gaia_source
 
     WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
-    AND parallax > 0
-    AND random_index < 1000000
-    """,
+    AND parallax >= 0
+    """
+    if random_index is not None:
+        query += f"AND random_index < {random_index}"
+
+    job = Gaia.launch_job_async(
+        query,
         dump_to_file=False,
         verbose=False,
     )
@@ -397,7 +407,8 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
     # plot the patches
     if plot:
         fig = plot_mollview(patch_ids, order)
-        fig.savefig(f"figures/mollview-{'-'.join(map(str, patch_ids))}.pdf")
+        # TODO! allow for plot directory
+        fig.savefig(PLOT_DIR / f"mollview-{'-'.join(map(str, patch_ids))}.pdf")
 
     # parallax plot
     if plot:
@@ -441,7 +452,7 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
         yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
         yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
 
-        with open("pk_reg/pk_" + str(patch_id) + ".pkl", mode="wb") as f:
+        with open(DATA_DIR / f"pk_{patch_id}.pkl", mode="wb") as f:
             pickle.dump(reg, f)  # the weighted linear regression
 
         if plot:
@@ -449,7 +460,7 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
 
     if plot:
         plt.tight_layout()
-        fig.savefig(f"figures/parallax-{'-'.join(map(str, patch_ids))}.pdf")
+        fig.savefig(PLOT_DIR / f"parallax-{'-'.join(map(str, patch_ids))}.pdf")
 
 
 ##############################################################################
@@ -459,7 +470,6 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool):
 
 def make_parser(
     *, inheritable: bool = False, plot: bool = _PLOT,
-    # verbose: int = _VERBOSE
 ) -> argparse.ArgumentParser:
     """Expose ArgumentParser for ``main``.
 
@@ -496,22 +506,27 @@ def make_parser(
     )
 
     # order
-    parser.add_argument("-o", "--order", action="store", default=4, type=int)
+    parser.add_argument("-o", "--order", default=4, type=int)
 
     # patches are done in batches. Need to decide the size
-    parser.add_argument("batch_size", action="store", type=int)
+    parser.add_argument("-b", "--batch_size", default=10, type=int)
 
     # which patches
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--allsky", action="store_true")
-    # group.add_argument()  # TODO! option to specify a list of patches
-    # group.add_argument()  # TODO! option to specify a start/stop patch index 
+    group.add_argument("--allsky", action="store_true",
+                       help="Do all sky patches.")
+    group.add_argument("--patches", action="append", type=int, nargs='+',
+                       help="sky patch ids.")
+    group.add_argument("-r", "--patches_range", type=int, nargs=2)
+
+    # stars in gaia
+    parser.add_argument("--random_index", default=None, type=int)
 
     # plot or not
     parser.add_argument("--plot", action="store", default=_PLOT, type=bool)
 
     # # script verbosity
-    # parser.add_argument("-v", "--verbose", action="store", default=0, type=int)
+    parser.add_argument("--filter_warnings", action="store_true")
 
     return parser
 
@@ -553,15 +568,30 @@ def main(
 
     # /if
 
-    breakpoint()
-
     # construct the list of batches of sky patches
     # [ (patch_1, patch_2, ...),  (patch_i, patch_i+1, ...)]
+    if opts.allsky:
+        nside = hp.order2nside(opts.order)
+        npix = hp.nside2npix(nside)  # the number of sky patches
+        nbatches = npix // opts.batch_size
+        list_of_batches = np.array_split(np.arange(npix), nbatches)
+    elif opts.patches_range:
+        pi, pf = opts.patches_range
+        if pi >= pf:
+            raise ValueError("`patches_range` must be [start, stop], with stop > start.")
+        nbatches = (pf - pi) // opts.batch_size
+        list_of_batches = np.array_split(np.arange(pi, pf), nbatches)
+    elif opts.patches:
+        list_of_batches = opts.patches
 
-    return
+    # optionally ignore warnings
+    with warnings.catch_warnings():
+        if opts.filter_warnings:
+            warnings.simplefilter("ignore", category=UndefinedMetricWarning)  # TODO!
+            warnings.simplefilter("ignore", category=UserWarning)  # TODO!
 
-    for batch in tqdm.tqdm(list_of_batches):
-        query_and_fit_patch_set(batch, order=opts.order, plot=opts.plot)
+        for batch in tqdm.tqdm(list_of_batches):
+            query_and_fit_patch_set(tuple(batch), order=opts.order, plot=opts.plot, random_index=opts.random_index)
 
 
 # /def
