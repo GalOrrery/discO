@@ -42,12 +42,12 @@ class Test_GalpyPotentialSampler(
         # make potential
         cls.mass = 1e12 * u.solMass
 
-        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
-        hernquist_pot.turn_physical_on()  # force units
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass, ro=8 * u.kpc, vo=220 * u.km / u.s)
+        hernquist_pot.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
         cls.potential = hernquist_pot
 
         cls.df = isotropicHernquistdf(hernquist_pot)
-        cls.df.turn_physical_on()
+        cls.df.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
         cls.inst = cls.obj(GalpyPotentialWrapper(cls.potential))
 
@@ -155,8 +155,8 @@ class Test_MeshGridPositionDF(
         # make potential
         cls.mass = 1e12 * u.solMass
 
-        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
-        hernquist_pot.turn_physical_on()  # force units
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass, ro=8 * u.kpc, vo=220 * u.km / u.s)
+        hernquist_pot.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
         cls.potential = hernquist_pot
 
         nx = ny = nz = 76  # must be int and even

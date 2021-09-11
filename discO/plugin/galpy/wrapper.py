@@ -274,12 +274,14 @@ class GalpyPotentialWrapper(
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
     ):
+        # it's important to turn physical on
+        getattr(potential, "turn_physical_on", object)()
         super().__init__(
             potential,
             frame=frame,
             representation_type=representation_type,
         )
-        getattr(self.wrapped, "turn_physical_on", object)()
+        getattr(self.wrapped, "turn_physical_on", object)()  # double check
 
 
 # /class
