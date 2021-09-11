@@ -119,25 +119,25 @@ jobs:
       matrix:
         include:
 
-          - name: py3.8 - all deps, remote data | coverage
+          - name: py3.9 - all deps, remote data | coverage
             os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test-alldeps-cov
+            python: 3.9
+            toxenv: py39-test-alldeps-cov
             toxargs: -v --develop
             toxposargs: --durations=50 --remote-data=any  # in case it runs long
 
           # NOTE: In the build below we also check that tests do not open and
           # leave open any files. This has a performance impact on running the
           # tests, hence why it is not enabled by default.
-          - name: py3.7 - oldest deps
+          - name: py3.8 - oldest deps
             os: ubuntu-16.04
-            python: 3.7
-            toxenv: py37-test-oldestdeps
+            python: 3.8
+            toxenv: py38-test-oldestdeps
 
-          - name: py3.7 - all deps, numpy 1.17 | coverage
+          - name: py3.8 - all deps, numpy 1.17 | coverage
             os: ubuntu-latest
-            python: 3.7
-            toxenv: py37-test-alldeps-numpy117-cov-clocale
+            python: 3.8
+            toxenv: py38-test-alldeps-numpy117-cov-clocale
             # toxposargs: --remote-data=discO
 
           - name: py3.8 - all deps (MacOS X)
@@ -187,7 +187,7 @@ jobs:
 
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: [3.7, 3.8]
+        python: [3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
