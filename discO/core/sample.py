@@ -595,8 +595,8 @@ class MeshGridPotentialSampler(PotentialSampler):
 
         weight = self.potential.density(meshgrid)[1].flatten()
         # distribution of flattened indices in [0, 1]
-        self._index_partition = np.cumsum(weight).value
-        self._normalization = np.sum(weight).value
+        self._index_partition = u.Quantity(np.cumsum(weight)).value
+        self._normalization = u.Quantity(np.sum(weight)).value
 
     # /def
 
