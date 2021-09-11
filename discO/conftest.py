@@ -54,6 +54,10 @@ if not HAS_GALA:
 SKIP_NO_GALPY = pytest.mark.skipif(not HAS_GALPY, reason="needs galpy")
 if not HAS_GALPY:
     collect_ignore.append("plugin/galpy/")
+else:
+    from galpy.util import config as galpy_config
+    galpy_config.__config__["astropy"]["astropy-units"] = "True"
+    galpy_config.__config__["astropy"]["astropy-coords"] = "True"
 
 
 # ------------------------------------------------------
