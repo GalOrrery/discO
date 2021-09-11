@@ -32,8 +32,8 @@ from discO.utils.random import NumpyRNGContext
 ##############################################################################
 
 
-class TestDF(object):
-    """docstring for TestDF"""
+class FallbackDF(object):
+    """Fallback DF if galpy is not installed."""
 
     def __init__(self, potential):
         self._pot = potential
@@ -235,7 +235,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 msamp = self.obj(
                     PotentialWrapper(self.potential),
                     total_mass=10 * u.solMass,
-                    df=TestDF,
+                    df=FallbackDF,
                     key=key,
                 )
 
@@ -264,7 +264,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 msamp = self.obj(
                     PotentialWrapper(self.potential),
                     key=key,
-                    df=TestDF,
+                    df=FallbackDF,
                     total_mass=10 * u.solMass,
                 )
 
