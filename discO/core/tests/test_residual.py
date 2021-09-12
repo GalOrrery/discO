@@ -8,7 +8,7 @@ __all__ = ["Test_ResidualMethod", "Test_GridResidual"]
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from types import MappingProxyType
 
 # THIRD PARTY
@@ -17,7 +17,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import residual
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper
@@ -197,10 +197,7 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
 
     def test_representation_type(self):
         """Test property ``representation_type``."""
-        assert (
-            self.inst.representation_type
-            is self.inst.original_potential.representation_type
-        )
+        assert self.inst.representation_type is self.inst.original_potential.representation_type
 
     # /def
 

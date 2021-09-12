@@ -22,7 +22,7 @@ __all__ = [
 
 def test_has_version():
     """The most basic test."""
-    # PROJECT-SPECIFIC
+    # LOCAL
     import discO
 
     assert hasattr(discO, "__version__"), "No version!"

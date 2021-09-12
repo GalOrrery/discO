@@ -14,7 +14,7 @@ __all__ = [
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.tests.helper import ObjectTest
 from discO.utils import random
 
@@ -53,9 +53,7 @@ class Test_NumpyRNGContext(ObjectTest, obj=random.NumpyRNGContext):
 
         # Generator
         obj = self.obj(np.random.default_rng(3))
-        assert (
-            obj.seed.__getstate__() == np.random.default_rng(3).__getstate__()
-        )
+        assert obj.seed.__getstate__() == np.random.default_rng(3).__getstate__()
 
     # /def
 

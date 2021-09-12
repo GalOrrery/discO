@@ -15,7 +15,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO import statistic
 from discO.utils.vectorfield import CartesianVectorField
 

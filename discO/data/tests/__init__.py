@@ -14,13 +14,13 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from pathlib import Path
 
 # THIRD PARTY
 from astropy.tests.runner import TestRunner
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import test_sim_CC_100 as sim_CC_100_tests
 
 ##############################################################################

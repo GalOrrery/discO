@@ -13,7 +13,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import test_coordinates as coordinates_tests
 from . import test_vectorfield as vectorfield_tests
 

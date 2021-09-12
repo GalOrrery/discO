@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import fitter, sample
 from .fitter import *  # noqa: F401, F403
 from .sample import *  # noqa: F401, F403

@@ -19,7 +19,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import typing as T
 from collections.abc import Sequence
@@ -29,14 +29,11 @@ from types import MappingProxyType, ModuleType
 import astropy.coordinates as coord
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import resolve_framelike, resolve_representationlike
 from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
@@ -113,8 +110,7 @@ class ResidualMethod(CommonBase):
 
         elif method is not None:
             raise ValueError(
-                f"Can't specify 'method' on {cls.__name__}, "
-                "only on ResidualMethod.",
+                f"Can't specify 'method' on {cls.__name__}, " "only on ResidualMethod.",
             )
 
         return super().__new__(cls)
@@ -140,9 +136,7 @@ class ResidualMethod(CommonBase):
         # representation type
         representation_type = (
             resolve_representationlike(representation_type)
-            if not (
-                representation_type is None or representation_type is Ellipsis
-            )
+            if not (representation_type is None or representation_type is Ellipsis)
             else representation_type
         )
 
@@ -270,9 +264,7 @@ class ResidualMethod(CommonBase):
         evaluator: T.Callable = getattr(evaluator_cls, observable)
 
         # evaluate
-        value = evaluator(
-            points, representation_type=representation_type, **kwargs
-        )
+        value = evaluator(points, representation_type=representation_type, **kwargs)
 
         # -----------------------
         # Return

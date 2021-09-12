@@ -27,7 +27,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import functools
 import inspect
 import operator
@@ -37,9 +37,7 @@ import typing as T
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
-from astropy.coordinates.representation import (
-    REPRESENTATION_CLASSES as _REP_CLSs,
-)
+from astropy.coordinates.representation import REPRESENTATION_CLASSES as _REP_CLSs
 from astropy.coordinates.representation import (
     BaseRepresentationOrDifferential,
     _array2string,
@@ -47,14 +45,9 @@ from astropy.coordinates.representation import (
 )
 from erfa import ufunc as erfa_ufunc
 
-# PROJECT-SPECIFIC
+# LOCAL
 from .coordinates import resolve_framelike
-from discO.type_hints import (
-    FrameLikeType,
-    FrameType,
-    QuantityType,
-    RepresentationType,
-)
+from discO.type_hints import FrameLikeType, FrameType, QuantityType, RepresentationType
 
 ##############################################################################
 # PARAMETERS
@@ -97,16 +90,13 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         """
         if not hasattr(cls, "base_representation"):
             raise NotImplementedError(
-                "VectorField representations must have a"
-                '"base_representation" class attribute.',
+                "VectorField representations must have a" '"base_representation" class attribute.',
             )
 
         # If not defined explicitly, create attr_classes.
         if not hasattr(cls, "attr_classes"):
             base_attr_classes = cls.base_representation.attr_classes
-            cls.attr_classes = {
-                "vf_" + c: u.Quantity for c in base_attr_classes
-            }
+            cls.attr_classes = {"vf_" + c: u.Quantity for c in base_attr_classes}
 
         # Now check caches!
         repr_name = cls.get_name()
@@ -116,8 +106,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             )
         elif cls.base_representation in VECTORFIELD_REPRESENTATIONS:
             raise ValueError(
-                "VectorField with representation "
-                f"'{cls.base_representation}' already exists.",
+                "VectorField with representation " f"'{cls.base_representation}' already exists.",
             )
 
         _VECTORFIELD_CLASSES[repr_name] = cls
@@ -361,10 +350,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             first, second = (self, other) if not reverse else (other, self)
             return self.__class__(
                 self.points,
-                *[
-                    op(getattr(first, c), getattr(second, c))
-                    for c in self.components
-                ],
+                *[op(getattr(first, c), getattr(second, c)) for c in self.components],
                 frame=self.frame,
             )
         else:
@@ -395,10 +381,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         return np.sqrt(
             functools.reduce(
                 operator.add,
-                (
-                    getattr(self, component) ** 2
-                    for component, cls in self.attr_classes.items()
-                ),
+                (getattr(self, component) ** 2 for component, cls in self.attr_classes.items()),
             ),
         )
 
@@ -452,13 +435,9 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         )
 
         pointsunitstr = (
-            ("in " + self.points._unitstr)
-            if self.points._unitstr
-            else "[dimensionless]"
+            ("in " + self.points._unitstr) if self.points._unitstr else "[dimensionless]"
         )
-        unitstr = (
-            ("in " + self._unitstr) if self._unitstr else "[dimensionless]"
-        )
+        unitstr = ("in " + self._unitstr) if self._unitstr else "[dimensionless]"
         return "<{} ({}) {:s} | ({}) {:s}\n{}{}>".format(
             self.__class__.__name__,
             ", ".join(self.points.components),

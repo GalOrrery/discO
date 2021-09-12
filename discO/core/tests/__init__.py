@@ -19,13 +19,13 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from pathlib import Path
 
 # THIRD PARTY
 from astropy.tests.runner import TestRunner
 
-# PROJECT-SPECIFIC
+# LOCAL
 from . import test_common as common_tests
 from . import test_fitter as fitter_tests
 from . import test_measurement as measurement_tests

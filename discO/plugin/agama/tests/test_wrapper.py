@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from abc import abstractmethod
 
 # THIRD PARTY
@@ -21,13 +21,9 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
-from discO.core.tests.test_wrapper import (
-    Test_PotentialWrapper as PotentialWrapper_Test,
-)
-from discO.core.tests.test_wrapper import (
-    Test_PotentialWrapperMeta as PotentialWrapperMeta_Test,
-)
+# LOCAL
+from discO.core.tests.test_wrapper import Test_PotentialWrapper as PotentialWrapper_Test
+from discO.core.tests.test_wrapper import Test_PotentialWrapperMeta as PotentialWrapperMeta_Test
 from discO.plugin.agama import wrapper
 from discO.utils import resolve_framelike, vectorfield
 

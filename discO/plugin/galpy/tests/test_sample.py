@@ -19,11 +19,9 @@ import pytest
 from galpy.df import isotropicHernquistdf
 from galpy.potential import HernquistPotential
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core.sample import MeshGridPotentialSampler
-from discO.core.tests.test_sample import (
-    Test_PotentialSampler as PotentialSampler_Test,
-)
+from discO.core.tests.test_sample import Test_PotentialSampler as PotentialSampler_Test
 from discO.plugin.galpy import GalpyPotentialWrapper, sample
 from discO.tests.helper import ObjectTest
 
@@ -44,12 +42,12 @@ class Test_GalpyPotentialSampler(
         # make potential
         cls.mass = 1e12 * u.solMass
 
-        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
-        hernquist_pot.turn_physical_on()  # force units
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass, ro=8 * u.kpc, vo=220 * u.km / u.s)
+        hernquist_pot.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
         cls.potential = hernquist_pot
 
         cls.df = isotropicHernquistdf(hernquist_pot)
-        cls.df.turn_physical_on()
+        cls.df.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
         cls.inst = cls.obj(GalpyPotentialWrapper(cls.potential))
 
@@ -88,9 +86,7 @@ class Test_GalpyPotentialSampler(
     )
     def test_call_parametrize(self, n, frame, representation, random, kwargs):
         """Parametrized call tests."""
-        res = self.inst(
-            n, frame=frame, representation_type=representation, **kwargs
-        )
+        res = self.inst(n, frame=frame, representation_type=representation, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
         assert res.cache["potential"].__wrapped__ == self.potential
@@ -159,8 +155,8 @@ class Test_MeshGridPositionDF(
         # make potential
         cls.mass = 1e12 * u.solMass
 
-        hernquist_pot = HernquistPotential(amp=2 * cls.mass)
-        hernquist_pot.turn_physical_on()  # force units
+        hernquist_pot = HernquistPotential(amp=2 * cls.mass, ro=8 * u.kpc, vo=220 * u.km / u.s)
+        hernquist_pot.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
         cls.potential = hernquist_pot
 
         nx = ny = nz = 76  # must be int and even

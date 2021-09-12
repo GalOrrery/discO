@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import typing as T
 
 # THIRD PARTY
@@ -20,7 +20,7 @@ import astropy.units as u
 import galpy.potential as gpot
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .type_hints import PotentialType
 from discO.core.wrapper import PotentialWrapper, PotentialWrapperMeta
@@ -191,9 +191,7 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
 
         # the specific force = acceleration
         Frho = potential.Rforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
-        Fphi = (
-            potential.phiforce(r.rho, r.z, phi=r.phi, **kwargs) / r.rho
-        ).to(_KMS2)
+        Fphi = (potential.phiforce(r.rho, r.z, phi=r.phi, **kwargs) / r.rho).to(_KMS2)
         Fz = potential.zforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
 
         vf = vectorfield.CylindricalVectorField(
@@ -276,12 +274,14 @@ class GalpyPotentialWrapper(
         frame: TH.OptFrameLikeType = None,
         representation_type: TH.OptRepresentationLikeType = None,
     ):
+        # it's important to turn physical on
+        getattr(potential, "turn_physical_on", object)()
         super().__init__(
             potential,
             frame=frame,
             representation_type=representation_type,
         )
-        getattr(self.wrapped, "turn_physical_on", object)()
+        getattr(self.wrapped, "turn_physical_on", object)()  # double check
 
 
 # /class

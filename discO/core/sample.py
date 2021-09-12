@@ -37,7 +37,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import contextlib
 import typing as T
@@ -48,7 +48,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from .wrapper import PotentialWrapper
@@ -154,8 +154,7 @@ class PotentialSampler(CommonBase):
 
             if key not in cls._registry:
                 raise ValueError(
-                    "PotentialSampler has no registered sampler for key: "
-                    f"{key}",
+                    "PotentialSampler has no registered sampler for key: " f"{key}",
                 )
 
             # from registry. Registered in __init_subclass__
@@ -195,8 +194,7 @@ class PotentialSampler(CommonBase):
         mtot = potential.total_mass() if total_mass is None else total_mass
         if not np.isfinite(mtot):  # divergent
             raise ValueError(
-                "The potential`s mass is divergent, "
-                "the argument `total_mass` cannot be None.",
+                "The potential`s mass is divergent, " "the argument `total_mass` cannot be None.",
             )
 
         # potential is checked in __new__ as a PotentialWrapper
@@ -597,8 +595,8 @@ class MeshGridPotentialSampler(PotentialSampler):
 
         weight = self.potential.density(meshgrid)[1].flatten()
         # distribution of flattened indices in [0, 1]
-        self._index_partition = np.cumsum(weight).value
-        self._normalization = np.sum(weight).value
+        self._index_partition = u.Quantity(np.cumsum(weight)).value
+        self._normalization = u.Quantity(np.sum(weight)).value
 
     # /def
 
@@ -642,9 +640,7 @@ class MeshGridPotentialSampler(PotentialSampler):
     def _imapper(self):
         @frompyfunc(nin=1, nout=1)
         def imapper(uniform_draw):
-            iflat = np.where(
-                uniform_draw * self._normalization <= self._index_partition,
-            )[0][0]
+            iflat = np.where(uniform_draw * self._normalization <= self._index_partition)[0][0]
             i = np.unravel_index(iflat, self._gridshape)
             return i
 
@@ -652,9 +648,7 @@ class MeshGridPotentialSampler(PotentialSampler):
 
     # /def
 
-    def __call__(
-        self, n: int, rng: T.Optional[np.random.Generator] = None, **kw
-    ):
+    def __call__(self, n: int, rng: T.Optional[np.random.Generator] = None, **kw):
         """Sample.
 
         .. todo::

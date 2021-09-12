@@ -12,7 +12,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from .conf_tests import ConfigNamespacTests
 from .objecttest import ObjectTest
 from .typevar_tests import TypeVarTests

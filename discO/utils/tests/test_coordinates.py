@@ -16,13 +16,9 @@ import astropy.coordinates as coord
 import astropy.units as u
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.config import conf
-from discO.utils.coordinates import (
-    UnFrame,
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import UnFrame, resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # TESTS
@@ -101,9 +97,7 @@ class Test_resolve_framelike:
             resolve_framelike(Exception)
 
         # check it doesn't error if
-        assert (
-            resolve_framelike(Exception, error_if_not_type=False) is Exception
-        )
+        assert resolve_framelike(Exception, error_if_not_type=False) is Exception
 
     # /def
 
@@ -122,14 +116,12 @@ class Test_resolve_representationlike:
         """Test when representation is a BaseCoordinateFrame."""
         with conf.set_temp("default_representation_type", "cartesian"):
             assert (
-                resolve_representationlike(representation=Ellipsis)
-                == coord.CartesianRepresentation
+                resolve_representationlike(representation=Ellipsis) == coord.CartesianRepresentation
             )
 
         with conf.set_temp("default_representation_type", "spherical"):
             assert (
-                resolve_representationlike(representation=Ellipsis)
-                == coord.SphericalRepresentation
+                resolve_representationlike(representation=Ellipsis) == coord.SphericalRepresentation
             )
 
     # /def
@@ -139,8 +131,7 @@ class Test_resolve_representationlike:
         """Test when representation is a string."""
         # basic usage
         assert (
-            resolve_representationlike(representation="cartesian")
-            == coord.CartesianRepresentation
+            resolve_representationlike(representation="cartesian") == coord.CartesianRepresentation
         )
 
     # /def
@@ -168,10 +159,7 @@ class Test_resolve_representationlike:
             lat=2 * u.deg,
             distance=3 * u.kpc,
         )
-        assert (
-            resolve_representationlike(representation=c)
-            == coord.SphericalRepresentation
-        )
+        assert resolve_representationlike(representation=c) == coord.SphericalRepresentation
 
     # /def
 
@@ -187,10 +175,7 @@ class Test_resolve_representationlike:
             resolve_representationlike(Exception)
 
         # check it doesn't error if
-        assert (
-            resolve_representationlike(Exception, error_if_not_type=False)
-            is Exception
-        )
+        assert resolve_representationlike(Exception, error_if_not_type=False) is Exception
 
     # /def
 

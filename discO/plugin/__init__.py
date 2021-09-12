@@ -7,18 +7,18 @@
 __all__ = []
 
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.setup_package import HAS_AGAMA, HAS_GALPY
 
 if HAS_AGAMA:
-    # PROJECT-SPECIFIC
+    # LOCAL
     from . import agama
 
     __all__ += ["agama"]
 
 
 if HAS_GALPY:
-    # PROJECT-SPECIFIC
+    # LOCAL
     from . import galpy
 
     __all__ += ["galpy"]

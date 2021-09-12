@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import contextlib
 
@@ -20,7 +20,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import sample
 from discO.core.tests.test_common import Test_CommonBase as CommonBase_Test
 from discO.core.wrapper import PotentialWrapper
@@ -32,8 +32,8 @@ from discO.utils.random import NumpyRNGContext
 ##############################################################################
 
 
-class TestDF(object):
-    """docstring for TestDF"""
+class FallbackDF(object):
+    """Fallback DF if galpy is not installed."""
 
     def __init__(self, potential):
         self._pot = potential
@@ -235,7 +235,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 msamp = self.obj(
                     PotentialWrapper(self.potential),
                     total_mass=10 * u.solMass,
-                    df=TestDF,
+                    df=FallbackDF,
                     key=key,
                 )
 
@@ -264,7 +264,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
                 msamp = self.obj(
                     PotentialWrapper(self.potential),
                     key=key,
-                    df=TestDF,
+                    df=FallbackDF,
                     total_mass=10 * u.solMass,
                 )
 
@@ -338,10 +338,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_representation_type(self):
         """Test method ``representation_type``."""
-        assert (
-            self.inst.representation_type
-            is self.inst.potential.representation_type
-        )
+        assert self.inst.representation_type is self.inst.potential.representation_type
 
     # /def
 
@@ -399,9 +396,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     )
     def test_run(self, n, niter, random, kwargs):
         """Test method ``run``."""
-        samples = self.inst.run(
-            n=n, iterations=niter, random=random, batch=True, **kwargs
-        )
+        samples = self.inst.run(n=n, iterations=niter, random=random, batch=True, **kwargs)
         if isinstance(samples, np.ndarray):
             for s, n_ in zip(samples, n):
                 if niter == 1:
@@ -430,20 +425,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         # ----------------
         # None -> own frame
 
-        assert (
-            self.inst._infer_representation(None)
-            == self.inst.potential.representation_type
-        )
+        assert self.inst._infer_representation(None) == self.inst.potential.representation_type
 
         # ----------------
         # still None
 
         old_representation_type = self.inst.representation_type
         self.inst.potential._representation_type = None
-        assert (
-            self.inst._infer_representation(None)
-            == self.inst.frame.default_representation
-        )
+        assert self.inst._infer_representation(None) == self.inst.frame.default_representation
         self.inst.potential._representation_type = old_representation_type
 
         # ----------------
@@ -460,10 +449,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             == coord.CartesianRepresentation
         )
 
-        assert (
-            self.inst._infer_representation("cartesian")
-            == coord.CartesianRepresentation
-        )
+        assert self.inst._infer_representation("cartesian") == coord.CartesianRepresentation
 
     # /def
 

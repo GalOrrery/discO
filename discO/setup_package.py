@@ -8,6 +8,9 @@
 
 from __future__ import absolute_import
 
+# STDLIB
+import importlib
+
 __all__ = ["HAS_AGAMA", "HAS_GALA", "HAS_GALPY", "HAS_TQDM"]
 
 
@@ -48,12 +51,16 @@ except ImportError:
 else:
     HAS_GALPY = True
 
-    # TODO better way of ensuring unit!
-    # THIRD PARTY
-    from galpy.util.config import __config__
+    importlib.reload(galpy)
 
-    __config__.set("astropy", "astropy-units", "True")
-    __config__.set("astropy", "astropy-coords", "True")
+    # THIRD PARTY
+    from galpy.util import config as galpy_config
+
+    # force configuration
+    galpy_config._APY_LOADED = True
+    galpy_config.__config__.set("astropy", "astropy-units", "True")
+    galpy_config.__config__.set("astropy", "astropy-coords", "True")
+    galpy_config.default_configuration["astropy"]["astropy-units"] = True
 
 # /try
 

@@ -23,7 +23,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import copy
 import inspect
@@ -37,15 +37,10 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 import scipy.stats
-from astropy.coordinates import (
-    BaseCoordinateFrame,
-    BaseRepresentation,
-    SkyCoord,
-    concatenate,
-)
+from astropy.coordinates import BaseCoordinateFrame, BaseRepresentation, SkyCoord, concatenate
 from astropy.utils.decorators import classproperty
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
 from .sample import RandomLike  # TODO move to type-hints
@@ -173,8 +168,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
 
         elif method is not None:
             raise ValueError(
-                f"Can't specify 'method' on {cls},"
-                " only on MeasurementErrorSampler.",
+                f"Can't specify 'method' on {cls}," " only on MeasurementErrorSampler.",
             )
 
         return super().__new__(cls)
@@ -398,9 +392,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         else:  # (Nsamples, Niter)
 
             samples = list(
-                self._run_iter(
-                    c, c_err=c_err, random=random, progress=progress, **kwargs
-                ),
+                self._run_iter(c, c_err=c_err, random=random, progress=progress, **kwargs),
             )
 
             sample = concatenate(samples).reshape(c.shape)
@@ -457,9 +449,7 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         if not isinstance(random, np.random.RandomState):
             random = np.random.RandomState(random)
 
-        return run_func(
-            c, c_err=c_err, random=random, progress=progress, **kwargs
-        )
+        return run_func(c, c_err=c_err, random=random, progress=progress, **kwargs)
 
     # /def
 
@@ -698,15 +688,12 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
             # a cleaner error than KeyError on the actual registry
             if not cls._in_registry(method):
                 raise ValueError(
-                    "RVS_Continuous has no registered "
-                    f"measurement resampler '{method}'",
+                    "RVS_Continuous has no registered " f"measurement resampler '{method}'",
                 )
 
             # from registry. Registered in __init_subclass__
             # don't pass rvs, b/c not all subclasses take it
-            return super().__new__(
-                cls[method], c_err=c_err, method=None, **kwargs
-            )
+            return super().__new__(cls[method], c_err=c_err, method=None, **kwargs)
 
         elif method is not None:
             raise ValueError(
@@ -846,10 +833,7 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
 
         # re-build representation
         new_rep = rep.__class__(
-            **{
-                n: attr_classes[n](p * unit)
-                for p, (n, unit) in zip(new_posT, units.items())
-            }
+            **{n: attr_classes[n](p * unit) for p, (n, unit) in zip(new_posT, units.items())}
         )
         # make coordinate
         new_cc = self.frame.realize_frame(

@@ -10,14 +10,14 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import pathlib
 import shutil
 
 # THIRD PARTY
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO import data as loaddata
 
 ##############################################################################

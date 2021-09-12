@@ -34,7 +34,7 @@ import astropy.units as u
 import pytest
 from astropy import table
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO import type_hints
 from discO.tests.helper import TypeVarTests
 

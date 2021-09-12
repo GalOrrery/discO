@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import inspect
 import typing as T
 from abc import ABCMeta, abstractmethod
@@ -22,7 +22,7 @@ import typing_extensions as TE
 from astropy.utils import sharedmethod
 from astropy.utils.misc import indent
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from discO.utils import resolve_framelike, resolve_representationlike
 from discO.utils.coordinates import UnFrame
@@ -458,9 +458,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
 
         # the "intrinsic" frame of the potential.
         # resolve else-wise (None -> UnFrame)
-        self._frame = (
-            resolve_framelike(frame) if frame is not Ellipsis else frame
-        )
+        self._frame = resolve_framelike(frame) if frame is not Ellipsis else frame
         self._default_representation = (
             resolve_representationlike(representation_type)
             if representation_type not in (None, Ellipsis)
@@ -545,9 +543,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         values : |Quantity|
 
         """
-        return self.potential(
-            points, representation_type=representation_type, **kwargs
-        )
+        return self.potential(points, representation_type=representation_type, **kwargs)
 
     # /def
 
@@ -601,9 +597,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         """
         # if representation type is None, use default
         representation_type = (
-            self.representation_type
-            if representation_type is None
-            else representation_type
+            self.representation_type if representation_type is None else representation_type
         )
 
         return self.__class__.density(
@@ -649,9 +643,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         """
         # if representation type is None, use default
         representation_type = (
-            self.representation_type
-            if representation_type is None
-            else representation_type
+            self.representation_type if representation_type is None else representation_type
         )
 
         return self.__class__.potential(
@@ -696,9 +688,7 @@ class PotentialWrapper(metaclass=PotentialWrapperMeta):
         """
         # if representation type is None, use default
         representation_type = (
-            self.representation_type
-            if representation_type is None
-            else representation_type
+            self.representation_type if representation_type is None else representation_type
         )
 
         return self.__class__.specific_force(

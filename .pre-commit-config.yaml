@@ -42,11 +42,6 @@ repos:
     - id: script-must-not-have-extension
     - id: shfmt
 
--   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.46"
-    hooks:
-    - id: check-manifest
-
 -   repo: https://github.com/pre-commit/mirrors-autopep8
     rev: v1.5.4
     hooks:
@@ -68,7 +63,7 @@ repos:
     - id: flake8
       args: # arguments to configure flake8
         # making isort line length compatible with black
-        - "--max-line-length=88"
+        - "--max-line-length=100"
         - "--max-complexity=18"
         - "--select=B,C,E,F,W,T4,B9"
 

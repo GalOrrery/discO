@@ -16,7 +16,7 @@ import astropy.units as u
 import numpy as np
 from astropy.coordinates import SkyCoord
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from discO.core.sample import PotentialSampler
 from discO.utils.random import RandomLike
@@ -79,9 +79,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
             )
         else:
             differentials = None
-        rep = coord.CartesianRepresentation(
-            *pos.T * u.kpc, differentials=differentials
-        )
+        rep = coord.CartesianRepresentation(*pos.T * u.kpc, differentials=differentials)
 
         if representation_type is None:
             representation_type = rep.__class__

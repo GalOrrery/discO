@@ -17,7 +17,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 import typing as T
 from types import MappingProxyType, ModuleType
@@ -25,13 +25,10 @@ from types import MappingProxyType, ModuleType
 # THIRD PARTY
 import numpy as np
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO.type_hints as TH
 from .common import CommonBase
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import resolve_framelike, resolve_representationlike
 from discO.utils.pbar import get_progress_bar
 
 ##############################################################################
@@ -114,16 +111,13 @@ class PotentialFitter(CommonBase):
 
             if key not in cls._registry:
                 raise ValueError(
-                    "PotentialFitter has no registered fitter for key: "
-                    f"{key}",
+                    "PotentialFitter has no registered fitter for key: " f"{key}",
                 )
 
             # from registry. Registered in __init_subclass__
             kls = cls._registry[key]
             kwargs.pop("key", None)  # it's already used.
-            return kls.__new__(
-                kls, potential_cls=potential_cls, key=None, **kwargs
-            )
+            return kls.__new__(kls, potential_cls=potential_cls, key=None, **kwargs)
 
         elif key is not None:
             raise ValueError(

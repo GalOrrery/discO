@@ -11,7 +11,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 import abc
 
 # THIRD PARTY
@@ -19,7 +19,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import pytest
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.core import wrapper
 from discO.tests.helper import ObjectTest
 from discO.utils.coordinates import UnFrame

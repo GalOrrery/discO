@@ -2,7 +2,7 @@
 
 """Progress bar, modified from :mod:`~emcee`."""
 
-# BUILT-IN
+# STDLIB
 import logging
 
 __all__ = ["get_progress_bar"]
@@ -11,7 +11,7 @@ __credits__ = ["emcee"]
 ##############################################################################
 # IMPORTS
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.setup_package import HAS_TQDM
 
 if HAS_TQDM:

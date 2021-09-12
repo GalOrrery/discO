@@ -27,7 +27,7 @@ be accessible, and the documentation will not build correctly.
 
 """
 
-# BUILT-IN
+# STDLIB
 import datetime
 import os
 import sys
@@ -39,8 +39,7 @@ try:
     from sphinx_astropy.conf.v1 import *
 except ImportError:
     print(
-        "ERROR: the documentation requires the "
-        "sphinx-astropy package to be installed",
+        "ERROR: the documentation requires the " "sphinx-astropy package to be installed",
     )
     sys.exit(1)
 

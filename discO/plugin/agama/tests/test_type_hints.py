@@ -13,7 +13,7 @@ __all__ = [
 # THIRD PARTY
 from agama import Potential
 
-# PROJECT-SPECIFIC
+# LOCAL
 from discO.plugin.agama import type_hints
 from discO.tests.helper import TypeVarTests
 

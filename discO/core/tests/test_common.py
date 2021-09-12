@@ -10,7 +10,7 @@ __all__ = [
 ##############################################################################
 # IMPORTS
 
-# BUILT-IN
+# STDLIB
 from abc import abstractmethod
 from collections.abc import Mapping
 from types import MappingProxyType
@@ -19,7 +19,7 @@ from types import MappingProxyType
 import pytest
 from astropy.utils.introspection import resolve_name
 
-# PROJECT-SPECIFIC
+# LOCAL
 import discO
 from discO.core import common
 from discO.tests.helper import ObjectTest
