@@ -12,6 +12,8 @@ packagename.test
 # IMPORTS
 
 # STDLIB
+import configparser
+import importlib
 import os
 
 # THIRD PARTY
@@ -22,7 +24,8 @@ from .setup_package import HAS_AGAMA, HAS_GALA, HAS_GALPY
 
 try:
     # THIRD PARTY
-    from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
+    from pytest_astropy_header.display import PYTEST_HEADER_MODULES  # noqa: F401
+    from pytest_astropy_header.display import TESTED_VERSIONS
 
     ASTROPY_HEADER = True
 except ImportError:
@@ -55,9 +58,28 @@ SKIP_NO_GALPY = pytest.mark.skipif(not HAS_GALPY, reason="needs galpy")
 if not HAS_GALPY:
     collect_ignore.append("plugin/galpy/")
 else:
+    # THIRD PARTY
+    import galpy
+
+    importlib.reload(galpy)
+
+    # THIRD PARTY
     from galpy.util import config as galpy_config
-    galpy_config.__config__["astropy"]["astropy-units"] = "True"
-    galpy_config.__config__["astropy"]["astropy-coords"] = "True"
+
+    # configuration
+    galpy_config._APY_LOADED = True
+    galpy_config.__config__.set("astropy", "astropy-units", "True")
+    galpy_config.__config__.set("astropy", "astropy-coords", "True")
+
+    if ".tmp" in os.getcwd():
+
+        # write config and read it
+        cfilename = os.path.join(os.path.expanduser("~"), ".galpyrc")
+        galpy_config.write_config(cfilename, galpy_config.__config__)
+
+        __config__ = configparser.ConfigParser()
+        __config__.read(cfilename)
+        galpy_config.__config__ = __config__
 
 
 # ------------------------------------------------------
@@ -74,12 +96,6 @@ def pytest_configure(config):
     if ASTROPY_HEADER:
 
         config.option.astropy_header = True
-
-        # Customize the following lines to add/remove entries from the list of
-        # packages for which version numbers are displayed when running the
-        # tests.
-        PYTEST_HEADER_MODULES.pop("Pandas", None)
-        PYTEST_HEADER_MODULES["scikit-image"] = "skimage"
 
         # LOCAL
         from . import __version__

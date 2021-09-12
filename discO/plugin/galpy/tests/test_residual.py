@@ -22,10 +22,6 @@ from discO.plugin.galpy.wrapper import GalpyPotentialWrapper
 from discO.utils import vectorfield
 
 ##############################################################################
-# PYTEST
-
-
-##############################################################################
 # TESTS
 ##############################################################################
 
@@ -42,7 +38,7 @@ class Test_GridResidual_Galpy(GridResidual_Test, obj=residual.GridResidual):
 
         # TODO!! actual potential that properly evaluates
         cls.original_potential = gpot.NFWPotential(amp=2e12 * u.solMass)
-        cls.original_potential.turn_physical_on(ro=8 * u.kpc, vo=220 * u.km / u.s)
+        gpot.turn_physical_on(cls.original_potential, ro=8 * u.kpc, vo=220 * u.km / u.s)
 
         cls.klass = cls.obj
 
