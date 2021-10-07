@@ -55,17 +55,15 @@ from sklearn.utils import shuffle
 ##############################################################################
 # PARAMETERS
 
-RandomStateType = T.Union[None, int, np.random.RandomState, np.random.Generator]
+RandomStateType = T.Union[
+    None,
+    int,
+    np.random.RandomState,
+    np.random.Generator,
+]
 
 # General
-_PLOT: bool = True  # Whether to plot the output
-
 THIS_DIR = pathlib.Path(__file__).parent
-PLOT_DIR = THIS_DIR / "figures"
-PLOT_DIR.mkdir(exist_ok=True)
-
-DATA_DIR = THIS_DIR / "pk_reg"
-DATA_DIR.mkdir(exist_ok=True)
 
 ##############################################################################
 # CODE
@@ -73,11 +71,11 @@ DATA_DIR.mkdir(exist_ok=True)
 
 
 def fit_kernel_ridge(
-    X: npt.NDArray,
-    y: npt.NDArray,
+    X: npt.NDArray[np.float_],
+    y: npt.NDArray[np.float_],
     train_size: int,
     random_state: RandomStateType = None,
-) -> (npt.NDArray, KernelRidge):
+) -> T.Tuple[npt.NDArray[np.float_], KernelRidge]:
     """Kernel-Ridge Regression code.
 
     Parameters
@@ -102,7 +100,11 @@ def fit_kernel_ridge(
     )
 
     # randomize the data order
-    idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
+    idx = shuffle(
+        np.arange(0, len(X)),
+        random_state=random_state,
+        n_samples=train_size,
+    )
 
     # Fitting using the Kernel-Ridge Regression
     kr.fit(X[idx], y[idx])
@@ -122,48 +124,12 @@ def fit_kernel_ridge(
 # /def
 
 
-# def fit_gaussian_process(
-#     X: npt.NDArray,
-#     y: npt.NDArray,
-#     train_size: int,
-#     random_state: RandomStateType = None,
-# ) -> (npt.NDArray, GaussianProcessRegressor):
-#     """Gaussian-Process Regression code.
-# 
-#     Parameters
-#     ----------
-#     X : ndarray
-#     y : ndarray
-#     train_size : int
-#     random_state : `numpy.random.Generator`, `numpy.random.RandomState`, int, or None (optional)
-# 
-#     Returns
-#     -------
-#     ykr : ndarray
-#     kr : `~sklearn.gaussian_process.GaussianProcessRegressor`
-#     """
-#     # estimator
-#     gpr = GaussianProcessRegressor(kernel=None)
-# 
-#     # randomize the data order
-#     idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
-# 
-#     # fit
-#     gpr.fit(X[idx], y[idx])
-#     ygp = gpr.predict(Xp)
-# 
-#     return ygp, gpr
-# 
-# 
-# # /def
-
-
 def fit_support_vector(
-    X: npt.NDArray,
-    y: npt.NDArray,
+    X: npt.NDArray[np.float_],
+    y: npt.NDArray[np.float_],
     train_size: int,
     random_state: RandomStateType = None,
-) -> (npt.NDArray, SVR):
+) -> T.Tuple[npt.NDArray[np.float_], SVR]:
     """support-vector regression.
 
     Parameter
@@ -184,7 +150,11 @@ def fit_support_vector(
     )
 
     # randomize the data order
-    idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
+    idx = shuffle(
+        np.arange(0, len(X)),
+        random_state=random_state,
+        n_samples=train_size,
+    )
 
     # Fitting using the Support Vector
     svr.fit(X[idx], y[idx])
@@ -205,12 +175,12 @@ def fit_support_vector(
 
 
 def fit_linear(
-    X: npt.NDArray,
-    y: npt.NDArray,
+    X: npt.NDArray[np.float_],
+    y: npt.NDArray[np.float_],
     train_size: int,
-    weight: T.Union[bool, npt.NDArray] = True,
+    weight: T.Union[bool, npt.NDArray[np.float_]] = True,
     random_state: RandomStateType = None,
-) -> (npt.NDArray, LinearRegression):
+) -> T.Tuple[npt.NDArray[np.float_], LinearRegression]:
     """Linear regression model.
 
     Parameters
@@ -229,13 +199,18 @@ def fit_linear(
     lr = LinearRegression()
 
     # randomize the data order
-    idx = shuffle(np.arange(0, len(X)), random_state=random_state, n_samples=train_size)
+    idx = shuffle(
+        np.arange(0, len(X)),
+        random_state=random_state,
+        n_samples=train_size,
+    )
 
     # fit, optionally with weights
-    if weight is True or isinstance(weight, np.ndarray):  # True or kde
-        if weight is True:
-            xy = np.vstack([X[:, 2], y])
-            weight = gaussian_kde(xy)(xy)
+    if weight is True:
+        xy: npt.NDArray[np.float_] = np.vstack([X[:, 2], y])
+        wgt: npt.NDArray[np.float_] = gaussian_kde(xy)(xy)
+        lr.fit(X[idx], y[idx], sample_weight=(1 / wgt)[idx])
+    elif isinstance(weight, np.ndarray):
         lr.fit(X[idx], y[idx], sample_weight=(1 / weight)[idx])
     else:
         lr.fit(X[idx], y[idx])
@@ -256,18 +231,18 @@ def fit_linear(
 # /def
 
 
-# ===================================================================
+# ============================================================================
 
 
 def plot_parallax_prediction(
-    Xtrue: npt.NDArray,
-    ytrue: npt.NDArray,
-    kde,
-    ypred1: npt.NDArray,
-    ypred2: npt.NDArray,
-    ypred3: npt.NDArray,
-    fids,
-    ax=None
+    Xtrue: npt.NDArray[np.float_],
+    ytrue: npt.NDArray[np.float_],
+    kde: gaussian_kde,
+    ypred1: npt.NDArray[np.float_],
+    ypred2: npt.NDArray[np.float_],
+    ypred3: npt.NDArray[np.float_],
+    patch_id: int,
+    ax: T.Optional[plt.Axes]=None,
 ) -> plt.Figure:
     """Plot predicted parallax.
 
@@ -279,7 +254,7 @@ def plot_parallax_prediction(
     ypred1
     ypred2
     ypred3
-    fids
+    patch_id
 
     Returns
     -------
@@ -293,14 +268,18 @@ def plot_parallax_prediction(
 
     ax.set_xlabel(r"$\log_{10}$ parallax [mas]")
     ax.set_ylabel(r"$\log_{10}$ parallax fractional error")
-    ax.set_title(f"Patch={fids}")
+    ax.set_title(f"Patch={patch_id}")
 
     # distance label
     secax = ax.secondary_xaxis(
         "top",
         functions=(
-            lambda logp: np.log10(coord.Distance(parallax=10 ** logp * u.mas).to_value(u.pc)),
-            lambda logd: np.log10(coord.Distance(10 ** logd * u.pc).parallax.to_value(u.mas)),
+            lambda logp: np.log10(
+                coord.Distance(parallax=10 ** logp * u.mas).to_value(u.pc),
+            ),
+            lambda logd: np.log10(
+                coord.Distance(10 ** logd * u.pc).parallax.to_value(u.mas),
+            ),
         ),
     )
     secax.set_xlabel(r"$\log_{10}$ Distance [kpc]")
@@ -328,8 +307,16 @@ def plot_parallax_prediction(
 # /def
 
 
-def plot_mollview(patch_ids, order, fig=None):
-    """Plot Mollweide view with patches on sky."""
+def plot_mollview(patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Figure]=None) -> plt.Figure:
+    """Plot Mollweide view with patches on sky.
+
+    Parameters
+    ----------
+    patch_ids : tuple[int]
+        Set of patch ids (int).
+    order : int
+        The healpix order.  See :func:`healpy.order2nside`
+    """
     nside = hp.order2nside(order)
     npix = hp.nside2npix(nside)
 
@@ -337,20 +324,12 @@ def plot_mollview(patch_ids, order, fig=None):
     m = np.arange(npix)
     alpha = np.zeros_like(m) + 0.5
     alpha[patch_ids[0] : patch_ids[-1]] = 1
-    hp.mollview(
-        m,
-        nest=True,
-        coord=["C"],
-        cbar=False,
-        cmap="inferno",
-        fig=fig,
-        alpha=alpha,
-    )
+    hp.mollview(m, nest=True, coord=["C"], cbar=False, cmap="inferno", fig=fig, alpha=alpha)
 
     # patch plot
     m[patch_ids[0] : patch_ids[-1]] = 3 * npix // 4
-    alpha[:patch_ids[0]] = 0
-    alpha[patch_ids[-1]:] = 0
+    alpha[: patch_ids[0]] = 0
+    alpha[patch_ids[-1] :] = 0
     hp.mollview(
         m,
         title=f"Mollview image (RING, order={order})\nPatches {patch_ids}",
@@ -362,12 +341,21 @@ def plot_mollview(patch_ids, order, fig=None):
         reuse_axes=True,
         alpha=alpha,
     )
-    fig = plt.gcf()
 
     return fig
 
+# /def
 
-def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, random_index: T.Optional[int]=1000000) -> None:
+
+# ============================================================================
+
+
+def query_and_fit_patch_set(
+    patch_ids: tuple[int, ...],
+    order: int,
+    plot: bool,
+    random_index: T.Optional[int] = 1000000,
+) -> None:
     """Query and fit a set of sky patches.
 
     Parameters
@@ -376,9 +364,20 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, r
         Set of patch ids (int).
     order : int
         The healpix order.  See :func:`healpy.order2nside`
-
     """
-    # create Gaia query
+    # create directories
+    FOLDER = THIS_DIR / f"order_{order}"
+    FOLDER.mkdir(exist_ok=True)
+
+    PLOT_DIR = FOLDER / "figures"
+    PLOT_DIR.mkdir(exist_ok=True)
+
+    DATA_DIR = FOLDER / "pk_reg"
+    DATA_DIR.mkdir(exist_ok=True)
+
+    # -----------------------
+    # Query batch
+
     hpl = f"healpix{order}"  # column name
     query = f"""
     SELECT
@@ -392,6 +391,7 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, r
     WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
     AND parallax >= 0
     """
+
     if random_index is not None:
         query += f"AND random_index < {random_index}"
 
@@ -400,37 +400,42 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, r
         dump_to_file=False,
         verbose=False,
     )
-    # perform query and
-    r = table.QTable(job.get_results(), copy=False)
-    rgr = r.group_by(hpl)  # group stars by patch
+    # perform query and...
+    result = table.QTable(job.get_results(), copy=False)
+    if len(result) == 0:
+        warnings.warn(f"no data in patches: {patch_ids}")
+        return
+
+    rgr: table.QTable = result.group_by(hpl)  # group stars by patch
 
     # plot the patches
     if plot:
-        fig = plot_mollview(patch_ids, order)
-        # TODO! allow for plot directory
+        fig = plt.figure()
+        plot_mollview(patch_ids, order, fig=fig)
         fig.savefig(PLOT_DIR / f"mollview-{'-'.join(map(str, patch_ids))}.pdf")
 
-    # parallax plot
-    if plot:
+    # -----------------------
+    # Fits to each patch
+
+    ax: T.Union[plt.Axes, None]
+    axs: npt.NDArray[np.object_]  # axes or 0s
+    if plot:  # set up parallax plots
         rows, remainder = np.divmod(len(patch_ids), 4)
-        if rows == 0:
-            width = remainder
-        else:
-            width = 4
+        width = remainder if (rows == 0) else 4
         if remainder > 0:
             rows += 1
         fig, axs = plt.subplots(rows, width, figsize=(5 * width, 5 * rows))
     else:
-        axs = np.zeros(len(rgr.groups))
+        axs = np.array([None] * len(rgr.groups))  # noop for iteration
 
     key: table.Row
-    group: table.Table
-    for grp, ax in zip(rgr.groups, axs.flat):
+    grp: table.Table
+    for grp, ax in zip(rgr.groups, axs.flat):  # iter thru patches
         patch_id: int = grp[hpl][0]
 
         grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
         # group = group[group["parallax"] > 0]  # positive parallax
-        
+
         # add the fractional error
         grp["parallax_frac_error"] = grp["parallax_error"] / grp["parallax"]
 
@@ -462,15 +467,15 @@ def query_and_fit_patch_set(patch_ids: tuple[int, ...], order: int, plot=bool, r
         plt.tight_layout()
         fig.savefig(PLOT_DIR / f"parallax-{'-'.join(map(str, patch_ids))}.pdf")
 
+# /def
+
 
 ##############################################################################
 # Command Line
 ##############################################################################
 
 
-def make_parser(
-    *, inheritable: bool = False, plot: bool = _PLOT,
-) -> argparse.ArgumentParser:
+def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
     """Expose ArgumentParser for ``main``.
 
     Parameters
@@ -487,17 +492,10 @@ def make_parser(
 
     Returns
     -------
-    parser: |ArgumentParser|
+    parser: `~argparse.ArgumentParser`
         The parser with arguments:
-
         - plot
         - verbose
-
-    ..
-      RST SUBSTITUTIONS
-
-    .. |ArgumentParser| replace:: `~argparse.ArgumentParser`
-
     """
     parser = argparse.ArgumentParser(
         description="",
@@ -506,27 +504,66 @@ def make_parser(
     )
 
     # order
-    parser.add_argument("-o", "--order", default=4, type=int)
+    parser.add_argument("-o", "--order", default=6, type=int, help="healpix order")
 
     # patches are done in batches. Need to decide the size
-    parser.add_argument("-b", "--batch_size", default=10, type=int)
+    parser.add_argument(
+        "-b",
+        "--batch_size",
+        default=30,
+        type=int,
+        help="number of patches in a batch",
+    )
 
     # which patches
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--allsky", action="store_true",
-                       help="Do all sky patches.")
-    group.add_argument("--patches", action="append", type=int, nargs='+',
-                       help="sky patch ids.")
-    group.add_argument("-r", "--patches_range", type=int, nargs=2)
+    group.add_argument("--allsky", action="store_true", help="fit all sky patches")
+    group.add_argument(
+        "--patches",
+        action="append",
+        type=int,
+        nargs="+",
+        help="only fit specified sky patches by ID",
+    )
+    group.add_argument(
+        "-r",
+        "--patches_range",
+        type=int,
+        nargs=2,
+        help="fit specified sky patches within range",
+    )
 
     # stars in gaia
-    parser.add_argument("--random_index", default=None, type=int)
+    parser.add_argument(
+        "-i",
+        "--random_index",
+        default=None,
+        type=int,
+        help="limit queried stars within random index",
+    )
+
+    # random number generator
+    parser.add_argument("--rng", default=0, type=int, help="random number generator")
 
     # plot or not
-    parser.add_argument("--plot", action="store", default=_PLOT, type=bool)
+    parser.add_argument("--plot", default=True, type=bool, help="plot")
 
-    # # script verbosity
-    parser.add_argument("--filter_warnings", action="store_true")
+    # script verbosity
+    parser.add_argument("--filter_warnings", action="store_true", help="filter warnings")
+
+    # parallelize
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        default=False,
+        help="whether to parallelize fitting the batches",
+    )
+    parser.add_argument(
+        "--numcores",
+        type=int,
+        default=None,
+        help="number of computer cores to use, if parallelizing",
+    )
 
     return parser
 
@@ -538,9 +575,9 @@ def make_parser(
 
 
 def main(
-    args: T.Union[list, str, None] = None,
+    args: T.Union[list[str], str, None] = None,
     opts: T.Optional[argparse.Namespace] = None,
-):
+) -> None:
     """Script Function.
 
     Parameters
@@ -553,10 +590,10 @@ def main(
         if not None, used ONLY if args is None
 
         - nside
-
     """
+    ns: argparse.Namespace
     if opts is not None and args is None:
-        pass
+        ns = opts
     else:
         if opts is not None:
             warnings.warn("Not using `opts` because `args` are given")
@@ -564,34 +601,81 @@ def main(
             args = args.split()
 
         parser = make_parser()
-        opts = parser.parse_args(args)
+        ns = parser.parse_args(args)
 
     # /if
 
+    # random number generator
+    rng = np.random.default_rng(ns.rng)
+
     # construct the list of batches of sky patches
     # [ (patch_1, patch_2, ...),  (patch_i, patch_i+1, ...)]
-    if opts.allsky:
-        nside = hp.order2nside(opts.order)
+    if ns.allsky:
+        nside = hp.order2nside(ns.order)
         npix = hp.nside2npix(nside)  # the number of sky patches
-        nbatches = npix // opts.batch_size
+        nbatches = npix // ns.batch_size
+        all_patches = np.arange(npix)
+        rng.shuffle(all_patches)  # shuffle up the patches
+
         list_of_batches = np.array_split(np.arange(npix), nbatches)
-    elif opts.patches_range:
-        pi, pf = opts.patches_range
+    elif ns.patches_range:
+        pi, pf = ns.patches_range
         if pi >= pf:
-            raise ValueError("`patches_range` must be [start, stop], with stop > start.")
-        nbatches = (pf - pi) // opts.batch_size
+            raise ValueError(
+                "`patches_range` must be [start, stop], with stop > start.",
+            )
+        nbatches = (pf - pi) // ns.batch_size
         list_of_batches = np.array_split(np.arange(pi, pf), nbatches)
-    elif opts.patches:
-        list_of_batches = opts.patches
+    elif ns.patches:
+        list_of_batches = ns.patches
+
+    list_of_batches = np.array(list_of_batches, dtype=object)
 
     # optionally ignore warnings
     with warnings.catch_warnings():
-        if opts.filter_warnings:
-            warnings.simplefilter("ignore", category=UndefinedMetricWarning)  # TODO!
+        if ns.filter_warnings:
+            warnings.simplefilter(
+                "ignore",
+                category=UndefinedMetricWarning,
+            )  # TODO!
             warnings.simplefilter("ignore", category=UserWarning)  # TODO!
 
-        for batch in tqdm.tqdm(list_of_batches):
-            query_and_fit_patch_set(tuple(batch), order=opts.order, plot=opts.plot, random_index=opts.random_index)
+        if ns.parallel:
+            # TODO! not have galpy dependency just for this util
+            # THIRD PARTY
+            from .multi import parallel_map
+
+            def wrapped_query_and_fit_patch_set(batch: tuple[int, ...]) ->  tuple[int, ...]:
+                if len(batch) != 0:  # skip empty batch
+                    query_and_fit_patch_set(
+                        tuple(batch),
+                        order=ns.order,
+                        plot=False,  # FIXME! doesn't work with parallel map
+                        random_index=ns.random_index,
+                    )
+                pbar.update(n=1)
+                pbar.refresh()
+                return batch
+
+            # /def
+
+            with tqdm.tqdm(total=len(list_of_batches)) as pbar:
+                # TODO! switch to
+                # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.multiprocessing.Pool.map
+                parallel_map(
+                    wrapped_query_and_fit_patch_set,
+                    list_of_batches,
+                    numcores=ns.numcores
+                )
+
+        else:
+            for batch in tqdm.tqdm(list_of_batches):
+                query_and_fit_patch_set(
+                    tuple(batch),
+                    order=ns.order,
+                    plot=ns.plot,
+                    random_index=ns.random_index,
+                )
 
 
 # /def
