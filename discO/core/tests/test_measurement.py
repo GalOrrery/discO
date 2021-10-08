@@ -164,10 +164,7 @@ class Test_MeasurementErrorSampler(
         # The GaussianMeasurementErrorSampler is already registered, so can
         # test for that.
         assert "Gaussian" in self.obj._registry
-        assert (
-            self.obj._registry["Gaussian"]
-            is measurement.GaussianMeasurementError
-        )
+        assert self.obj._registry["Gaussian"] is measurement.GaussianMeasurementError
 
     # /def
 
@@ -183,10 +180,7 @@ class Test_MeasurementErrorSampler(
         if self.obj is measurement.MeasurementErrorSampler:
 
             assert self.obj["Gaussian"] is measurement.GaussianMeasurementError
-            assert (
-                self.obj["rvs", "Gaussian"]
-                is measurement.GaussianMeasurementError
-            )
+            assert self.obj["rvs", "Gaussian"] is measurement.GaussianMeasurementError
 
             # not in own registry
             with pytest.raises(TypeError):
@@ -275,9 +269,7 @@ class Test_MeasurementErrorSampler(
                 representation_type=rep_type,
             )
             assert obj.frame == coord.Galactocentric(), frame
-            assert (
-                obj.representation_type == coord.CartesianRepresentation
-            ), rep_type
+            assert obj.representation_type == coord.CartesianRepresentation, rep_type
             assert "method" not in obj.params
 
     # /def
@@ -407,9 +399,7 @@ class Test_MeasurementErrorSampler(
                 theta=[3, 4] * u.deg,
                 r=[5, 6] * u.kpc,
             )
-            array = (
-                rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
-            )
+            array = rep._values.view(dtype=np.float64).reshape(rep.shape[0], -1).T
             self.inst._fix_branch_cuts(
                 array.copy(),
                 coord.PhysicsSphericalRepresentation,
@@ -422,7 +412,7 @@ class Test_MeasurementErrorSampler(
 
     @abstractmethod
     def test___call__(self):
-        """Test method ``__call__``. """
+        """Test method ``__call__``."""
         # run tests on super
         super().test___call__()
 
@@ -768,9 +758,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
                 representation_type=rep_type,
             )
             assert obj.frame == coord.Galactocentric(), frame
-            assert (
-                obj.representation_type == coord.CartesianRepresentation
-            ), rep_type
+            assert obj.representation_type == coord.CartesianRepresentation, rep_type
             assert "method" not in obj.params
 
     # /def
@@ -803,9 +791,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         expected_dec = [2.08003144, 3.5602674]
         expected_dist = [1.97873798, 0.02272212]
 
-        random = (
-            np.random.RandomState(0) if random == "RandomState(0)" else random
-        )
+        random = np.random.RandomState(0) if random == "RandomState(0)" else random
 
         res = self.inst(self.c, c_err=eval(c_err), random=random)  # TODO!
         assert np.allclose(res.ra.deg, expected_ra)
@@ -1083,9 +1069,7 @@ class Test_GaussianMeasurementError(
                 representation_type=rep_type,
             )
             assert obj.frame == coord.Galactocentric(), frame
-            assert (
-                obj.representation_type == coord.CartesianRepresentation
-            ), rep_type
+            assert obj.representation_type == coord.CartesianRepresentation, rep_type
             assert "method" not in obj.params
 
     # /def

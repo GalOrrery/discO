@@ -338,10 +338,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test_representation_type(self):
         """Test method ``representation_type``."""
-        assert (
-            self.inst.representation_type
-            is self.inst.potential.representation_type
-        )
+        assert self.inst.representation_type is self.inst.potential.representation_type
 
     # /def
 
@@ -399,9 +396,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
     )
     def test_run(self, n, niter, random, kwargs):
         """Test method ``run``."""
-        samples = self.inst.run(
-            n=n, iterations=niter, random=random, batch=True, **kwargs
-        )
+        samples = self.inst.run(n=n, iterations=niter, random=random, batch=True, **kwargs)
         if isinstance(samples, np.ndarray):
             for s, n_ in zip(samples, n):
                 if niter == 1:
@@ -430,20 +425,14 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         # ----------------
         # None -> own frame
 
-        assert (
-            self.inst._infer_representation(None)
-            == self.inst.potential.representation_type
-        )
+        assert self.inst._infer_representation(None) == self.inst.potential.representation_type
 
         # ----------------
         # still None
 
         old_representation_type = self.inst.representation_type
         self.inst.potential._representation_type = None
-        assert (
-            self.inst._infer_representation(None)
-            == self.inst.frame.default_representation
-        )
+        assert self.inst._infer_representation(None) == self.inst.frame.default_representation
         self.inst.potential._representation_type = old_representation_type
 
         # ----------------
@@ -460,10 +449,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
             == coord.CartesianRepresentation
         )
 
-        assert (
-            self.inst._infer_representation("cartesian")
-            == coord.CartesianRepresentation
-        )
+        assert self.inst._infer_representation("cartesian") == coord.CartesianRepresentation
 
     # /def
 

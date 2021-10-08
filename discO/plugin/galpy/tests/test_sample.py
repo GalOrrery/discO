@@ -21,9 +21,7 @@ from galpy.potential import HernquistPotential
 
 # PROJECT-SPECIFIC
 from discO.core.sample import MeshGridPotentialSampler
-from discO.core.tests.test_sample import (
-    Test_PotentialSampler as PotentialSampler_Test,
-)
+from discO.core.tests.test_sample import Test_PotentialSampler as PotentialSampler_Test
 from discO.plugin.galpy import GalpyPotentialWrapper, sample
 from discO.tests.helper import ObjectTest
 
@@ -88,9 +86,7 @@ class Test_GalpyPotentialSampler(
     )
     def test_call_parametrize(self, n, frame, representation, random, kwargs):
         """Parametrized call tests."""
-        res = self.inst(
-            n, frame=frame, representation_type=representation, **kwargs
-        )
+        res = self.inst(n, frame=frame, representation_type=representation, **kwargs)
         assert res.__class__ == coord.SkyCoord
 
         assert res.cache["potential"].__wrapped__ == self.potential

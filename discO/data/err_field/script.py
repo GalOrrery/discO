@@ -52,6 +52,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
+# PROJECT-SPECIFIC
+from .sky_distribution import main as sky_distribution_main
+
 ##############################################################################
 # PARAMETERS
 
@@ -242,7 +245,7 @@ def plot_parallax_prediction(
     ypred2: npt.NDArray[np.float_],
     ypred3: npt.NDArray[np.float_],
     patch_id: int,
-    ax: T.Optional[plt.Axes]=None,
+    ax: T.Optional[plt.Axes] = None,
 ) -> plt.Figure:
     """Plot predicted parallax.
 
@@ -307,7 +310,9 @@ def plot_parallax_prediction(
 # /def
 
 
-def plot_mollview(patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Figure]=None) -> plt.Figure:
+def plot_mollview(
+    patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Figure] = None
+) -> plt.Figure:
     """Plot Mollweide view with patches on sky.
 
     Parameters
@@ -317,8 +322,7 @@ def plot_mollview(patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Fi
     order : int
         The healpix order.  See :func:`healpy.order2nside`
     """
-    nside = hp.order2nside(order)
-    npix = hp.nside2npix(nside)
+    npix = hp.nside2npix(hp.order2nside(order))
 
     # background plot
     m = np.arange(npix)
@@ -343,6 +347,7 @@ def plot_mollview(patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Fi
     )
 
     return fig
+
 
 # /def
 
@@ -467,8 +472,71 @@ def query_and_fit_patch_set(
         plt.tight_layout()
         fig.savefig(PLOT_DIR / f"parallax-{'-'.join(map(str, patch_ids))}.pdf")
 
+
 # /def
 
+
+def make_groups(sky: table.QTable, order: int):
+    """Make groups.
+
+    Parameters
+    ----------
+    sky : `~astropy.table.QTable`
+    order : int
+
+    Returns
+    -------
+    groupsids : list[ndarray]
+    """
+    nside = hp.order2nside(order)
+    npix = hp.nside2npix(nside)  # the number of sky patches
+
+    # get healpix column name. it depends on the order, but is the group key.
+    keyname = rgr.groups.keys.colnames[0]
+
+    # get unique ids
+    patchids, hpx_indices, num_counts_per_patch = np.unique(
+        sky[keyname].value, return_index=True, return_counts=True
+    )
+
+    allpatchids = np.arange(npix)
+    patchnums = np.ones(npix)
+    patchnums[patchids] = num_counts_per_patch
+    patchnums[patchnums == 0] = 1  # set minimum number of 'counts' to 1
+
+    # sort by number of counts
+    sorter = np.argsort(patchnums)[::-1]
+    patchnums = patchnums[sorter]
+    allpatchids = allpatchids[sorter]
+
+    numgroups = 200
+    threshold = patchnums.sum() // numgroups
+
+    # split arrays into numgroups
+    patchnums_split = np.array_split(patchnums, numgroups)
+    allpatchids_split = np.array_split(allpatchids, numgroups)
+
+    # reverse every other, to try and even out the addition a little
+    patchnums_split = [
+        (group if not i % 2 else group[::-1]) for i, group in enumerate(patchnums_split)
+    ]
+    allpatchids_split = [
+        (group if not i % 2 else group[::-1]) for i, group in enumerate(allpatchids_split)
+    ]
+
+    # turn back into 1 array
+    patchnums = np.concatenate(patchnums_split)
+    allpatchids = np.concatenate(allpatchids_split)
+
+    groupsids = [allpatchids[i::numgroups] for i in range(numgroups)]
+
+    # # plot the distribution of groups
+    # groups = [patchnums[i::numgroups] for i in range(numgroups)]
+
+    return groupsids
+
+
+# /def
 
 ##############################################################################
 # Command Line
@@ -565,6 +633,9 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         help="number of computer cores to use, if parallelizing",
     )
 
+    # local query for background
+    parser.add_argument("--use_local", default=True, type=bool, help="local query or not")
+
     return parser
 
 
@@ -605,25 +676,25 @@ def main(
 
     # /if
 
+    # -----------------------
+    # make background distribution
+
+    sky = sky_distribution_main(opts=ns)
+
+    # -----------------------
+
     # random number generator
     rng = np.random.default_rng(ns.rng)
 
     # construct the list of batches of sky patches
     # [ (patch_1, patch_2, ...),  (patch_i, patch_i+1, ...)]
     if ns.allsky:
-        nside = hp.order2nside(ns.order)
-        npix = hp.nside2npix(nside)  # the number of sky patches
-        nbatches = npix // ns.batch_size
-        all_patches = np.arange(npix)
-        rng.shuffle(all_patches)  # shuffle up the patches
-
-        list_of_batches = np.array_split(np.arange(npix), nbatches)
+        list_of_batches = make_groups(sky, order=ns.order)
     elif ns.patches_range:
+        # TODO! get sky-weighted groups
         pi, pf = ns.patches_range
         if pi >= pf:
-            raise ValueError(
-                "`patches_range` must be [start, stop], with stop > start.",
-            )
+            raise ValueError("`patches_range` must be [start, stop], with stop > start.")
         nbatches = (pf - pi) // ns.batch_size
         list_of_batches = np.array_split(np.arange(pi, pf), nbatches)
     elif ns.patches:
@@ -642,10 +713,10 @@ def main(
 
         if ns.parallel:
             # TODO! not have galpy dependency just for this util
-            # THIRD PARTY
+            # PROJECT-SPECIFIC
             from .multi import parallel_map
 
-            def wrapped_query_and_fit_patch_set(batch: tuple[int, ...]) ->  tuple[int, ...]:
+            def wrapped_query_and_fit_patch_set(batch: tuple[int, ...]) -> tuple[int, ...]:
                 if len(batch) != 0:  # skip empty batch
                     query_and_fit_patch_set(
                         tuple(batch),
@@ -662,11 +733,7 @@ def main(
             with tqdm.tqdm(total=len(list_of_batches)) as pbar:
                 # TODO! switch to
                 # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.multiprocessing.Pool.map
-                parallel_map(
-                    wrapped_query_and_fit_patch_set,
-                    list_of_batches,
-                    numcores=ns.numcores
-                )
+                parallel_map(wrapped_query_and_fit_patch_set, list_of_batches, numcores=ns.numcores)
 
         else:
             for batch in tqdm.tqdm(list_of_batches):

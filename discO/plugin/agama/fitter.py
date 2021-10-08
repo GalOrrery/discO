@@ -23,10 +23,7 @@ import astropy.coordinates as coord
 import discO.type_hints as TH
 from .wrapper import AGAMAPotentialWrapper
 from discO.core.fitter import PotentialFitter
-from discO.utils.coordinates import (
-    resolve_framelike,
-    resolve_representationlike,
-)
+from discO.utils.coordinates import resolve_framelike, resolve_representationlike
 
 ##############################################################################
 # PARAMETERS

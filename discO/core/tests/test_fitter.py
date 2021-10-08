@@ -323,10 +323,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
     def test_potential_kwargs(self):
         """Test attribute ``potential_kwargs``."""
         if hasattr(self.inst, "_instance"):
-            assert (
-                self.inst.potential_kwargs
-                == self.inst._instance.potential_kwargs
-            )
+            assert self.inst.potential_kwargs == self.inst._instance.potential_kwargs
         else:
             assert self.inst.potential_kwargs == MappingProxyType(
                 self.inst._kwargs,
@@ -388,10 +385,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
             assert isinstance(pots, np.ndarray)
             assert len(pots) == sample.shape[1]
             assert all(
-                [
-                    isinstance(p.__wrapped__, sample.cache["potential"])
-                    for p in pots
-                ],
+                [isinstance(p.__wrapped__, sample.cache["potential"]) for p in pots],
             )
 
         # and then cleanup

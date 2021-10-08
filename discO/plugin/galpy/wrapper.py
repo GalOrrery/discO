@@ -191,9 +191,7 @@ class GalpyPotentialMeta(PotentialWrapperMeta):
 
         # the specific force = acceleration
         Frho = potential.Rforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
-        Fphi = (
-            potential.phiforce(r.rho, r.z, phi=r.phi, **kwargs) / r.rho
-        ).to(_KMS2)
+        Fphi = (potential.phiforce(r.rho, r.z, phi=r.phi, **kwargs) / r.rho).to(_KMS2)
         Fz = potential.zforce(r.rho, r.z, phi=r.phi, **kwargs).to(_KMS2)
 
         vf = vectorfield.CylindricalVectorField(

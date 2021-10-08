@@ -81,10 +81,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
 
         # initialize & store DF
         super().__init__(
-            potential,
-            representation_type=representation_type,
-            total_mass=total_mass,
-            **defaults
+            potential, representation_type=representation_type, total_mass=total_mass, **defaults
         )
         self._df: gdf.df.df = df
 
@@ -158,8 +155,7 @@ class GalpyPotentialSampler(PotentialSampler, key="galpy"):
             self.frame.realize_frame(
                 rep,
                 representation_type=(
-                    self._infer_representation(representation_type)
-                    or rep.__class__
+                    self._infer_representation(representation_type) or rep.__class__
                 ),
             ),
             copy=False,
@@ -206,9 +202,7 @@ class MeshGridPositionDF(DF):
 
     # /def
 
-    def sample(
-        self, n: int, rng: T.Optional[np.random.Generator] = None, **kw
-    ):
+    def sample(self, n: int, rng: T.Optional[np.random.Generator] = None, **kw):
         """Sample.
 
         .. todo::
