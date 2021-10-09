@@ -398,7 +398,7 @@ def query_and_fit_patch_set(
     """
 
     if random_index is not None:
-        query += f"AND random_index < {random_index}"
+        query += f"AND random_index < {int(random_index)}"
 
     job = Gaia.launch_job_async(
         query,

@@ -58,7 +58,7 @@ THIS_DIR = pathlib.Path(__file__).parent
 
 
 def query_sky_distribution(
-    order: int = 6, random_index: int = int(2e6), *, plot: bool = True, use_local: bool = True
+    order: int = 6, random_index: T.Optional[int] = None, *, plot: bool = True, use_local: bool = True
 ) -> None:
     """Query Sky and save number count.
 
@@ -76,13 +76,14 @@ def query_sky_distribution(
         Grouped by
     """
     # make ADQL
+    random_index = "" if random_index is None else "AND random_index < {int(random_index)}"
     adql_query = f"""
     SELECT
     source_id, hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
-    
+
     FROM (
         SELECT
         source_id, random_index,
@@ -90,15 +91,16 @@ def query_sky_distribution(
         parallax, parallax_error,
         ra, ra_error,
         dec, dec_error
-    
+
         FROM gaiadr2.gaia_source AS gaia
     ) AS gaia
-    
+
     WHERE parallax >= 0
-    AND random_index < {int(random_index)}
-    
+    {random_index}
+
     ORDER BY hpx{order};
     """
+
     # data folder
     FOLDER = THIS_DIR / f"order_{order}"
     FOLDER.mkdir(exist_ok=True)
