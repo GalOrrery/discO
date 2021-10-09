@@ -81,7 +81,7 @@ def query_sky_distribution(
         Grouped by
     """
     # make ADQL
-    random_index = "" if random_index is None else "AND random_index < {int(random_index)}"
+    random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
     adql_query = f"""
 SELECT
 source_id, hpx{order},
