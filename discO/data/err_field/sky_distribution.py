@@ -87,7 +87,7 @@ def query_sky_distribution(
     *,
     plot: bool = True,
     use_local: bool = True,
-    user: T.Optional[str] = "postgres",
+    user: str = "postgres",
 ) -> None:
     """Query Sky and save number count.
 

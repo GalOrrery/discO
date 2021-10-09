@@ -732,8 +732,10 @@ def main(
                     query_and_fit_patch_set(
                         tuple(batch),
                         order=ns.order,
-                        plot=False,  # FIXME! doesn't work with parallel map
                         random_index=ns.random_index,
+                        plot=False,  # FIXME! doesn't work with parallel map
+                        use_local=ns.use_local,
+                        user=ns.username,
                     )
                 pbar.update(n=1)
                 pbar.refresh()
@@ -751,8 +753,10 @@ def main(
                 query_and_fit_patch_set(
                     tuple(batch),
                     order=ns.order,
-                    plot=ns.plot,
                     random_index=ns.random_index,
+                    plot=ns.plot,
+                    use_local=ns.use_local,
+                    user=ns.username,
                 )
 
 
