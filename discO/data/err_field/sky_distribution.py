@@ -113,10 +113,10 @@ def query_sky_distribution(
     # data file
     DATA_DIR = FOLDER / f"sky_distribution_{order}.ecsv"
 
+    print(user)
     try:
         result = table.QTable.read(DATA_DIR)
     except Exception as e:
-        print(e)
         result = do_query(adql_query, local=use_local, use_cache=False, user=user)
         result.write(DATA_DIR)
 
@@ -226,7 +226,7 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
     parser.add_argument("--plot", default=True, type=bool, help="make plots or not")
 
     # gaia_tools
-    parser.add_argument("--use_local", default=True, type=bool, help="gaia_tools local query")
+    parser.add_argument("--use_local", action="store_true", help="gaia_tools local query")
     parser.add_argument("--username", default=None, type=str, help="gaia_tools query username")
 
     return parser
@@ -267,8 +267,11 @@ def main(
     # /if
 
     sky = query_sky_distribution(
-        order=ns.order, random_index=ns.random_index, plot=ns.plot, use_local=ns.use_local,
-        user=ns.username
+        order=ns.order,
+        random_index=ns.random_index,
+        plot=ns.plot,
+        use_local=ns.use_local,
+        user=ns.username,
     )
 
     return sky
