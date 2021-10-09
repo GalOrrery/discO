@@ -58,7 +58,12 @@ THIS_DIR = pathlib.Path(__file__).parent
 
 
 def query_sky_distribution(
-    order: int = 6, random_index: T.Optional[int] = None, *, plot: bool = True, use_local: bool = True
+    order: int = 6,
+    random_index: T.Optional[int] = None,
+    *,
+    plot: bool = True,
+    use_local: bool = True,
+    user: T.Optional[str] = None,
 ) -> None:
     """Query Sky and save number count.
 
@@ -112,7 +117,7 @@ def query_sky_distribution(
         result = table.QTable.read(DATA_DIR)
     except Exception as e:
         print(e)
-        result = do_query(adql_query, local=use_local, use_cache=False)
+        result = do_query(adql_query, local=use_local, use_cache=False, user=user)
         result.write(DATA_DIR)
 
     # group by healpix index
@@ -220,8 +225,9 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
     # plot or not
     parser.add_argument("--plot", default=True, type=bool, help="make plots or not")
 
-    # local query
-    parser.add_argument("--use_local", default=True, type=bool, help="local query or not")
+    # gaia_tools
+    parser.add_argument("--use_local", default=True, type=bool, help="gaia_tools local query")
+    parser.add_argument("--username", default=None, type=str, help="gaia_tools query username")
 
     return parser
 
@@ -261,7 +267,8 @@ def main(
     # /if
 
     sky = query_sky_distribution(
-        order=ns.order, random_index=ns.random_index, plot=ns.plot, use_local=ns.use_local
+        order=ns.order, random_index=ns.random_index, plot=ns.plot, use_local=ns.use_local,
+        user=ns.username
     )
 
     return sky

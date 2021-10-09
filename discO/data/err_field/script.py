@@ -633,8 +633,9 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         help="number of computer cores to use, if parallelizing",
     )
 
-    # local query for background
-    parser.add_argument("--use_local", default=True, type=bool, help="local query or not")
+    # gaia_tools
+    parser.add_argument("--use_local", default=True, type=bool, help="gaia_tools local query")
+    parser.add_argument("--username", default=None, type=str, help="gaia_tools query username")
 
     return parser
 
