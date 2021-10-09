@@ -635,7 +635,7 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 
     # gaia_tools
     parser.add_argument("--use_local", action="store_true", help="gaia_tools local query")
-    parser.add_argument("--username", default=None, type=str, help="gaia_tools query username")
+    parser.add_argument("--username", default='postgres', type=str, help="gaia_tools query username")
 
     return parser
 
