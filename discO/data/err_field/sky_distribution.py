@@ -52,37 +52,7 @@ RandomStateType = T.Union[
 # General
 THIS_DIR = pathlib.Path(__file__).parent
 
-##############################################################################
-# CODE
-##############################################################################
-
-
-def query_sky_distribution(
-    order: int = 6,
-    random_index: T.Optional[int] = None,
-    *,
-    plot: bool = True,
-    use_local: bool = True,
-    user: T.Optional[str] = 'postgres',
-) -> None:
-    """Query Sky and save number count.
-
-    Parameters
-    ----------
-    order : int, optional
-    random_index : int, optional
-
-    plot : bool (optional, keyword-only)
-    use_local : bool (optional, keyword-only)
-
-    Returns
-    -------
-    sky : `~astropy.tables.QTable`
-        Grouped by
-    """
-    # make ADQL
-    random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
-    adql_query = f"""
+ADQL_QUERY = """
 SELECT
 source_id, hpx{order},
 parallax, parallax_error,
@@ -106,6 +76,38 @@ WHERE parallax >= 0
 ORDER BY hpx{order};
 """
 
+##############################################################################
+# CODE
+##############################################################################
+
+
+def query_sky_distribution(
+    order: int = 6,
+    random_index: T.Optional[int] = None,
+    *,
+    plot: bool = True,
+    use_local: bool = True,
+    user: T.Optional[str] = "postgres",
+) -> None:
+    """Query Sky and save number count.
+
+    Parameters
+    ----------
+    order : int, optional
+    random_index : int, optional
+
+    plot : bool (optional, keyword-only)
+    use_local : bool (optional, keyword-only)
+
+    Returns
+    -------
+    sky : `~astropy.tables.QTable`
+        Grouped by
+    """
+    # make ADQL
+    random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
+    adql_query = ADQL_QUERY.format(order=order, random_index=random_index)
+
     print(adql_query)
 
     # data folder
@@ -118,7 +120,9 @@ ORDER BY hpx{order};
     try:
         result = table.QTable.read(DATA_DIR)
     except Exception as e:
-        result = do_query(adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True)
+        result = do_query(
+            adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
+        )
         result.write(DATA_DIR)
 
     # group by healpix index
@@ -228,7 +232,9 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 
     # gaia_tools
     parser.add_argument("--use_local", action="store_true", help="gaia_tools local query")
-    parser.add_argument("--username", default='postgres', type=str, help="gaia_tools query username")
+    parser.add_argument(
+        "--username", default="postgres", type=str, help="gaia_tools query username"
+    )
 
     return parser
 

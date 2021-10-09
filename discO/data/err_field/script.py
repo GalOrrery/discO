@@ -43,6 +43,7 @@ import numpy.typing as npt
 import tqdm  # TODO! make optional
 from astropy import table
 from astroquery.gaia import Gaia
+from gaia_tools.query import query as do_query
 from scipy.stats import gaussian_kde
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.kernel_ridge import KernelRidge
@@ -67,6 +68,19 @@ RandomStateType = T.Union[
 
 # General
 THIS_DIR = pathlib.Path(__file__).parent
+
+ADQL_QUERY = """
+SELECT
+source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
+parallax AS parallax, parallax_error AS parallax_error,
+ra, ra_error AS ra_err,
+dec, dec_error AS dec_err
+
+FROM gaiadr2.gaia_source
+
+WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
+AND parallax >= 0
+"""
 
 ##############################################################################
 # CODE
@@ -358,8 +372,11 @@ def plot_mollview(
 def query_and_fit_patch_set(
     patch_ids: tuple[int, ...],
     order: int,
-    plot: bool,
     random_index: T.Optional[int] = 1000000,
+    *,
+    plot: bool = True,
+    use_local: bool = True,
+    user: str = "postgres",
 ) -> None:
     """Query and fit a set of sky patches.
 
@@ -384,29 +401,20 @@ def query_and_fit_patch_set(
     # Query batch
 
     hpl = f"healpix{order}"  # column name
-    query = f"""
-    SELECT
-    source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
-    parallax AS parallax, parallax_error AS parallax_error,
-    ra, ra_error AS ra_err,
-    dec, dec_error AS dec_err
-
-    FROM gaiadr2.gaia_source
-
-    WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
-    AND parallax >= 0
-    """
-
+    adql_query = ADQL_QUERY.format(order=order, hpl=hpl, patch_ids)
     if random_index is not None:
-        query += f"AND random_index < {int(random_index)}"
+        adql_query += f"AND random_index < {int(random_index)}"
 
-    job = Gaia.launch_job_async(
-        query,
-        dump_to_file=False,
-        verbose=False,
+    result = do_query(
+        adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
     )
-    # perform query and...
-    result = table.QTable(job.get_results(), copy=False)
+    # job = Gaia.launch_job_async(
+    #     query,
+    #     dump_to_file=False,
+    #     verbose=False,
+    # )
+    # # perform query and...
+    # result = table.QTable(job.get_results(), copy=False)
     if len(result) == 0:
         warnings.warn(f"no data in patches: {patch_ids}")
         return
@@ -492,7 +500,7 @@ def make_groups(sky: table.QTable, order: int):
     npix = hp.nside2npix(nside)  # the number of sky patches
 
     # get healpix column name. it depends on the order, but is the group key.
-    keyname = rgr.groups.keys.colnames[0]
+    keyname = sky.groups.keys.colnames[0]
 
     # get unique ids
     patchids, hpx_indices, num_counts_per_patch = np.unique(
@@ -635,7 +643,9 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 
     # gaia_tools
     parser.add_argument("--use_local", action="store_true", help="gaia_tools local query")
-    parser.add_argument("--username", default='postgres', type=str, help="gaia_tools query username")
+    parser.add_argument(
+        "--username", default="postgres", type=str, help="gaia_tools query username"
+    )
 
     return parser
 
