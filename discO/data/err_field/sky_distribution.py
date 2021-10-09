@@ -83,28 +83,28 @@ def query_sky_distribution(
     # make ADQL
     random_index = "" if random_index is None else "AND random_index < {int(random_index)}"
     adql_query = f"""
+SELECT
+source_id, hpx{order},
+parallax, parallax_error,
+ra, ra_error,
+dec, dec_error
+
+FROM (
     SELECT
-    source_id, hpx{order},
+    source_id, random_index,
+    GAIA_HEALPIX_INDEX({order}, source_id) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
 
-    FROM (
-        SELECT
-        source_id, random_index,
-        GAIA_HEALPIX_INDEX({order}, source_id) AS hpx{order},
-        parallax, parallax_error,
-        ra, ra_error,
-        dec, dec_error
+    FROM gaiadr2.gaia_source AS gaia
+) AS gaia
 
-        FROM gaiadr2.gaia_source AS gaia
-    ) AS gaia
+WHERE parallax >= 0
+{random_index}
 
-    WHERE parallax >= 0
-    {random_index}
-
-    ORDER BY hpx{order};
-    """
+ORDER BY hpx{order};
+"""
 
     # data folder
     FOLDER = THIS_DIR / f"order_{order}"
