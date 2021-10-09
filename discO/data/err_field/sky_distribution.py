@@ -108,8 +108,6 @@ def query_sky_distribution(
     random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
     adql_query = ADQL_QUERY.format(order=order, random_index=random_index)
 
-    print(adql_query)
-
     # data folder
     FOLDER = THIS_DIR / f"order_{order}"
     FOLDER.mkdir(exist_ok=True)
