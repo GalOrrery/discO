@@ -106,6 +106,8 @@ WHERE parallax >= 0
 ORDER BY hpx{order};
 """
 
+    print(adql_query)
+
     # data folder
     FOLDER = THIS_DIR / f"order_{order}"
     FOLDER.mkdir(exist_ok=True)
