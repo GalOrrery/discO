@@ -258,7 +258,9 @@ def main(
 
     # /if
 
-    sky = query_sky_distribution(**vars(ns))
+    sky = query_sky_distribution(
+        order=ns.order, random_index=ns.random_index, plot=ns.plot, use_local=ns.use_local
+    )
 
     return sky
 

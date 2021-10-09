@@ -574,7 +574,7 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
     # order
     parser.add_argument("-o", "--order", default=6, type=int, help="healpix order")
 
-    # patches are done in batches. Need to decide the size
+    # patches are done in batches. Needed unless all-sky.
     parser.add_argument(
         "-b",
         "--batch_size",
