@@ -401,7 +401,7 @@ def query_and_fit_patch_set(
     # Query batch
 
     hpl = f"healpix{order}"  # column name
-    adql_query = ADQL_QUERY.format(order=order, hpl=hpl, patch_ids)
+    adql_query = ADQL_QUERY.format(order=order, hpl=hpl, patch_ids=patch_ids)
     if random_index is not None:
         adql_query += f"AND random_index < {int(random_index)}"
 
