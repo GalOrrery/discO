@@ -69,18 +69,43 @@ RandomStateType = T.Union[
 # General
 THIS_DIR = pathlib.Path(__file__).parent
 
+# gaia_tools doesn't have ``GAIA_HEALPIX_INDEX``, so we use the equivalent
+# formula source_id / 2^(35 + (12 - order) * 2)
+# see https://www.gaia.ac.uk/data/gaia-data-release-1/adql-cookbook
 ADQL_QUERY = """
 SELECT
-source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
-parallax AS parallax, parallax_error AS parallax_error,
-ra, ra_error AS ra_err,
-dec, dec_error AS dec_err
+source_id, hpx{order},
+parallax, parallax_error,
+ra, ra_error,
+dec, dec_error
 
-FROM gaiadr2.gaia_source
+FROM (
+    SELECT
+    source_id, random_index,
+    source_id/power(35+(12-{order})*2, 2) AS hpx{order}
+    parallax, parallax_error,
+    ra, ra_error,
+    dec, dec_error
 
-WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
+    FROM gaiadr2.gaia_source AS gaia
+) AS gaia
+
+WHERE hpx{order} IN {patch_ids}
 AND parallax >= 0
 """
+
+# """
+# SELECT
+# source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
+# parallax AS parallax, parallax_error AS parallax_error,
+# ra, ra_error AS ra_err,
+# dec, dec_error AS dec_err
+# 
+# FROM gaiadr2.gaia_source
+# 
+# WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
+# AND parallax >= 0
+# """
 
 ##############################################################################
 # CODE
@@ -508,7 +533,7 @@ def make_groups(sky: table.QTable, order: int):
     )
 
     allpatchids = np.arange(npix)
-    patchnums = np.ones(npix)
+    patchnums = np.zeros(npix)
     patchnums[patchids] = num_counts_per_patch
     patchnums[patchnums == 0] = 1  # set minimum number of 'counts' to 1
 
@@ -518,24 +543,6 @@ def make_groups(sky: table.QTable, order: int):
     allpatchids = allpatchids[sorter]
 
     numgroups = 200
-    threshold = patchnums.sum() // numgroups
-
-    # split arrays into numgroups
-    patchnums_split = np.array_split(patchnums, numgroups)
-    allpatchids_split = np.array_split(allpatchids, numgroups)
-
-    # reverse every other, to try and even out the addition a little
-    patchnums_split = [
-        (group if not i % 2 else group[::-1]) for i, group in enumerate(patchnums_split)
-    ]
-    allpatchids_split = [
-        (group if not i % 2 else group[::-1]) for i, group in enumerate(allpatchids_split)
-    ]
-
-    # turn back into 1 array
-    patchnums = np.concatenate(patchnums_split)
-    allpatchids = np.concatenate(allpatchids_split)
-
     groupsids = [allpatchids[i::numgroups] for i in range(numgroups)]
 
     # # plot the distribution of groups
