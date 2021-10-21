@@ -82,7 +82,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    source_id/power(35+(12-{order})*2, 2) AS hpx{order}
+    source_id/power(35+(12-{order})*2, 2) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
