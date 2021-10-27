@@ -82,7 +82,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    source_id/power(35+(12-{order})*2, 2) AS hpx{order},
+    TO_INTEGER(FLOOR(source_id/POWER(35+(12-{order})*2, 2))) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
@@ -93,19 +93,6 @@ FROM (
 WHERE hpx{order} IN {patch_ids}
 AND parallax >= 0
 """
-
-# """
-# SELECT
-# source_id, GAIA_HEALPIX_INDEX({order}, source_id) AS {hpl},
-# parallax AS parallax, parallax_error AS parallax_error,
-# ra, ra_error AS ra_err,
-# dec, dec_error AS dec_err
-# 
-# FROM gaiadr2.gaia_source
-# 
-# WHERE GAIA_HEALPIX_INDEX({order}, source_id) IN {patch_ids}
-# AND parallax >= 0
-# """
 
 ##############################################################################
 # CODE
@@ -397,7 +384,7 @@ def plot_mollview(
 def query_and_fit_patch_set(
     patch_ids: tuple[int, ...],
     order: int,
-    random_index: T.Optional[int] = 1000000,
+    random_index: T.Optional[int] = 1_000_000,
     *,
     plot: bool = True,
     use_local: bool = True,
@@ -425,8 +412,8 @@ def query_and_fit_patch_set(
     # -----------------------
     # Query batch
 
-    hpl = f"healpix{order}"  # column name
-    adql_query = ADQL_QUERY.format(order=order, hpl=hpl, patch_ids=patch_ids)
+    hpl = f"hpx{order}"  # column name
+    adql_query = ADQL_QUERY.format(order=order, patch_ids=patch_ids)
     if random_index is not None:
         adql_query += f"AND random_index < {int(random_index)}"
 

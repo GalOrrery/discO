@@ -52,6 +52,9 @@ RandomStateType = T.Union[
 # General
 THIS_DIR = pathlib.Path(__file__).parent
 
+# gaia_tools doesn't have ``GAIA_HEALPIX_INDEX``, so we use the equivalent
+# formula source_id / 2^(35 + (12 - order) * 2)
+# see https://www.gaia.ac.uk/data/gaia-data-release-1/adql-cookbook
 ADQL_QUERY = """
 SELECT
 source_id, hpx{order},
@@ -62,7 +65,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    GAIA_HEALPIX_INDEX({order}, source_id) AS hpx{order},
+    TO_INTEGER(FLOOR(source_id/POWER(35+(12-{order})*2, 2))) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
