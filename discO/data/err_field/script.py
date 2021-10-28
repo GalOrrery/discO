@@ -82,7 +82,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    TO_INTEGER(FLOOR(source_id/POWER(35+(12-{order})*2, 2))) AS hpx{order},
+    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx6,
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
@@ -437,7 +437,12 @@ def query_and_fit_patch_set(
     if plot:
         fig = plt.figure()
         plot_mollview(patch_ids, order, fig=fig)
-        fig.savefig(PLOT_DIR / f"mollview-{'-'.join(map(str, patch_ids))}.pdf")
+
+        shortened = hash(patch_ids)  # TODO! do better. Put in PDF metadata
+        with open(PLOT_DIR / f"mollview-{shortened}.txt") as f:
+            f.write(patch_ids)
+
+        fig.savefig(PLOT_DIR / f"mollview-{shortened}.pdf")
 
     # -----------------------
     # Fits to each patch
