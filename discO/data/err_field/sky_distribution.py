@@ -311,7 +311,7 @@ def main(
         parser = make_parser()
         ns = parser.parse_args(args)
 
-    if np.verbose:
+    if ns.verbose:
         print("Starting script for the sky distribution of stars in Gaia.")
 
     # query or load from
@@ -321,7 +321,7 @@ def main(
         plot=ns.plot,
         use_local=ns.use_local,
         user=ns.username,
-        verbose=np.verbose,
+        verbose=ns.verbose,
     )
 
     return sky
