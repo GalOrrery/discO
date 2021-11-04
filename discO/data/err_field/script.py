@@ -406,7 +406,6 @@ def query_and_fit_patch_set(
     result = do_query(
         adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
     )
-    result = QTable(result, copy=False)
     if len(result) == 0:
         warnings.warn(f"no data in patches: {patch_ids}")
         return
@@ -442,7 +441,6 @@ def query_and_fit_patch_set(
     grp: QTable
     for grp, ax in zip(rgr.groups, axs.flat):  # iter thru patches
         patch_id: int = grp[hpl][0]
-
         grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
         # group = group[group["parallax"] > 0]  # positive parallax
 
@@ -451,9 +449,9 @@ def query_and_fit_patch_set(
 
         X = np.array(
             [
-                grp["ra"].to_value(u.deg),
-                grp["dec"].to_value(u.deg),
-                np.log10(grp["parallax"].to_value(u.mas)),
+                u.Quantity(grp["ra"], u.deg, copy=False).value,
+                u.Quantity(grp["dec"], u.deg, copy=False).value,
+                np.log10(u.Quantity(grp["parallax"], u.mas, copy=False).value),
             ],
         ).T
         y = np.log10(grp["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
