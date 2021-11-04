@@ -311,7 +311,7 @@ def main(
         parser = make_parser()
         ns = parser.parse_args(args)
 
-    if verbose:
+    if np.verbose:
         print("Starting script for the sky distribution of stars in Gaia.")
 
     # query or load from
