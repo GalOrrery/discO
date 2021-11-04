@@ -495,7 +495,7 @@ def query_and_fit_patch_set(
 
     if plot:
         plt.tight_layout()
-        fig.savefig(PLOT_DIR / f"parallax-{'-'.join(map(str, patch_ids))}.pdf")
+        fig.savefig(PLOT_DIR / f"parallax-{shortened}.pdf")
 
 
 # /def
