@@ -406,6 +406,7 @@ def query_and_fit_patch_set(
     result = do_query(
         adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
     )
+    result = QTable(result, copy=False)
     if len(result) == 0:
         warnings.warn(f"no data in patches: {patch_ids}")
         return
