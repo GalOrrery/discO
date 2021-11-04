@@ -42,7 +42,7 @@ import numpy as np
 import numpy.typing as npt
 import tqdm  # TODO! make optional
 from astropy import table
-from astroquery.gaia import Gaia
+from astropy.table import QTable, Row
 from gaia_tools.query import query as do_query
 from scipy.stats import gaussian_kde
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -52,6 +52,7 @@ from sklearn.metrics._regression import UndefinedMetricWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
+from numpy.random import Generator
 
 # PROJECT-SPECIFIC
 from .sky_distribution import main as sky_distribution_main
@@ -420,18 +421,11 @@ def query_and_fit_patch_set(
     result = do_query(
         adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
     )
-    # job = Gaia.launch_job_async(
-    #     query,
-    #     dump_to_file=False,
-    #     verbose=False,
-    # )
-    # # perform query and...
-    # result = table.QTable(job.get_results(), copy=False)
     if len(result) == 0:
         warnings.warn(f"no data in patches: {patch_ids}")
         return
 
-    rgr: table.QTable = result.group_by(hpl)  # group stars by patch
+    rgr: QTable = result.group_by(hpl)  # group stars by patch
 
     # plot the patches
     if plot:
@@ -458,8 +452,8 @@ def query_and_fit_patch_set(
     else:
         axs = np.array([None] * len(rgr.groups))  # noop for iteration
 
-    key: table.Row
-    grp: table.Table
+    key: Row
+    grp: QTable
     for grp, ax in zip(rgr.groups, axs.flat):  # iter thru patches
         patch_id: int = grp[hpl][0]
 
@@ -501,7 +495,7 @@ def query_and_fit_patch_set(
 # /def
 
 
-def make_groups(sky: table.QTable, order: int):
+def make_groups(sky: QTable, order: int):
     """Make groups.
 
     Parameters
@@ -520,13 +514,13 @@ def make_groups(sky: table.QTable, order: int):
     keyname = sky.groups.keys.colnames[0]
 
     # get unique ids
-    patchids, hpx_indices, num_counts_per_patch = np.unique(
+    patchids, hpx_indices, num_counts_per_pixel = np.unique(
         sky[keyname].value, return_index=True, return_counts=True
     )
 
     allpatchids = np.arange(npix)
     patchnums = np.zeros(npix)
-    patchnums[patchids] = num_counts_per_patch
+    patchnums[patchids] = num_counts_per_pixel
     patchnums[patchnums == 0] = 1  # set minimum number of 'counts' to 1
 
     # sort by number of counts
@@ -684,17 +678,11 @@ def main(
         parser = make_parser()
         ns = parser.parse_args(args)
 
-    # /if
-
-    # -----------------------
     # make background distribution
-
-    sky = sky_distribution_main(opts=ns)
-
-    # -----------------------
+    sky: QTable = sky_distribution_main(opts=ns)
 
     # random number generator
-    rng = np.random.default_rng(ns.rng)
+    rng: Generator = np.random.default_rng(ns.rng)
 
     # construct the list of batches of sky patches
     # [ (patch_1, patch_2, ...),  (patch_i, patch_i+1, ...)]
