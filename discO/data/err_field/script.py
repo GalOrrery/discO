@@ -418,7 +418,7 @@ def query_and_fit_patch_set(
         plot_mollview(patch_ids, order, fig=fig)
 
         shortened = hash(patch_ids)  # TODO! do better. Put in PDF metadata
-        with open(PLOT_DIR / f"mollview-{shortened}.txt") as f:
+        with open(PLOT_DIR / f"mollview-{shortened}.txt", mode="wb") as f:
             f.write(patch_ids)
 
         fig.savefig(PLOT_DIR / f"mollview-{shortened}.pdf")
