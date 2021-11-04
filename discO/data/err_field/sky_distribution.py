@@ -156,7 +156,7 @@ def query_sky_distribution(
         plot_hist_pixel_count(num_counts_per_pixel, order, saveloc=PLOT_DIR)
 
         # plot mollweide of sky colored by count
-        plot_sky_mollview(num_counts_per_pixel, order, saveloc=PLOT_DIR)
+        plot_sky_mollview(patchids, num_counts_per_pixel, order, saveloc=PLOT_DIR)
 
     return sky
 
@@ -184,11 +184,12 @@ def plot_hist_pixel_count(num_counts_per_pixel: np.ndarray, order: int, saveloc:
     plt.close(fig)
 
 
-def plot_sky_mollview(num_counts_per_pixel: np.ndarray, order: int, saveloc: pathlib.Path) -> None:
+def plot_sky_mollview(patchids, num_counts_per_pixel: np.ndarray, order: int, saveloc: pathlib.Path) -> None:
     """Plot mollweide of sky colored by pixel count.
 
     Parameters
     ----------
+    patchids : ndarray[int]
     num_counts_per_pixel : ndarray[int]
     order : int
     saveloc : path-like
