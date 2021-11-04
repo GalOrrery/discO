@@ -419,7 +419,7 @@ def query_and_fit_patch_set(
 
         shortened = hash(patch_ids)  # TODO! do better. Put in PDF metadata
         with open(PLOT_DIR / f"mollview-{shortened}.txt", mode="wb") as f:
-            f.write(patch_ids)
+            f.write(str(patch_ids))
 
         fig.savefig(PLOT_DIR / f"mollview-{shortened}.pdf")
 
@@ -466,7 +466,7 @@ def query_and_fit_patch_set(
         yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
         yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
 
-        with open(DATA_DIR / f"pk_{patch_id}.pkl", mode="wb") as f:
+        with open(DATA_DIR / f"pk_{patch_id}.pkl", mode="w") as f:
             pickle.dump(reg, f)  # the weighted linear regression
 
         if plot:
