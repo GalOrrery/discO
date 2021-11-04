@@ -153,7 +153,7 @@ def query_sky_distribution(
         )
 
         # histogram of counts per pixel
-        plot_hist_pixel_count(num_counts_per_pixel, saveloc=PLOT_DIR)
+        plot_hist_pixel_count(num_counts_per_pixel, order, saveloc=PLOT_DIR)
 
         # plot mollweide of sky colored by count
         plot_sky_mollview(num_counts_per_pixel, order, saveloc=PLOT_DIR)
@@ -161,12 +161,13 @@ def query_sky_distribution(
     return sky
 
 
-def plot_hist_pixel_count(num_counts_per_pixel: np.ndarray, saveloc: pathlib.Path) -> None:
+def plot_hist_pixel_count(num_counts_per_pixel: np.ndarray, order: int, saveloc: pathlib.Path) -> None:
     """Plot histogram of counts per pixel.
 
     Parameters
     ----------
     num_counts_per_pixel : ndarray[int]
+    order : int
     saveloc : path-like
     """
     # make plot
