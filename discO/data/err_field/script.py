@@ -83,7 +83,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx6,
+    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error

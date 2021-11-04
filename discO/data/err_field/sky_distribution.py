@@ -47,7 +47,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx6,
+    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx{order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
@@ -110,6 +110,7 @@ def query_sky_distribution(
     # Perform query or load from file
 
     # make ADQL
+    hpxO = f"hpx{order}"
     random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
     adql_query = ADQL_QUERY.format(order=order, random_index=random_index)
 
@@ -125,8 +126,8 @@ def query_sky_distribution(
             print("finished query.")
 
         # ensure tight columns are int
-        result["source_id"].dtype = int
-        result[f"hpx{order}"].dtype = int
+        result["source_id"] = result["source_id"].value.astype(int)
+        result[hpxO] = result[hpxO].value.astype(int)
 
         # write so next time don't need to query
         if verbose:
@@ -137,7 +138,7 @@ def query_sky_distribution(
             print("loaded sky distribution table.")
 
     # group by healpix index
-    sky = result.group_by(f"hpx{order}")
+    sky = result.group_by(hpxO)
 
     if plot:
         if verbose:
@@ -149,7 +150,7 @@ def query_sky_distribution(
 
         # get healpix counts
         patchids, hpx_indices, num_counts_per_pixel = np.unique(
-            sky[f"hpx{order}"].value, return_index=True, return_counts=True
+            sky[hpxO].value, return_index=True, return_counts=True
         )
 
         # histogram of counts per pixel
