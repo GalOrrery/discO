@@ -151,9 +151,6 @@ def fit_kernel_ridge(
     return ykr, kr
 
 
-# /def
-
-
 def fit_support_vector(
     X: npt.NDArray[np.float_],
     y: npt.NDArray[np.float_],
@@ -199,9 +196,6 @@ def fit_support_vector(
     ysv = svr.predict(Xp)
 
     return ysv, svr
-
-
-# /def
 
 
 def fit_linear(
@@ -256,9 +250,6 @@ def fit_linear(
     ylr = lr.predict(Xp)
 
     return ylr, lr
-
-
-# /def
 
 
 # ============================================================================
@@ -334,9 +325,6 @@ def plot_parallax_prediction(
     return fig
 
 
-# /def
-
-
 def plot_mollview(
     patch_ids: tuple[int, ...], order: int, fig: T.Optional[plt.Figure] = None
 ) -> plt.Figure:
@@ -374,9 +362,6 @@ def plot_mollview(
     )
 
     return fig
-
-
-# /def
 
 
 # ============================================================================
@@ -492,9 +477,6 @@ def query_and_fit_patch_set(
         fig.savefig(PLOT_DIR / f"parallax-{shortened}.pdf")
 
 
-# /def
-
-
 def make_groups(sky: QTable, order: int):
     """Make groups.
 
@@ -536,8 +518,6 @@ def make_groups(sky: QTable, order: int):
 
     return groupsids
 
-
-# /def
 
 ##############################################################################
 # Command Line
@@ -619,6 +599,7 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 
     # script verbosity
     parser.add_argument("--filter_warnings", action="store_true", help="filter warnings")
+    parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
 
     # parallelize
     parser.add_argument(
@@ -747,9 +728,6 @@ def main(
                 )
 
 
-# /def
-
-
 # ------------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -757,8 +735,6 @@ if __name__ == "__main__":
     # call script
     main(args=None, opts=None)  # all arguments except script name
 
-
-# /if
 
 
 ##############################################################################
