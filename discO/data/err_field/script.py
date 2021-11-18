@@ -376,20 +376,20 @@ def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
     healpix_colname : str
     """
     patch_id: int = patch[healpix_colname][0]
-    grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
+    patch = patch[np.isfinite(patch["parallax"])]  # filter out NaN  # TODO! in query
 
     # add the fractional error
-    grp["parallax_frac_error"] = grp["parallax_error"] / grp["parallax"]
+    patch["parallax_frac_error"] = patch["parallax_error"] / patch["parallax"]
 
     # construct the signal array
     X = np.array(
         [
-            u.Quantity(grp["ra"], u.deg, copy=False).value,
-            u.Quantity(grp["dec"], u.deg, copy=False).value,
-            np.log10(u.Quantity(grp["parallax"], u.mas, copy=False).value),
+            u.Quantity(patch["ra"], u.deg, copy=False).value,
+            u.Quantity(patch["dec"], u.deg, copy=False).value,
+            np.log10(u.Quantity(patch["parallax"], u.mas, copy=False).value),
         ],
     ).T
-    y = np.log10(grp["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
+    y = np.log10(patch["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
 
     # get signal density of the parallax
     xy = np.vstack([X[:, 2], y])
