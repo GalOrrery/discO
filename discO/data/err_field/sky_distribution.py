@@ -72,7 +72,6 @@ def query_sky_distribution(
     *,
     plot: bool = True,
     use_local: bool = True,
-    user: str = "postgres",
     verbose: bool = True,
 ) -> None:
     """Query sky and save number count.
@@ -120,7 +119,7 @@ def query_sky_distribution(
         if verbose:
             print("starting query.")
         result = do_query(
-            adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
+            adql_query, local=use_local, use_cache=False, verbose=True, timeit=True
         )
         if verbose:
             print("finished query.")
@@ -272,9 +271,6 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
     parser.add_argument(
         "--use_local", action="store_true", help="perform a local database query or query gaia"
     )
-    parser.add_argument(
-        "--username", default="postgres", type=str, help="gaia_tools query username"
-    )
 
     return parser
 
@@ -323,7 +319,6 @@ def main(
         random_index=ns.random_index,
         plot=ns.plot,
         use_local=ns.use_local,
-        user=ns.username,
         verbose=ns.verbose,
     )
 

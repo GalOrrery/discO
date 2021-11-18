@@ -367,6 +367,43 @@ def plot_mollview(
 # ============================================================================
 
 
+def fit_and_plot_patch(patch, healpix_colname, ax, saveloc):
+    """
+
+    """
+    patch_id: int = grp[healpix_colname][0]
+    grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
+
+    # add the fractional error
+    grp["parallax_frac_error"] = grp["parallax_error"] / grp["parallax"]
+
+    # construct the signal array
+    X = np.array(
+        [
+            u.Quantity(grp["ra"], u.deg, copy=False).value,
+            u.Quantity(grp["dec"], u.deg, copy=False).value,
+            np.log10(u.Quantity(grp["parallax"], u.mas, copy=False).value),
+        ],
+    ).T
+    y = np.log10(grp["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
+
+    # get signal density of the parallax
+    xy = np.vstack([X[:, 2], y])
+    kde = gaussian_kde(xy)(xy)
+
+    # fit a few different ways
+    # ykr, kr = fit_kernel_ridge(X, y, train_size=int(len(grp) * 0.8))
+    # ysv, svr = fit_support_vector(X, y, train_size=int(len(grp) * 0.8))
+    yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
+    yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
+
+    with open(saveloc / f"pk_{patch_id}.pkl", mode="wb") as f:
+        pickle.dump(reg, f)  # the weighted linear regression
+
+    if plot:
+        plot_parallax_prediction(X, y, kde, ykr, yreg, yreg1, patch_id, ax=ax)
+
+
 def query_and_fit_patch_set(
     patch_ids: tuple[int, ...],
     order: int,
@@ -374,7 +411,6 @@ def query_and_fit_patch_set(
     *,
     plot: bool = True,
     use_local: bool = True,
-    user: str = "postgres",
 ) -> None:
     """Query and fit a set of sky patches.
 
@@ -404,7 +440,7 @@ def query_and_fit_patch_set(
         adql_query += f"AND random_index < {int(random_index)}"
 
     result = do_query(
-        adql_query, local=use_local, use_cache=False, user=user, verbose=True, timeit=True
+        adql_query, local=use_local, use_cache=False, verbose=True, timeit=True
     )
     if len(result) == 0:
         warnings.warn(f"no data in patches: {patch_ids}")
@@ -440,37 +476,9 @@ def query_and_fit_patch_set(
     key: Row
     grp: QTable
     for grp, ax in zip(rgr.groups, axs.flat):  # iter thru patches
-        patch_id: int = grp[hpl][0]
-        grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
-        # group = group[group["parallax"] > 0]  # positive parallax
+        fit_and_plot_patch(grp, hpl, ax, DATA_DIR)
 
-        # add the fractional error
-        grp["parallax_frac_error"] = grp["parallax_error"] / grp["parallax"]
-
-        X = np.array(
-            [
-                u.Quantity(grp["ra"], u.deg, copy=False).value,
-                u.Quantity(grp["dec"], u.deg, copy=False).value,
-                np.log10(u.Quantity(grp["parallax"], u.mas, copy=False).value),
-            ],
-        ).T
-        y = np.log10(grp["parallax_frac_error"].value.reshape(-1, 1))[:, 0]
-
-        xy = np.vstack([X[:, 2], y])
-        kde = gaussian_kde(xy)(xy)
-
-        # fit a few different ways
-        ykr, kr = fit_kernel_ridge(X, y, train_size=int(len(grp) * 0.8))
-        ysv, svr = fit_support_vector(X, y, train_size=int(len(grp) * 0.8))
-        yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
-        yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
-
-        with open(DATA_DIR / f"pk_{patch_id}.pkl", mode="wb") as f:
-            pickle.dump(reg, f)  # the weighted linear regression
-
-        if plot:
-            plot_parallax_prediction(X, y, kde, ykr, yreg, yreg1, patch_id, ax=ax)
-
+    # save plot of all the patches
     if plot:
         plt.tight_layout()
         fig.savefig(PLOT_DIR / f"parallax-{shortened}.pdf")
@@ -616,9 +624,6 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 
     # gaia_tools
     parser.add_argument("--use_local", action="store_true", help="gaia_tools local query")
-    parser.add_argument(
-        "--username", default="postgres", type=str, help="gaia_tools query username"
-    )
 
     return parser
 
@@ -689,42 +694,14 @@ def main(
             )  # TODO!
             warnings.simplefilter("ignore", category=UserWarning)  # TODO!
 
-        if ns.parallel:
-            # TODO! not have galpy dependency just for this util
-            # PROJECT-SPECIFIC
-            from .multi import parallel_map
-
-            def wrapped_query_and_fit_patch_set(batch: tuple[int, ...]) -> tuple[int, ...]:
-                if len(batch) != 0:  # skip empty batch
-                    query_and_fit_patch_set(
-                        tuple(batch),
-                        order=ns.order,
-                        random_index=ns.random_index,
-                        plot=False,  # FIXME! doesn't work with parallel map
-                        use_local=ns.use_local,
-                        user=ns.username,
-                    )
-                pbar.update(n=1)
-                pbar.refresh()
-                return batch
-
-            # /def
-
-            with tqdm.tqdm(total=len(list_of_batches)) as pbar:
-                # TODO! switch to
-                # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.multiprocessing.Pool.map
-                parallel_map(wrapped_query_and_fit_patch_set, list_of_batches, numcores=ns.numcores)
-
-        else:
-            for batch in tqdm.tqdm(list_of_batches):
-                query_and_fit_patch_set(
-                    tuple(batch),
-                    order=ns.order,
-                    random_index=ns.random_index,
-                    plot=ns.plot,
-                    use_local=ns.use_local,
-                    user=ns.username,
-                )
+        for batch in tqdm.tqdm(list_of_batches):
+            query_and_fit_patch_set(
+                tuple(batch),
+                order=ns.order,
+                random_index=ns.random_index,
+                plot=ns.plot,
+                use_local=ns.use_local
+            )
 
 
 # ------------------------------------------------------------------------
