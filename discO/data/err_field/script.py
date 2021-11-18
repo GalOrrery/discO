@@ -367,11 +367,15 @@ def plot_mollview(
 # ============================================================================
 
 
-def fit_and_plot_patch(patch, healpix_colname, ax, saveloc):
+def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
     """
 
+    Parameters
+    ----------
+    patch : QTable
+    healpix_colname : str
     """
-    patch_id: int = grp[healpix_colname][0]
+    patch_id: int = patch[healpix_colname][0]
     grp = grp[np.isfinite(grp["parallax"])]  # filter out NaN  # TODO! in query
 
     # add the fractional error
