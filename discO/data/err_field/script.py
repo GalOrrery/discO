@@ -398,8 +398,8 @@ def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
     # fit a few different ways
     # ykr, kr = fit_kernel_ridge(X, y, train_size=int(len(grp) * 0.8))
     # ysv, svr = fit_support_vector(X, y, train_size=int(len(grp) * 0.8))
-    yreg, reg = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=kde)
-    yreg1, reg1 = fit_linear(X, y, train_size=int(len(grp) * 0.8), weight=False)
+    yreg, reg = fit_linear(X, y, train_size=int(len(patch) * 0.8), weight=kde)
+    yreg1, reg1 = fit_linear(X, y, train_size=int(len(patch) * 0.8), weight=False)
 
     with open(saveloc / f"pk_{patch_id}.pkl", mode="wb") as f:
         pickle.dump(reg, f)  # the weighted linear regression
