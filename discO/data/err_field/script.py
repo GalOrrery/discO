@@ -404,7 +404,7 @@ def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
     with open(saveloc / f"pk_{patch_id}.pkl", mode="wb") as f:
         pickle.dump(reg, f)  # the weighted linear regression
 
-    if plot:
+    if ax is not None:
         plot_parallax_prediction(X, y, kde, ykr, yreg, yreg1, patch_id, ax=ax)
 
 
