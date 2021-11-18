@@ -314,7 +314,7 @@ def plot_parallax_prediction(
     ).T
 
     ax.scatter(Xtrue[:, -1], ytrue, s=5, label="data", alpha=0.3, c=kde)
-    ax.scatter(Xpred[:, -1], ypred1, s=5, label="kernel-ridge")
+    # ax.scatter(Xpred[:, -1], ypred1, s=5, label="kernel-ridge")
     ax.scatter(Xpred[:, -1], ypred2, s=5, label="linear model: density-weighting")
     ax.scatter(Xpred[:, -1], ypred3, s=5, label="linear model: no density weight")
 
@@ -396,6 +396,7 @@ def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
     kde = gaussian_kde(xy)(xy)
 
     # fit a few different ways
+    ykr = None  # TODO!
     # ykr, kr = fit_kernel_ridge(X, y, train_size=int(len(grp) * 0.8))
     # ysv, svr = fit_support_vector(X, y, train_size=int(len(grp) * 0.8))
     yreg, reg = fit_linear(X, y, train_size=int(len(patch) * 0.8), weight=kde)
