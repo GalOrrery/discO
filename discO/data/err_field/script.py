@@ -393,7 +393,10 @@ def fit_and_plot_patch(patch, healpix_colname, ax, saveloc) -> None:
 
     # get signal density of the parallax
     xy = np.vstack([X[:, 2], y])
-    kde = gaussian_kde(xy)(xy)
+    try:
+        kde = gaussian_kde(xy)(xy)
+    except:
+        breakpoint()
 
     # fit a few different ways
     ykr = None  # TODO!
