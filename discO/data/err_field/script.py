@@ -666,7 +666,7 @@ def main(
                 random_index=ns.random_index,
                 plot=ns.plot,
                 use_local=ns.use_local,
-                saveloc=pathlib.Path(ns.saveloc),
+                saveloc=pathlib.Path(ns.saveloc).expanduser().resolve(),
             )
 
 
