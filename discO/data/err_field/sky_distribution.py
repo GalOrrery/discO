@@ -106,6 +106,7 @@ def query_sky_distribution(
         See :func:`gaia_tools.query.query` for details.
     verbose : bool (optional, keyword-only)
         Script verbosity.
+    saveloc : `pathlib.Path` (optional, keyword-only)
 
     Returns
     -------
@@ -348,7 +349,7 @@ def main(
         plot=ns.plot,
         use_local=ns.use_local,
         verbose=ns.verbose,
-        saveloc=pathlib.Path(ns.saveloc),
+        saveloc=pathlib.Path(ns.saveloc).expanduser().resolve(),
     )
 
     return sky
