@@ -78,7 +78,7 @@ from scipy.stats import gaussian_kde
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics._regression import UndefinedMetricWarning
 from sklearn.utils import shuffle
-from astropy_healpix import nside2npix, order2nside
+from astropy_healpix.healpy import nside2npix, order2nside
 
 # PROJECT-SPECIFIC
 from .sky_distribution import main as sky_distribution_main
