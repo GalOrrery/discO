@@ -42,8 +42,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from astropy.table import QTable
-from gaia_tools.query import query as do_query
 from astropy_healpix.healpy import nside2npix, order2nside
+from gaia_tools.query import query as do_query
 
 ##############################################################################
 # PARAMETERS

@@ -72,13 +72,13 @@ import numpy as np
 import numpy.typing as npt
 import tqdm
 from astropy.table import QTable, Row
+from astropy_healpix.healpy import nside2npix, order2nside
 from gaia_tools.query import query as do_query
 from numpy.random import Generator
 from scipy.stats import gaussian_kde
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics._regression import UndefinedMetricWarning
 from sklearn.utils import shuffle
-from astropy_healpix.healpy import nside2npix, order2nside
 
 # PROJECT-SPECIFIC
 from .sky_distribution import main as sky_distribution_main
@@ -253,7 +253,7 @@ def query_and_fit_pixel_set(
     *,
     plot: bool = True,
     use_local: bool = True,
-    saveloc: pathlib.Path = THIS_DIR
+    saveloc: pathlib.Path = THIS_DIR,
 ) -> None:
     """Query and fit a set of sky pixels (healpix pixels).
 
