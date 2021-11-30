@@ -6,7 +6,21 @@ This script can be run from the command line with the following parameters:
 
 Parameters
 ----------
-
+o, order : int (optional, keyword-only)
+    The HEALPix order. Default 6.
+i, random_index : int or None (optional, keyword-only)
+    Limit the number of queried stars to within the random index.
+    This can be used to speed up test queries without impacting which pixels
+    are queried and fit.
+use_local : bool (optional, keyword-only)
+    Whether to perform the queries on Gaia's server or locally.
+    See :mod:`gaia_tools` for details.
+plot : bool (optional, keyword-only)
+    Whether to make plots.
+v, verbose : bool (optional, keyword-only)
+    Script verbosity.
+saveloc : str (optional, keyword-only)
+    The save location for the data.
 """
 
 __all__ = ["make_parser", "main"]
@@ -19,14 +33,17 @@ __all__ = ["make_parser", "main"]
 import argparse
 import pathlib
 import typing as T
+import warnings
 
 # THIRD PARTY
-import healpy as hp
+import healpy
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from astropy.table import QTable
 from gaia_tools.query import query as do_query
+from astropy_healpy import nside2npix, order2nside
 
 ##############################################################################
 # PARAMETERS
@@ -39,7 +56,7 @@ THIS_DIR = pathlib.Path(__file__).parent
 # see https://www.gaia.ac.uk/data/gaia-data-release-1/adql-cookbook
 ADQL_QUERY = """
 SELECT
-source_id, hpx{order},
+source_id, hpx{healpix_order},
 parallax, parallax_error,
 ra, ra_error,
 dec, dec_error
@@ -47,7 +64,7 @@ dec, dec_error
 FROM (
     SELECT
     source_id, random_index,
-    CAST(FLOOR(source_id/POWER(2, 35+(12-{order})*2)) AS BIGINT) AS hpx{order},
+    CAST(FLOOR(source_id/POWER(2, 35+(12-{healpix_order})*2)) AS BIGINT) AS hpx{healpix_order},
     parallax, parallax_error,
     ra, ra_error,
     dec, dec_error
@@ -58,7 +75,7 @@ FROM (
 WHERE parallax >= 0
 {random_index}
 
-ORDER BY hpx{order};
+ORDER BY hpx{healpix_order};
 """
 
 ##############################################################################
@@ -67,18 +84,19 @@ ORDER BY hpx{order};
 
 
 def query_sky_distribution(
-    order: int = 6,
+    healpix_order: int = 6,
     random_index: T.Optional[int] = None,
     *,
     plot: bool = True,
     use_local: bool = True,
     verbose: bool = True,
-) -> None:
+    saveloc: pathlib.Path = THIS_DIR,
+) -> QTable:
     """Query sky and save number count.
 
     Parameters
     ----------
-    order : int, optional
+    healpix_order : int, optional
     random_index : int, optional
 
     plot : bool (optional, keyword-only)
@@ -96,11 +114,11 @@ def query_sky_distribution(
     """
     # ----------------------
     # data folder
-    FOLDER = THIS_DIR / f"order_{order}"
+    FOLDER = saveloc / f"order_{healpix_order}"
     FOLDER.mkdir(exist_ok=True)
 
     # data file
-    DATA_DIR = FOLDER / f"sky_distribution_{order}.ecsv"
+    DATA_DIR = FOLDER / f"sky_distribution_{healpix_order}.ecsv"
 
     if verbose:
         print(f"data will be saved to / read from {DATA_DIR}")
@@ -109,18 +127,16 @@ def query_sky_distribution(
     # Perform query or load from file
 
     # make ADQL
-    hpxO = f"hpx{order}"
-    random_index = "" if random_index is None else f"AND random_index < {int(random_index)}"
-    adql_query = ADQL_QUERY.format(order=order, random_index=random_index)
+    hpxO = f"hpx{healpix_order}"
+    random_idx_sql = "" if random_index is None else f"AND random_index < {int(random_index)}"
+    adql_query = ADQL_QUERY.format(healpix_order=healpix_order, random_index=random_idx_sql)
 
     try:
         result = QTable.read(DATA_DIR)
     except Exception as e:
         if verbose:
             print("starting query.")
-        result = do_query(
-            adql_query, local=use_local, use_cache=False, verbose=True, timeit=True
-        )
+        result = do_query(adql_query, local=use_local, use_cache=False, verbose=True, timeit=True)
         if verbose:
             print("finished query.")
 
@@ -148,26 +164,31 @@ def query_sky_distribution(
         PLOT_DIR.mkdir(exist_ok=True)
 
         # get healpix counts
-        patchids, hpx_indices, num_counts_per_pixel = np.unique(
+        pixelids: npt.NDArray[np.int_]
+        hpx_indices: npt.NDArray[np.int_]
+        num_counts_per_pixel: npt.NDArray[np.int_]
+        pixelids, hpx_indices, num_counts_per_pixel = np.unique(
             sky[hpxO].value, return_index=True, return_counts=True
         )
 
         # histogram of counts per pixel
-        plot_hist_pixel_count(num_counts_per_pixel, order, saveloc=PLOT_DIR)
+        plot_hist_pixel_count(num_counts_per_pixel, healpix_order, saveloc=PLOT_DIR)
 
         # plot mollweide of sky colored by count
-        plot_sky_mollview(patchids, num_counts_per_pixel, order, saveloc=PLOT_DIR)
+        plot_sky_mollview(pixelids, num_counts_per_pixel, healpix_order, saveloc=PLOT_DIR)
 
     return sky
 
 
-def plot_hist_pixel_count(num_counts_per_pixel: np.ndarray, order: int, saveloc: pathlib.Path) -> None:
+def plot_hist_pixel_count(
+    num_counts_per_pixel: npt.NDArray[np.int_], healpix_order: int, saveloc: pathlib.Path
+) -> None:
     """Plot histogram of counts per pixel.
 
     Parameters
     ----------
     num_counts_per_pixel : ndarray[int]
-    order : int
+    healpix_order : int
     saveloc : path-like
     """
     # make plot
@@ -180,45 +201,49 @@ def plot_hist_pixel_count(num_counts_per_pixel: np.ndarray, order: int, saveloc:
     # plot histogram
     ax.hist(num_counts_per_pixel, bins=50, log=True)
     # save and close
-    fig.savefig(saveloc / f"num_counts_per_pixel_{order}.pdf")
+    fig.savefig(saveloc / f"num_counts_per_pixel_{healpix_order}.pdf")
     plt.close(fig)
 
 
-def plot_sky_mollview(patchids, num_counts_per_pixel: np.ndarray, order: int, saveloc: pathlib.Path) -> None:
+def plot_sky_mollview(
+    pixelids: npt.NDArray[np.int_],
+    num_counts_per_pixel: npt.NDArray[np.int_],
+    healpix_order: int,
+    saveloc: pathlib.Path,
+) -> None:
     """Plot mollweide of sky colored by pixel count.
 
     Parameters
     ----------
-    patchids : ndarray[int]
+    pixelids : ndarray[int]
     num_counts_per_pixel : ndarray[int]
-    order : int
+    healpix_order : int
     saveloc : path-like
     """
     fig = plt.figure(figsize=(10, 10), facecolor="white")
 
     # calculate npix from order
-    nside = hp.order2nside(order)
-    npix = hp.nside2npix(nside)
+    npix = nside2npix(order2nside(healpix_order))
 
     # create pixel map
     pmap = np.zeros(npix)
-    pmap[patchids] = num_counts_per_pixel / num_counts_per_pixel.sum()
-    pmap[pmap == 0] = hp.UNSEEN
+    pmap[pixelids] = num_counts_per_pixel / num_counts_per_pixel.sum()
+    pmap[pmap == 0] = healpy.UNSEEN
 
     # plot
-    hp.mollview(
+    healpy.mollview(
         pmap,
         nest=True,
         coord=["C"],
         cbar=True,
         cmap="Greens",
         fig=fig,
-        title=f"Star Count Fraction (Nest {order}, Mollweide)",
+        title=f"Star Count Fraction (Nest {healpix_order}, Mollweide)",
         norm=colors.LogNorm(),
         badcolor="white",
     )
     # save and close
-    fig.savefig(saveloc / f"sky_distribution_{order}.pdf")
+    fig.savefig(saveloc / f"sky_distribution_{healpix_order}.pdf")
     plt.close(fig)
 
 
@@ -263,14 +288,17 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         help="limit queried stars within random index",
     )
 
-    # plot or not
-    parser.add_argument("--plot", default=True, type=bool, help="make plots or not")
-    parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
-
     # gaia_tools
     parser.add_argument(
         "--use_local", action="store_true", help="perform a local database query or query gaia"
     )
+
+    # plot or not
+    parser.add_argument("--plot", default=True, type=bool, help="make plots or not")
+    parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
+
+    # save location
+    parser.add_argument("--saveloc", type=str, default=THIS_DIR)
 
     return parser
 
@@ -281,7 +309,7 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
 def main(
     args: T.Union[list[str], str, None] = None,
     opts: T.Optional[argparse.Namespace] = None,
-) -> None:
+) -> QTable:
     """Query Gaia for distribution of stars on the sky.
 
     Parameters
@@ -315,11 +343,12 @@ def main(
 
     # query or load from
     sky = query_sky_distribution(
-        order=ns.order,
+        healpix_order=ns.order,
         random_index=ns.random_index,
         plot=ns.plot,
         use_local=ns.use_local,
         verbose=ns.verbose,
+        saveloc=pathlib.Path(ns.saveloc),
     )
 
     return sky
