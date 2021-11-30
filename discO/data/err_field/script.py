@@ -87,7 +87,7 @@ from .sky_distribution import main as sky_distribution_main
 # PARAMETERS
 
 RandomStateType = T.Union[None, int, np.random.RandomState, np.random.Generator]
-AxesSubplotType = T.TypeVar("AxesSubplotType", bound=plt.axes._subplots.AxesSubplot)
+AxesSubplotType = T.TypeVar("AxesSubplotType", bound=type(plt.gca()))
 
 THIS_DIR = pathlib.Path(__file__).parent
 
