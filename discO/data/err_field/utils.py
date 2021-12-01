@@ -70,16 +70,16 @@ def make_healpix_los_unitsphere_grid(healpix) -> coord.SkyCoord:
     -------
     (N,) `~astropy.coordinates.SkyCoord`
     """
-    pixel_ids: np.ndarray = np.arange(hp.npix, dtype=int)  # get all pixels
+    pixel_ids: np.ndarray = np.arange(healpix.npix, dtype=int)  # get all pixels
     # TODO! support more than one point per pixel
     dxs, dys = [0.5], [0.5]
 
     temp_dim = np.zeros((len(pixel_ids), len(dxs)))
     temp_r = coord.UnitSphericalRepresentation(temp_dim * u.rad, temp_dim * u.rad)
-    healpix_sc = coord.SkyCoord(hp.frame.realize_frame(temp_r))
+    healpix_sc = coord.SkyCoord(healpix.frame.realize_frame(temp_r))
 
     for i, dx in enumerate(dxs):
-        healpix_sc[:, i] = hp.healpix_to_skycoord(pixel_ids, dx=dx)
+        healpix_sc[:, i] = healpix.healpix_to_skycoord(pixel_ids, dx=dx)
 
     return healpix_sc.flatten()
 
