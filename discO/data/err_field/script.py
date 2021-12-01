@@ -72,7 +72,7 @@ import numpy as np
 import numpy.typing as npt
 import tqdm
 from astropy.table import QTable, Row
-from astropy_healpix.healpy import nside2npix, order2nside
+from astropy_healpix import level_to_nside, nside_to_npix
 from gaia_tools.query import query as do_query
 from numpy.random import Generator
 from scipy.stats import gaussian_kde
@@ -262,7 +262,7 @@ def query_and_fit_pixel_set(
     pixel_ids : tuple[int]
         Set of Healpix indices, at order.
     healpix_order : int
-        The healpix order. See :func:`order2nside`
+        The healpix order. See :func:`~astropy_healpix.level_to_nside`
     random_index : int or None, optional
         The Gaia random index depth in the query. `None` will query the whole
         database. An integer (default 10^6) will limit the depth and make the
@@ -353,7 +353,7 @@ def make_groups(
     sky : `~astropy.table.QTable`
         Table of stars, grouped by healpix pixel ID.
     healpix_order : int
-        The healpix order. See :func:`astropy_healpix.order2nside`
+        The healpix order. See :func:`astropy_healpix.level_to_nside`
     numgroups : int, optional
         The number of groups to make.
 
@@ -362,7 +362,7 @@ def make_groups(
     groupsids : list[ndarray[int]]
         List of grouped pixels.
     """
-    npix: int = nside2npix(order2nside(healpix_order))  # the number of sky pixels
+    npix: int = nside_to_npix(level_to_nside(healpix_order))  # the number of sky pixels
 
     # get healpix column name. it depends on the order, but is the group key.
     colname = sky.groups.keys.colnames[0]
@@ -471,13 +471,13 @@ def plot_mollview(
     pixel_ids : tuple[int]
         Set of pixel ids (int).
     healpix_order : int
-        The healpix order.  See :func:`order2nside`
+        The healpix order.  See :func:`~astropy_healpix.level_to_nside`
 
     Returns
     -------
     `matplotlib.pyplot.Figure`
     """
-    npix = nside2npix(order2nside(healpix_order))
+    npix = nside_to_npix(level_to_nside(healpix_order))
 
     # background plot
     m = np.arange(npix)

@@ -20,7 +20,6 @@ import astropy.units as u
 import numpy as np
 import tqdm
 from astropy_healpix import HEALPix
-from astropy_healpix.healpy import order2nside
 from scipy.interpolate import NearestNDInterpolator
 
 ##############################################################################
@@ -59,24 +58,18 @@ class NearestNDInterpolatorWithUnits(NearestNDInterpolator):
         return super().__call__(x) << self._yunit
 
 
-def make_healpix_los_unitsphere_grid(order: int, frame=coord.ICRS()) -> coord.SkyCoord:
+def make_healpix_los_unitsphere_grid(healpix) -> coord.SkyCoord:
     """Unit sphere grid.
 
     Parameters
     ----------
-    order : int
-        The HEALPix order
-    frame : `~astropy.coordinates.BaseCoordinateFrame`
-        The frame of the data.
+    healpix : `~astropy_healpix.HEALPix`
+        The HEALPix instance.
 
     Returns
     -------
-    `~astropy_healpix.HEALPix`
     (N,) `~astropy.coordinates.SkyCoord`
     """
-    nside: int = order2nside(order)
-    hp = HEALPix(nside, order="nested", frame=frame)
-
     pixel_ids: np.ndarray = np.arange(hp.npix, dtype=int)  # get all pixels
     # TODO! support more than one point per pixel
     dxs, dys = [0.5], [0.5]
@@ -88,7 +81,7 @@ def make_healpix_los_unitsphere_grid(order: int, frame=coord.ICRS()) -> coord.Sk
     for i, dx in enumerate(dxs):
         healpix_sc[:, i] = hp.healpix_to_skycoord(pixel_ids, dx=dx)
 
-    return hp, healpix_sc.flatten()
+    return healpix_sc.flatten()
 
 
 def make_los_sphere_grid(unitsphere: RFS, distances: u.Quantity = np.arange(1, 20) * u.kpc) -> RFS:

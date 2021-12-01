@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from astropy.table import QTable
-from astropy_healpix.healpy import nside2npix, order2nside
+from astropy_healpix import level_to_nside, nside_to_npix
 from gaia_tools.query import query as do_query
 
 ##############################################################################
@@ -224,7 +224,7 @@ def plot_sky_mollview(
     fig = plt.figure(figsize=(10, 10), facecolor="white")
 
     # calculate npix from order
-    npix = nside2npix(order2nside(healpix_order))
+    npix = nside_to_npix(level_to_nside(healpix_order))
 
     # create pixel map
     pmap = np.zeros(npix)
