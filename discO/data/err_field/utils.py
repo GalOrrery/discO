@@ -128,21 +128,24 @@ def make_los_sphere_grid(unitsphere: RFS, distances: u.Quantity = np.arange(1, 2
         return coord.SkyCoord(unitsphere.realize_frame(grid))
 
 
-def make_X(sr: coord.SphericalRepresentation) -> np.ndarray:
+def make_X(c: RFS) -> np.ndarray:
     """Make coordinates for evaluating `scipy` interpolations.
 
     Parameters
     ----------
-    sr : (N, M) `~astropy.coordinates.SphericalRepresentation`
+    sr : (N, M) BaseRepresentation, BaseCoordinateFrame, SkyCoord
 
     Returns
     -------
-    (NxM, 3) ndarray
+    (NxM, 3) ndarray[float]
         columns are flattened dimensions of 'sr':
         - longitude in deg,
         - latitude in deg
         - log10 parallax
     """
+    # change to spherical representation
+    sr = c.represent_as(coord.SphericalRepresentation)
+    # [lon, lat, log10(p)]
     X = np.c_[
         sr.lon.to_value(u.deg).flat,
         sr.lat.to_value(u.deg).flat,
