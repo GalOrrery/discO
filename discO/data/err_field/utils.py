@@ -58,8 +58,32 @@ class NearestNDInterpolatorWithUnits(NearestNDInterpolator):
         return super().__call__(x) << self._yunit
 
 
+class SphericalLogParallaxNearestNDInterpolator(NearestNDInterpolatorWithUnits):
+
+    def __init__(
+        self,
+        c: RFS,
+        y: T.Union[np.ndarray, u.Quantity],
+        rescale: bool = False,
+        tree_options: T.Optional[dict] = None,
+        yunit: u.Unit = u.one,
+    ) -> None:
+        x = make_X(c)
+        super().__init__(x, y, rescale=rescale, tree_options=tree_options, yunit=yunit)
+
+    def __call__(self, c: RFS) -> u.Quantity:
+        return super().__call__(make_X(c))
+
+
+
 def make_healpix_los_unitsphere_grid(healpix) -> coord.SkyCoord:
     """Unit sphere grid.
+
+    .. todo::
+
+        Allow for more than one point per pixel.
+        Possibly by going one further order and merging to get desired number
+        of points.
 
     Parameters
     ----------
@@ -205,8 +229,8 @@ def interpolate_errfield_on_los_sphere_grid(
         ypred[i, :] = patchfit.predict(X)
 
     # Make ND interpolation
-    X = make_X(sr)  # Build coordinates from all data.
-    interp = NearestNDInterpolatorWithUnits(X, ypred.flat, rescale=True, yunit=u.dex(u.mas))
+    interp = SphericalLogParallaxNearestNDInterpolator(sr, ypred.flat,
+                                                       rescale=True, yunit=u.dex(u.one))
 
     return interp
 
