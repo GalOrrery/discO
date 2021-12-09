@@ -321,7 +321,7 @@ def query_and_fit_pixel_set(
 
     # perform query using `gaia_tools`
     # if the query fails to return anything, stop there.
-    result = do_query(adql_query, local=use_local, use_cache=False, verbose=True, timeit=True)
+    result = do_query(adql_query, local=use_local, use_cache=False, verbose=False, timeit=True)
     if len(result) == 0:
         warnings.warn(f"no data in pixels: {pixel_ids}")
         return
@@ -357,7 +357,7 @@ def query_and_fit_pixel_set(
         fit_pixel(pixel, int(pixel[hpl][0]), row=fits[i], ax=ax)
 
     # save table
-    fits.write(DATA_DIR / "fit_{shortened}.ecsv", overwrite=True)
+    fits.write(DATA_DIR / f"fit_{shortened}.ecsv", overwrite=True)
     # and reference for content of table
     with open(DATA_DIR / f"ref-{shortened}.txt", mode="w") as f:
         f.write(str(pixel_ids))
