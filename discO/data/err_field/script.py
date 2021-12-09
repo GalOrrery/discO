@@ -230,7 +230,7 @@ def fit_pixel(
     yreguw, reg1 = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=False)
 
     # save weighted fit
-    row.table[row.index] = reg.__getstate__().values()
+    row.table[row.index] = [pixel_id, *reg.__getstate__().values()]
     # with open(saveloc / f"fit_{pixel_id:010}.pkl", mode="wb") as f:
     #     pickle.dump(reg, f)  # the weighted linear regression
 
