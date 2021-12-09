@@ -253,7 +253,7 @@ def query_and_fit_pixel_set(
     random_index: T.Optional[int] = 1_000_000,
     *,
     savetable: QTable,
-    plot: bool = True,
+    plot: T.Union[pathlib.Path, T.Literal[False]] = False,
     use_local: bool = True,
 ) -> None:
     """Query and fit a set of sky pixels (healpix pixels).
@@ -269,50 +269,14 @@ def query_and_fit_pixel_set(
         database. An integer (default 10^6) will limit the depth and make the
         query much faster.
 
-    plot : bool (optional, keyword-only)
-        Whether to plot the set of pixels.
+    plot : `pathlib.Path` or `False` (optional, keyword-only)
+        Whether and where to plot the set of pixel fits.
     use_local : bool (optional, keyword-only)
         Whether to perform the query on a local database (`True`, default) or
         on Gaia's servers (`False`).
     savetable : `~astropy.table.QTable` (optional, keyword-only)
         Where to store the fit to the 'pixel'.
     """
-#     # create directories
-#     PFOLDER = saveloc / f"order_{healpix_order}"
-#     PFOLDER.mkdir(exist_ok=True)
-# 
-#     FOLDER = PFOLDER / f"random_{random_index}" if random_index is not None else "allsky"
-#     FOLDER.mkdir(exist_ok=True)
-# 
-#     PLOT_DIR = FOLDER / "figures"
-#     PLOT_DIR.mkdir(exist_ok=True)
-# 
-#     DATA_DIR = FOLDER / "pixel_fits"
-#     DATA_DIR.mkdir(exist_ok=True)
-
-    # empty = np.empty(len(pixel_ids))
-    # dtype = [
-    #     ("pixel_id", "int64"),
-    #     ("fit_intercept", "bool"),
-    #     ("normalize", "U10"),
-    #     ("copy_X", "bool"),
-    #     ("n_jobs", object),
-    #     ("positive", "bool"),
-    #     ("n_features_in_", "i4"),
-    #     ("coef_", "float64", 3),
-    #     ("_residues", "float64"),
-    #     ("rank_", "i4"),
-    #     ("singular_", "float64", 3),
-    #     ("intercept_", "float64"),
-    #     ("_sklearn_version", "U4"),
-    # ]
-    # fits = QTable(data=np.empty(len(pixel_ids), dtype=dtype))
-
-    shortened = hash(pixel_ids)  # TODO! do better. Put in PDF metadata
-
-    # -----------------------
-    # Query batch
-
     # make query string
     hpl = f"hpx{healpix_order}"  # column name for healpix index
     adql_query = ADQL_QUERY.format(healpix_order=healpix_order, pixel_ids=pixel_ids)
@@ -334,11 +298,13 @@ def query_and_fit_pixel_set(
 
     # plot the pixels
     if plot:
+        shortened = hash(pixel_ids)  # TODO! do better. Put in PDF metadata
+
         fig = plt.figure()
         plot_mollview(pixel_ids, healpix_order, fig=fig)
-        fig.savefig(PLOT_DIR / f"mollview_{shortened}.pdf")
+        fig.savefig(plot / f"mollview_{shortened}.pdf")
 
-        with open(PLOT_DIR / f"ref_{shortened}.txt", mode="w") as f:
+        with open(plot / f"ref_{shortened}.txt", mode="w") as f:
             f.write(str(pixel_ids))
 
     # -----------------------
@@ -366,7 +332,7 @@ def query_and_fit_pixel_set(
     # save plot of all the pixels
     if plot:
         plt.tight_layout()
-        fig.savefig(PLOT_DIR / f"parallax_{shortened}.pdf")
+        fig.savefig(plot / f"parallax_{shortened}.pdf")
 
 
 def make_groups(
@@ -683,7 +649,6 @@ def main(
 
     # -----------------------
     # query and fit
-    # optionlly ignore warnings
 
     # create directories
     saveloc = pathlib.Path(ns.saveloc).expanduser().resolve()
@@ -716,9 +681,8 @@ def main(
         ("_sklearn_version", "U4"),
     ]
     fits = QTable(data=np.empty(npix, dtype=dtype))
-    # TODO! save to HDF5 and work with it in append mode so that
-    # each pixel set can be saved as soon as it's done.
 
+    # optionally ignore warnings while fitting
     with warnings.catch_warnings():
         if ns.filter_warnings:
             warnings.simplefilter("ignore", category=UndefinedMetricWarning)
@@ -730,13 +694,16 @@ def main(
                 tuple(batch),
                 healpix_order=ns.order,
                 random_index=ns.random_index,
-                plot=ns.plot,
+                plot=PLOT_DIR if ns.plot else False,
                 use_local=ns.use_local,
                 savetable=fits[running_index:running_index+len(batch)],
             )
             # update starting index
             running_index += len(batch)
 
+    # save!
+    # TODO! save to HDF5 and work with it in append mode so that
+    # each pixel set can be saved as soon as it's done.
     fits.write(DATA_DIR / f"fits.ecsv", overwrite=True)
 
 
