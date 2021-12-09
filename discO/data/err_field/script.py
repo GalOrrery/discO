@@ -285,7 +285,7 @@ def query_and_fit_pixel_set(
 
     # perform query using `gaia_tools`
     # if the query fails to return anything, stop there.
-    result = do_query(adql_query, local=use_local, use_cache=False, verbose=False, timeit=True)
+    result = do_query(adql_query, local=use_local, use_cache=False, verbose=True, timeit=False)
     if len(result) == 0:
         warnings.warn(f"no data in pixels: {pixel_ids}")
         return
@@ -661,9 +661,6 @@ def main(
     
     PLOT_DIR = FOLDER / "figures"
     PLOT_DIR.mkdir(exist_ok=True)
-    
-    DATA_DIR = FOLDER / "pixel_fits"
-    DATA_DIR.mkdir(exist_ok=True)
 
     dtype = [
         ("pixel_id", "int64"),
@@ -704,7 +701,7 @@ def main(
     # save!
     # TODO! save to HDF5 and work with it in append mode so that
     # each pixel set can be saved as soon as it's done.
-    fits.write(DATA_DIR / f"fits.ecsv", overwrite=True)
+    fits.write(FOLDER / f"fits.ecsv", overwrite=True)
 
 
 # ------------------------------------------------------------------------
