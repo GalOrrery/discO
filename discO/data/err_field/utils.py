@@ -59,7 +59,6 @@ class NearestNDInterpolatorWithUnits(NearestNDInterpolator):
 
 
 class SphericalLogParallaxNearestNDInterpolator(NearestNDInterpolatorWithUnits):
-
     def __init__(
         self,
         c: RFS,
@@ -73,7 +72,6 @@ class SphericalLogParallaxNearestNDInterpolator(NearestNDInterpolatorWithUnits):
 
     def __call__(self, c: RFS) -> u.Quantity:
         return super().__call__(make_X(c))
-
 
 
 def make_healpix_los_unitsphere_grid(healpix) -> coord.SkyCoord:
@@ -229,8 +227,9 @@ def interpolate_errfield_on_los_sphere_grid(
         ypred[i, :] = patchfit.predict(X)
 
     # Make ND interpolation
-    interp = SphericalLogParallaxNearestNDInterpolator(sr, ypred.flat,
-                                                       rescale=True, yunit=u.dex(u.one))
+    interp = SphericalLogParallaxNearestNDInterpolator(
+        sr, ypred.flat, rescale=True, yunit=u.dex(u.one)
+    )
 
     return interp
 

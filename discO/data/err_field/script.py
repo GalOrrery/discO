@@ -188,7 +188,7 @@ def _fit_linear(
 
 
 def fit_pixel(
-    pixel: QTable, pixel_id: int, *, saveloc: pathlib.Path, ax: T.Optional[AxesSubplotType] = None
+    pixel: QTable, pixel_id: int, *, row: Row, ax: T.Optional[AxesSubplotType] = None
 ) -> None:
     """Fit pixel with linear models.
 
@@ -202,8 +202,8 @@ def fit_pixel(
     pixel_id : int
        Healpix index for the 'pixel'.
 
-    saveloc : `pathlib.Path`, keyword-only
-        Where to save the fit to the 'pixel'.
+    row : `~astropy.table.Row`, keyword-only
+        Where to store the fit information to the 'pixel'.
     ax : `matplotlib.axes._subplots.AxesSubplot` or None (optional, keyword-only)
         Plot axes onto which to plot the data and fits.
         If `None`, nothing is plotted.
@@ -230,8 +230,9 @@ def fit_pixel(
     yreguw, reg1 = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=False)
 
     # save weighted fit
-    with open(saveloc / f"fit_{pixel_id:010}.pkl", mode="wb") as f:
-        pickle.dump(reg, f)  # the weighted linear regression
+    row.table[row.index] = reg.__getstate__().values()
+    # with open(saveloc / f"fit_{pixel_id:010}.pkl", mode="wb") as f:
+    #     pickle.dump(reg, f)  # the weighted linear regression
 
     if ax is not None:
         plot_parallax_prediction(
@@ -277,7 +278,9 @@ def query_and_fit_pixel_set(
         Where to save the fit to the 'pixel'.
     """
     # create directories
-    FOLDER = saveloc / f"order_{healpix_order}"
+    FOLDER = saveloc / f"order_{healpix_order}" + (
+        f"-random_{random_index}" if random_index is not None else "-allsky"
+    )
     FOLDER.mkdir(exist_ok=True)
 
     PLOT_DIR = FOLDER / "figures"
@@ -285,6 +288,26 @@ def query_and_fit_pixel_set(
 
     DATA_DIR = FOLDER / "pixel_fits"
     DATA_DIR.mkdir(exist_ok=True)
+
+    empty = np.empty(len(pixel_ids))
+    dtype = [
+        ("pixel_id", "float64"),
+        ("fit_intercept", "bool"),
+        ("normalize", "U10"),
+        ("copy_X", "bool"),
+        ("n_jobs", object),
+        ("positive", "bool"),
+        ("n_features_in_", "i4"),
+        ("coef_", "float64", 3),
+        ("_residues", "float64"),
+        ("rank_", "i4"),
+        ("singular_", "float64", 3),
+        ("intercept_", "float64"),
+        ("_sklearn_version", "U4"),
+    ]
+    fits = QTable(data=np.empty(len(pixel_ids), dtype=dtype))
+
+    shortened = hash(pixel_ids)  # TODO! do better. Put in PDF metadata
 
     # -----------------------
     # Query batch
@@ -312,11 +335,6 @@ def query_and_fit_pixel_set(
     if plot:
         fig = plt.figure()
         plot_mollview(pixel_ids, healpix_order, fig=fig)
-
-        shortened = hash(pixel_ids)  # TODO! do better. Put in PDF metadata
-        with open(PLOT_DIR / f"mollview-{shortened}.txt", mode="w") as f:
-            f.write(str(pixel_ids))
-
         fig.savefig(PLOT_DIR / f"mollview-{shortened}.pdf")
 
     # -----------------------
@@ -334,8 +352,14 @@ def query_and_fit_pixel_set(
 
     pixel: QTable
     ax: T.Union[plt.axes._subplots.AxesSubplot, None]
-    for pixel, ax in zip(pixels.groups, axs.flat):  # iter thru pixels
-        fit_pixel(pixel, int(pixel[hpl][0]), saveloc=DATA_DIR, ax=ax)
+    for i, (pixel, ax) in enumerate(zip(pixels.groups, axs.flat)):  # iter thru pixels
+        fit_pixel(pixel, int(pixel[hpl][0]), row=fits[i], ax=ax)
+
+    # save table
+    fits.write(DATA_DIR / "fit_{shortened}.ecsv", overwrite=True)
+    # and reference for content of table
+    with open(DATA_DIR / f"ref-{shortened}.txt", mode="w") as f:
+        f.write(str(pixel_ids))
 
     # save plot of all the pixels
     if plot:
