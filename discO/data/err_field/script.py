@@ -278,9 +278,10 @@ def query_and_fit_pixel_set(
         Where to save the fit to the 'pixel'.
     """
     # create directories
-    FOLDER = saveloc / f"order_{healpix_order}" + (
-        f"-random_{random_index}" if random_index is not None else "-allsky"
-    )
+    PFOLDER = saveloc / f"order_{healpix_order}"
+    PFOLDER.mkdir(exist_ok=True)
+
+    FOLDER = PFOLDER / f"random_{random_index}" if random_index is not None else "allsky"
     FOLDER.mkdir(exist_ok=True)
 
     PLOT_DIR = FOLDER / "figures"
