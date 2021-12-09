@@ -691,7 +691,7 @@ def main(
     PFOLDER = saveloc / f"order_{ns.order}"
     PFOLDER.mkdir(exist_ok=True)
     
-    FOLDER = PFOLDER / f"random_{ns.random_index}" if random_index is not None else "allsky"
+    FOLDER = PFOLDER / f"random_{ns.random_index}" if ns.random_index is not None else "allsky"
     FOLDER.mkdir(exist_ok=True)
     
     PLOT_DIR = FOLDER / "figures"
