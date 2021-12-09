@@ -698,9 +698,11 @@ def main(
             # update starting index
             running_index += len(batch)
 
-    # save!
-    # TODO! save to HDF5 and work with it in append mode so that
-    # each pixel set can be saved as soon as it's done.
+            # TODO! save to HDF5 and work with it in append mode so that
+            # each pixel set can be saved as soon as it's done.
+            fits.write(FOLDER / f"fits.ecsv", overwrite=True)
+
+    # final save!
     fits.write(FOLDER / f"fits.ecsv", overwrite=True)
 
 

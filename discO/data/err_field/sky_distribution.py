@@ -115,14 +115,17 @@ def query_sky_distribution(
     """
     # ----------------------
     # data folder
-    FOLDER = saveloc / f"order_{healpix_order}"
+
+    PFOLDER = saveloc / f"order_{healpix_order}"
+    PFOLDER.mkdir(exist_ok=True)
+    FOLDER = PFOLDER / "sky_distribution"
     FOLDER.mkdir(exist_ok=True)
 
     # data file
-    DATA_DIR = FOLDER / f"sky_distribution_{healpix_order}.ecsv"
+    DATA_LOC = FOLDER / f"sky_distribution_{healpix_order}.ecsv"
 
     if verbose:
-        print(f"data will be saved to / read from {DATA_DIR}")
+        print(f"data will be saved to / read from {DATA_LOC}")
 
     # ----------------------
     # Perform query or load from file
@@ -133,7 +136,7 @@ def query_sky_distribution(
     adql_query = ADQL_QUERY.format(healpix_order=healpix_order, random_index=random_idx_sql)
 
     try:
-        result = QTable.read(DATA_DIR)
+        result = QTable.read(DATA_LOC)
     except Exception as e:
         if verbose:
             print("starting query.")
@@ -148,7 +151,7 @@ def query_sky_distribution(
         # write so next time don't need to query
         if verbose:
             print("saving sky distribution table.")
-        result.write(DATA_DIR)
+        result.write(DATA_LOC)
     else:
         if verbose:
             print("loaded sky distribution table.")
@@ -160,10 +163,6 @@ def query_sky_distribution(
         if verbose:
             print("making plots.")
 
-        # save plots in the same location as the data
-        PLOT_DIR = FOLDER / "figures"
-        PLOT_DIR.mkdir(exist_ok=True)
-
         # get healpix counts
         pixelids: npt.NDArray[np.int_]
         hpx_indices: npt.NDArray[np.int_]
@@ -173,10 +172,10 @@ def query_sky_distribution(
         )
 
         # histogram of counts per pixel
-        plot_hist_pixel_count(num_counts_per_pixel, healpix_order, saveloc=PLOT_DIR)
+        plot_hist_pixel_count(num_counts_per_pixel, healpix_order, saveloc=FOLDER)
 
         # plot mollweide of sky colored by count
-        plot_sky_mollview(pixelids, num_counts_per_pixel, healpix_order, saveloc=PLOT_DIR)
+        plot_sky_mollview(pixelids, num_counts_per_pixel, healpix_order, saveloc=FOLDER)
 
     return sky
 
