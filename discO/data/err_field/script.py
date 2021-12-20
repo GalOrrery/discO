@@ -226,13 +226,11 @@ def fit_pixel(
     kde = gaussian_kde(xy)(xy)
 
     # fit a few different ways
-    yregkde, reg = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=kde)
-    yreguw, reg1 = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=False)
+    yregkde, reg = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=kde)  # inverse density weighting to normalize natural density
+    yreguw, reg1 = _fit_linear(X, y, train_size=int(len(pixel) * 0.8), weight=False)  # fit "fairly", but this shouldn't capture intended behavior.
 
-    # save weighted fit
+    # add weighted fit to save tble
     row.table[row.index] = [pixel_id, *reg.__getstate__().values()]
-    # with open(saveloc / f"fit_{pixel_id:010}.pkl", mode="wb") as f:
-    #     pickle.dump(reg, f)  # the weighted linear regression
 
     if ax is not None:
         plot_parallax_prediction(
@@ -510,26 +508,20 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         whether the parser can be inherited from (default False).
         if True, sets ``add_help=False`` and ``conflict_hander='resolve'``
 
-    plot : bool, optional, keyword only
-        Whether to produce plots, or not.
-
-    verbose : int, optional, keyword only
-        Script logging verbosity.
-
     Returns
     -------
     parser: `~argparse.ArgumentParser`
-        The parser with arguments:
-        - plot
-        - verbose
+        The parser with arguments: ``order``, ``ngroups``, ``allsky``,
+        ``pixels``, ``random_index``, ``rng``, ``use_local``, ``plot``,
+        ``filter_warnings``, ``verbose``, and ``saveloc``.
     """
     parser = argparse.ArgumentParser(
-        description="",
+        description="Create interpolatable Gaia error field.",
         add_help=not inheritable,
         conflict_handler="resolve" if not inheritable else "error",
     )
 
-    # order
+    # HEALPix order
     parser.add_argument("-o", "--order", default=6, type=int, help="healpix order")
 
     # pixels are done in groups.
@@ -566,6 +558,13 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         default=None,
         type=int,
         help="limit queried stars within random index",
+    )
+
+    parser.add_argument(
+        "--sky_distribution_depth",
+        default=int(2e6),
+        type=int,
+        help="limit queried stars within random index, when making the estimate of the background distribution.",
     )
 
     # random number generator
@@ -627,7 +626,9 @@ def main(
     # -----------------------
     # Make background distribution
     # This loads a table of 2 million stars, organized by healpix pixel number.
-    sky: QTable = sky_distribution_main(opts=ns)
+    ns_sd = copy.deepcopy(ns)
+    ns_sd.random_index = ns.sky_distribution_depth
+    sky: QTable = sky_distribution_main(opts=ns_sd)
 
     # construct the list of groups of healpix pixels.
     # [ (pixel_1, pixel_2, ...),  (pixel_i, pixel_i+1, ...)]
@@ -662,7 +663,8 @@ def main(
     PLOT_DIR = FOLDER / "figures"
     PLOT_DIR.mkdir(exist_ok=True)
 
-    dtype = [
+    # create blank Table, which will be filled in by each fit.
+    dtype = [  # data type for each column. Needed for blank tables.
         ("pixel_id", "int64"),
         ("fit_intercept", "bool"),
         ("normalize", "U10"),
