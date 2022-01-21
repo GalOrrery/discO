@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""**DOCSTRING**."""
+"""Utilities for making an interpolated error field."""
 
 # __all__ = []
 

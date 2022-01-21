@@ -299,9 +299,10 @@ def query_and_fit_pixel_set(
     if plot:
         shortened = hash(pixel_ids)  # TODO! do better. Put in PDF metadata
 
-        fig = plt.figure()
-        plot_mollview(pixel_ids, healpix_order, fig=fig)
-        fig.savefig(plot / f"mollview_{shortened}.pdf")
+        # fig = plt.figure()
+        # plot_mollview(pixel_ids, healpix_order, fig=fig)
+        # fig.savefig(plot / f"mollview_{shortened}.pdf")
+        # plt.close(fig)
 
         with open(plot / f"ref_{shortened}.txt", mode="w") as f:
             f.write(str(pixel_ids))
@@ -324,14 +325,11 @@ def query_and_fit_pixel_set(
     for i, (pixel, ax) in enumerate(zip(pixels.groups, axs.flat)):  # iter thru pixels
         fit_pixel(pixel, int(pixel[hpl][0]), row=savetable[i], ax=ax)
 
-    # save table
-    # fits.write(DATA_DIR / f"fit_{shortened}.ecsv", overwrite=True)
-    # # and reference for content of table
-
     # save plot of all the pixels
     if plot:
         plt.tight_layout()
         fig.savefig(plot / f"parallax_{shortened}.pdf")
+        plt.close(fig)
 
 
 def make_groups(
@@ -422,9 +420,10 @@ def plot_parallax_prediction(
     ]
 
     # plot the coordinates and evaluations
-    ax.scatter(Xtrue[:, -1], ytrue, s=5, label="data", alpha=0.3, c=kde)
+    ax.scatter(Xtrue[:, -1], ytrue, s=5, label="data", alpha=0.3, c=kde,
+               rasterized=True)
     for i, y in enumerate(ypred):
-        ax.scatter(Xpred[:, -1], y, s=5, label=r"$y_{pred}$ " + str(i))
+        ax.scatter(Xpred[:, -1], y, s=5, label=r"$y_{pred}$ " + str(i), rasterized=True)
 
     # set axes labels and adjust properties
     ax.set_xlabel(r"$\log_{10}$ parallax [mas]")
@@ -551,6 +550,11 @@ def make_parser(*, inheritable: bool = False) -> argparse.ArgumentParser:
         nargs=2,
         help="fit specified sky pixels within range",
     )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="resume from previous run. All the same options should be used.",
+    )
 
     # stars in gaia
     parser.add_argument(
@@ -624,40 +628,12 @@ def main(
         parser = make_parser()
         ns = parser.parse_args(args)
 
-    # -----------------------
-    # Make background distribution
-    # This loads a table of 2 million stars, organized by healpix pixel number.
-    ns_sd = copy.deepcopy(ns)
-    ns_sd.random_index = ns.sky_distribution_depth
-    sky: QTable = sky_distribution_main(opts=ns_sd)
-
-    # construct the list of groups of healpix pixels.
-    # [ (pixel_1, pixel_2, ...),  (pixel_i, pixel_i+1, ...)]
-    list_of_groups: T.List[T.Tuple[int, ...]]
-    if ns.allsky:
-        # groups the pixels together so that each group will have
-        # approximately the same number of stars.
-        list_of_groups = make_groups(sky, healpix_order=ns.order, numgroups=ns.ngroups)
-        npix = nside_to_npix(level_to_nside(ns.order))
-    elif ns.pixels_range:
-        pi, pf = ns.pixels_range
-        if pi >= pf:
-            raise ValueError("`pixels_range` must be [start, stop], with stop > start.")
-        list_of_groups = np.array_split(np.arange(pi, pf), ns.ngroups)
-        npix = pf - pi
-    elif ns.pixels:
-        list_of_groups = ns.pixels
-        # npix = # TODO!
-
-    # -----------------------
-    # query and fit
-
     # create directories
     saveloc = pathlib.Path(ns.saveloc).expanduser().resolve()
-
+    
     PFOLDER = saveloc / f"order_{ns.order}"
     PFOLDER.mkdir(exist_ok=True)
-
+    
     fname = f"random_{ns.random_index}" if ns.random_index is not None else 'allsky'
     FOLDER = PFOLDER / fname
     FOLDER.mkdir(exist_ok=True)
@@ -665,23 +641,74 @@ def main(
     PLOT_DIR = FOLDER / "figures"
     PLOT_DIR.mkdir(exist_ok=True)
 
-    # create blank Table, which will be filled in by each fit.
-    dtype = [  # data type for each column. Needed for blank tables.
-        ("pixel_id", "int64"),
-        ("fit_intercept", "bool"),
-        ("normalize", "U10"),
-        ("copy_X", "bool"),
-        ("n_jobs", object),
-        ("positive", "bool"),
-        ("n_features_in_", "i4"),
-        ("coef_", "float64", 3),
-        ("_residues", "float64"),
-        ("rank_", "i4"),
-        ("singular_", "float64", 3),
-        ("intercept_", "float64"),
-        ("_sklearn_version", "U4"),
-    ]
-    fits = QTable(data=np.empty(npix, dtype=dtype))
+    # -----------------------
+    # Make background distribution
+    # This loads a table of 2 million stars, organized by healpix pixel number.
+    ns_sd = copy.deepcopy(ns)
+    ns_sd.random_index = ns.sky_distribution_depth
+    sky: QTable = sky_distribution_main(opts=ns_sd)
+
+    if ns.resume:
+        fits = QTable.read(FOLDER / f"fits.ecsv")
+        i_end = np.where(fits["pixel_id"] == 0)[0][0] - 1
+        last_pixel_id = fits["pixel_id"][i_end]
+
+    # list_of_groups = list_of_groups[resume_from_group:]
+
+    # construct the list of groups of healpix pixels.
+    # [ (pixel_1, pixel_2, ...),  (pixel_i, pixel_i+1, ...)]
+    running_index = 0
+    list_of_groups: T.List[T.Tuple[int, ...]]
+    if ns.allsky:
+        # groups the pixels together so that each group will have
+        # approximately the same number of stars.
+        list_of_groups = make_groups(sky, healpix_order=ns.order, numgroups=ns.ngroups)
+        npix = nside_to_npix(level_to_nside(ns.order))
+
+        if ns.resume:
+            i_stop_pixel = np.where(fits["pixel_id"] == 0)[0][0] - 1
+            stop_pixel = fits["pixel_id"][i_stop_pixel]
+            in_group = np.array([stop_pixel in group for group in list_of_groups])
+            i_stop_group = np.where(in_groups)[0][0]
+            list_of_groups = list_of_groups[i_stop_group+1:]  # TODO! will repeat last group
+            running_index = i_stop_pixel + 1
+    elif ns.pixels_range:
+        pi, pf = ns.pixels_range
+        if pi >= pf:
+            raise ValueError("`pixels_range` must be [start, stop], with stop > start.")
+        list_of_groups = np.array_split(np.arange(pi, pf), ns.ngroups)
+        npix = pf - pi
+
+        if ns.resume:
+            raise NotImplementedError("TODO")
+    elif ns.pixels:
+        list_of_groups = ns.pixels
+        npix = len(ns.pixels)
+
+        if ns.resume:
+            raise NotImplementedError("TODO")
+
+    # -----------------------
+    # query and fit
+
+    if not ns.resume:
+        # create blank Table, which will be filled in by each fit.
+        dtype = [  # data type for each column. Needed for blank tables.
+            ("pixel_id", "int64"),
+            ("fit_intercept", "bool"),
+            ("normalize", "U10"),
+            ("copy_X", "bool"),
+            ("n_jobs", object),
+            ("positive", "bool"),
+            ("n_features_in_", "i4"),
+            ("coef_", "float64", 3),
+            ("_residues", "float64"),
+            ("rank_", "i4"),
+            ("singular_", "float64", 3),
+            ("intercept_", "float64"),
+            ("_sklearn_version", "U4"),
+        ]
+        fits = QTable(data=np.empty(npix, dtype=dtype))
 
     # optionally ignore warnings while fitting
     with warnings.catch_warnings():
@@ -689,7 +716,6 @@ def main(
             warnings.simplefilter("ignore", category=UndefinedMetricWarning)
             warnings.simplefilter("ignore", category=UserWarning)
 
-        running_index = 0
         for batch in tqdm.tqdm(list_of_groups):
             query_and_fit_pixel_set(
                 tuple(batch),
