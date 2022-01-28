@@ -668,7 +668,7 @@ def main(
         if ns.resume:
             i_stop_pixel = np.where(fits["pixel_id"] == 0)[0][0] - 1
             stop_pixel = fits["pixel_id"][i_stop_pixel]
-            in_group = np.array([stop_pixel in group for group in list_of_groups])
+            in_groups = np.array([stop_pixel in group for group in list_of_groups])
             i_stop_group = np.where(in_groups)[0][0]
             list_of_groups = list_of_groups[i_stop_group+1:]  # TODO! will repeat last group
             running_index = i_stop_pixel + 1
