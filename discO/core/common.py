@@ -137,11 +137,7 @@ class CommonBase(metaclass=ABCMeta):
 
         # else, filter registry by subclass
         return MappingProxyType(
-            {
-                k: v
-                for k, v in cls._registry.items()
-                if issubclass(v, cls) and v is not cls
-            },
+            {k: v for k, v in cls._registry.items() if issubclass(v, cls) and v is not cls},
         )
 
     # /def

@@ -79,9 +79,7 @@ class AGAMAPotentialSampler(PotentialSampler, key="agama"):
             )
         else:
             differentials = None
-        rep = coord.CartesianRepresentation(
-            *pos.T * u.kpc, differentials=differentials
-        )
+        rep = coord.CartesianRepresentation(*pos.T * u.kpc, differentials=differentials)
 
         if representation_type is None:
             representation_type = rep.__class__

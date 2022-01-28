@@ -79,22 +79,17 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
 
             if key not in cls._registry:
                 raise ValueError(
-                    "PotentialFitter has no registered fitter for key: "
-                    f"{key}",
+                    "PotentialFitter has no registered fitter for key: " f"{key}",
                 )
 
             # from registry. Registered in __init_subclass__
             kls = cls._registry[key]
-            return kls.__new__(
-                kls, potential_cls=potential_cls, key=None, **kwargs
-            )
+            return kls.__new__(kls, potential_cls=potential_cls, key=None, **kwargs)
 
         elif key is not None:
             raise ValueError(f"Can't specify 'key' on {cls.__name__}.")
 
-        return super().__new__(
-            cls, potential_cls=potential_cls, key=None, **kwargs
-        )
+        return super().__new__(cls, potential_cls=potential_cls, key=None, **kwargs)
 
     # /def
 
@@ -156,9 +151,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
     def __new__(cls, **kwargs):
         kwargs.pop("potential_cls", None)
         kwargs.pop("key", None)
-        return super().__new__(
-            cls, potential_cls=SCFPotential, key=None, **kwargs
-        )
+        return super().__new__(cls, potential_cls=SCFPotential, key=None, **kwargs)
 
     # /def
 
@@ -243,9 +236,7 @@ class GalpySCFPotentialFitter(GalpyPotentialFitter, key="scf"):
             )
 
         _scale_factor = kw.pop("scale_factor", 1 * u.one)
-        scale_factor = (
-            scale_factor if scale_factor is not None else _scale_factor
-        )
+        scale_factor = scale_factor if scale_factor is not None else _scale_factor
 
         # --------------
 

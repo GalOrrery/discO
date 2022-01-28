@@ -63,8 +63,7 @@ if not _ASTROPY_SETUP_:  # noqa: F403
                     update_default_config(__package__, config_dir)
                 except ConfigurationDefaultMissingError as e:
                     wmsg = (
-                        e.args[0]
-                        + " Cannot install default profile. If you are "
+                        e.args[0] + " Cannot install default profile. If you are "
                         "importing from source, this is expected."
                     )
                     warn(ConfigurationDefaultMissingWarning(wmsg))
