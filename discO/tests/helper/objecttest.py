@@ -49,7 +49,6 @@ class ObjectTest:
         # format doc, if there is None
 
         if cls.__doc__ is None and cls.obj is not None:
-
             if inspect.isclass(cls.obj):  # class vs instance
                 clsname = cls.obj.__name__.strip()
             else:

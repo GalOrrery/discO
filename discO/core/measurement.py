@@ -55,7 +55,7 @@ from discO.utils.pbar import get_progress_bar
 ##############################################################################
 # PARAMETERS
 
-_MEASURE_REGISTRY: T.Dict[str, CommonBase] = dict()  # key : measurer
+_MEASURE_REGISTRY: T.Dict[str, CommonBase] = {}  # key : measurer
 
 CERR_Type = T.Union[
     T.Callable,
@@ -159,7 +159,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
         if cls is MeasurementErrorSampler:
-
             # a cleaner error than KeyError on the actual registry
             if method is None or not cls._in_registry(method):
                 raise ValueError(
@@ -396,7 +395,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
             )
 
         else:  # (Nsamples, Niter)
-
             samples = list(
                 self._run_iter(
                     c, c_err=c_err, random=random, progress=progress, **kwargs
@@ -467,7 +465,6 @@ class MeasurementErrorSampler(CommonBase, metaclass=abc.ABCMeta):
     # Utils
 
     def _distribute_c_err(self, c_err, iterations: int):
-
         # need to determine how c_err should be distributed.
         if isinstance(
             c_err,
@@ -694,7 +691,6 @@ class RVS_Continuous(MeasurementErrorSampler, method="rvs"):
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
         if cls is RVS_Continuous and method is not None:
-
             # a cleaner error than KeyError on the actual registry
             if not cls._in_registry(method):
                 raise ValueError(

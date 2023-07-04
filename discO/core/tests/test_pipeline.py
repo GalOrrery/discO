@@ -252,7 +252,6 @@ class Test_Pipeline(object):
             )
 
     def test___init__frame_mismatch(self):
-
         fitter = PotentialFitter(
             object(),
             key="unittest",

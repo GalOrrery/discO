@@ -86,7 +86,6 @@ class Test_GalpyPotentialFitter(
 
         # --------------------------
         if self.obj is fitter.GalpyPotentialFitter:
-
             # --------------------------
             # for object not in registry
 
@@ -115,7 +114,6 @@ class Test_GalpyPotentialFitter(
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
-
             # ---------------
             # AOK
 
@@ -137,7 +135,6 @@ class Test_GalpyPotentialFitter(
         super().test___call__()
 
         if self.obj is fitter.GalpyPotentialFitter:
-
             with pytest.raises(NotImplementedError, match="Implement in sub"):
                 self.obj.__call__(self.inst, None)
 

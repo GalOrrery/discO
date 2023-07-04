@@ -66,7 +66,6 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
         )
 
         if cls.obj is residual.ResidualMethod:
-
             cls.original_potential = object()
 
             class SubClass(cls.obj):
@@ -215,12 +214,9 @@ class Test_ResidualMethod(CommonBase_Test, obj=residual.ResidualMethod):
             self.obj.evaluate_potential(self.inst, self.original_potential)
 
         # evaluate_potential
-        assert (
-            self.inst.evaluate_potential(
-                self.original_potential,
-            )
-            == coord.CartesianRepresentation(x=1, y=2, z=3)
-        )
+        assert self.inst.evaluate_potential(
+            self.original_potential,
+        ) == coord.CartesianRepresentation(x=1, y=2, z=3)
 
     # /def
 
@@ -345,7 +341,6 @@ class Test_GridResidual(Test_ResidualMethod, obj=residual.GridResidual):
         super().setup_class()
 
         if cls is Test_GridResidual:
-
             # TODO!! actual potential that properly evaluates
             cls.original_potential = object()
 
@@ -406,12 +401,9 @@ class Test_GridResidual(Test_ResidualMethod, obj=residual.GridResidual):
     def test_evaluate_potential(self):
         """Test method ``evaluate_potential``."""
         # evaluate_potential
-        assert (
-            self.inst.evaluate_potential(
-                self.original_potential,
-            )
-            == coord.CartesianRepresentation(x=1, y=2, z=3)
-        )
+        assert self.inst.evaluate_potential(
+            self.original_potential,
+        ) == coord.CartesianRepresentation(x=1, y=2, z=3)
 
     # /def
 

@@ -86,7 +86,7 @@ class Test_AGAMAPotentialWrapperMeta(
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -99,7 +99,6 @@ class Test_AGAMAPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.density(
                 self.potential,
                 self.points,
@@ -108,7 +107,7 @@ class Test_AGAMAPotentialWrapperMeta(
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
-            assert values.unit == u.solMass / u.pc ** 3
+            assert values.unit == u.solMass / u.pc**3
 
             # TODO! test the specific values
 
@@ -125,7 +124,7 @@ class Test_AGAMAPotentialWrapperMeta(
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -153,7 +152,7 @@ class Test_AGAMAPotentialWrapperMeta(
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -166,7 +165,6 @@ class Test_AGAMAPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.potential(
                 self.potential,
                 self.points,
@@ -175,7 +173,7 @@ class Test_AGAMAPotentialWrapperMeta(
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
-            assert values.unit == u.km ** 2 / u.s ** 2
+            assert values.unit == u.km**2 / u.s**2
 
             # TODO! test the specific values
 
@@ -192,7 +190,7 @@ class Test_AGAMAPotentialWrapperMeta(
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -228,7 +226,6 @@ class Test_AGAMAPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             vf = self.subclass.specific_force(
                 self.potential,
                 self.points,
@@ -323,7 +320,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -337,7 +334,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -346,7 +343,6 @@ class Test_AGAMAPotentialWrapper(
         # test the different inputs
 
         with pytest.raises(TypeError, match="multiple values for keyword"):
-
             points, values = self.inst.density(
                 self.points,
                 frame=coord.Galactocentric(),
@@ -364,7 +360,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -381,7 +377,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -395,7 +391,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -404,7 +400,6 @@ class Test_AGAMAPotentialWrapper(
         # test the different inputs
 
         with pytest.raises(TypeError, match="multiple values for keyword"):
-
             points, values = self.inst.potential(
                 self.points,
                 frame=coord.Galactocentric(),
@@ -422,7 +417,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -439,7 +434,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -453,7 +448,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -462,7 +457,6 @@ class Test_AGAMAPotentialWrapper(
         # test the different inputs
 
         with pytest.raises(TypeError, match="multiple values for keyword"):
-
             points, values = self.inst(
                 self.points,
                 frame=coord.Galactocentric(),
@@ -480,7 +474,7 @@ class Test_AGAMAPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -507,7 +501,6 @@ class Test_AGAMAPotentialWrapper(
         # test the different inputs
 
         with pytest.raises(TypeError, match="multiple values for keyword"):
-
             vf = self.inst.specific_force(
                 self.points,
                 frame=coord.Galactocentric(),

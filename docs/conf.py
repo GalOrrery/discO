@@ -33,16 +33,9 @@ import os
 import sys
 from configparser import ConfigParser
 from importlib import import_module
+from sphinx_astropy.conf.v1 import exclude_patterns, rst_epilog
+from sphinx_astropy.conf.v1 import *  # noqa: F403
 
-try:
-    # THIRD PARTY
-    from sphinx_astropy.conf.v1 import *
-except ImportError:
-    print(
-        "ERROR: the documentation requires the "
-        "sphinx-astropy package to be installed",
-    )
-    sys.exit(1)
 
 conf = ConfigParser()
 
@@ -96,7 +89,7 @@ rst_epilog += """
 .. |RandomGenerator| replace:: :class:`~numpy.random.Generator`
 .. |RandomState| replace:: :class:`~numpy.random.RandomState`
 
-"""
+"""  # noqa: E501
 
 # Whether to create cross-references for the parameter types in the
 # Parameters, Other Parameters, Returns and Yields sections of the docstring.
@@ -222,7 +215,7 @@ htmlhelp_basename = project + "doc"
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", project + ".tex", project + u" Documentation", author, "manual"),
+    ("index", project + ".tex", project + " Documentation", author, "manual"),
 ]
 
 
@@ -231,21 +224,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ("index", project.lower(), project + u" Documentation", [author], 1),
+    ("index", project.lower(), project + " Documentation", [author], 1),
 ]
-
-
-# -- Options for the edit_on_github extension ---------------------------------
-
-if setup_cfg.get("edit_on_github").lower() == "true":
-
-    extensions += ["sphinx_astropy.ext.edit_on_github"]
-
-    edit_on_github_project = setup_cfg["github_project"]
-    edit_on_github_branch = "master"
-
-    edit_on_github_source_root = ""
-    edit_on_github_doc_root = "docs"
 
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = "https://github.com/{0}/issues/".format(

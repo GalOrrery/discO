@@ -110,6 +110,7 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
     def test___init_subclass__(self):
         """Test subclassing."""
+
         # When package is None, it is not registered
         class SubClass1(self.obj):
             pass
@@ -205,7 +206,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # --------------------------
         if self.obj is sample.PotentialSampler:
-
             # ---------------
             # Need the "potential" argument
             with pytest.raises(TypeError, match="argument: 'potential'"):
@@ -277,7 +277,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
-
             # ---------------
             # Can't have the "key" argument
 
@@ -306,7 +305,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
         super().test___init__()
 
         if self.obj is not sample.PotentialSampler:
-
             with pytest.raises(ValueError, match="mass is divergent"):
                 self.obj(
                     PotentialWrapper(self.potential),
@@ -361,7 +359,6 @@ class Test_PotentialSampler(CommonBase_Test, obj=sample.PotentialSampler):
 
         # raises error if called
         if self.obj is sample.PotentialSampler:
-
             with pytest.raises(NotImplementedError, match="in subclass."):
                 self.obj.__call__(self.inst)
 

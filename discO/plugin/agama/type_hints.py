@@ -25,7 +25,6 @@ from agama import Potential
 ##############################################################################
 
 PotentialType = T.TypeVar("Potential", bound=Potential)
-""":class:`~agama.Potential`"""
 
 ##############################################################################
 # END

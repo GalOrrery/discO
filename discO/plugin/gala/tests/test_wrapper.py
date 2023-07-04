@@ -90,7 +90,7 @@ class Test_GalaPotentialWrapperMeta(
         # check data types
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
-        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
         # ---------------
         # frame
@@ -101,7 +101,6 @@ class Test_GalaPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.density(
                 self.potential,
                 self.points,
@@ -109,7 +108,7 @@ class Test_GalaPotentialWrapperMeta(
             )
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
-            assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+            assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
             # TODO! test the specific values
 
@@ -125,7 +124,7 @@ class Test_GalaPotentialWrapperMeta(
         assert isinstance(points, coord.SkyCoord)
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
-        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
         # TODO! test the specific values
 
@@ -153,7 +152,7 @@ class Test_GalaPotentialWrapperMeta(
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -166,7 +165,6 @@ class Test_GalaPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.potential(
                 self.potential,
                 self.points,
@@ -175,7 +173,7 @@ class Test_GalaPotentialWrapperMeta(
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
-            assert values.unit == u.kpc ** 2 / u.Myr ** 2
+            assert values.unit == u.kpc**2 / u.Myr**2
 
             # TODO! test the specific values
 
@@ -192,7 +190,7 @@ class Test_GalaPotentialWrapperMeta(
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -228,7 +226,6 @@ class Test_GalaPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             vf = self.subclass.specific_force(
                 self.potential,
                 self.points,
@@ -325,7 +322,7 @@ class Test_GalaPotentialWrapper(
         # check data types
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
-        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
         # TODO! test the specific values
 
@@ -338,7 +335,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points, coord.SkyCoord)
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
-        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
         # TODO! test the specific values
 
@@ -363,7 +360,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points, coord.SkyCoord)
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
-        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc ** 3)
+        assert u.allclose(values, [0.0, 0.0, 0.0] * u.solMass / u.pc**3)
 
         # TODO! test the specific values
 
@@ -380,7 +377,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -394,7 +391,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -420,7 +417,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -438,7 +435,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # ---------------
         # with a frame
@@ -450,7 +447,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -476,7 +473,7 @@ class Test_GalaPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.kpc ** 2 / u.Myr ** 2
+        assert values.unit == u.kpc**2 / u.Myr**2
 
         # TODO! test the specific values
 
@@ -493,7 +490,7 @@ class Test_GalaPotentialWrapper(
         assert hasattr(vf, "vf_rho")
         assert hasattr(vf, "vf_phi")
         assert hasattr(vf, "vf_z")
-        assert vf.vf_rho.unit == u.kpc / u.Myr ** 2
+        assert vf.vf_rho.unit == u.kpc / u.Myr**2
         assert isinstance(vf.frame, coord.Galactocentric)
 
         # TODO! test the specific values
@@ -523,7 +520,7 @@ class Test_GalaPotentialWrapper(
         assert hasattr(vf, "vf_x")
         assert hasattr(vf, "vf_y")
         assert hasattr(vf, "vf_z")
-        assert vf.vf_x.unit == u.kpc / u.Myr ** 2
+        assert vf.vf_x.unit == u.kpc / u.Myr**2
         assert isinstance(vf.frame, coord.Galactocentric)
 
         # TODO! test the specific values

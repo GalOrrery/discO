@@ -60,7 +60,7 @@ from discO.utils.random import NumpyRNGContext, RandomLike
 ##############################################################################
 # PARAMETERS
 
-SAMPLER_REGISTRY = dict()  # key : sampler
+SAMPLER_REGISTRY = {}  # key : sampler
 
 ##############################################################################
 # CODE

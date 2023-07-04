@@ -30,7 +30,7 @@ from discO.utils.coordinates import UnFrame
 ##############################################################################
 # PARAMETERS
 
-WRAPPER_REGISTRY: T.Dict[str, object] = dict()
+WRAPPER_REGISTRY: T.Dict[str, object] = {}
 
 SCorF = T.Union[TH.SkyCoordType, TE.Literal[False]]
 

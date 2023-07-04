@@ -365,7 +365,6 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
         inst._points = self.inst.points * 2
 
         with pytest.raises(Exception, match="can't combine mismatching"):
-
             self.inst._combine_operation(operator.add, inst)
 
     # /def
@@ -373,7 +372,7 @@ class Test_BaseVectorField(ObjectTest, obj=vectorfield.BaseVectorField):
     def test_norm(self):
         """Test method ``norm``."""
         # sqrt(4^2 + 2^2)
-        assert u.allclose(self.inst.norm() ** 2, 20 * u.km ** 2 / u.s ** 2)
+        assert u.allclose(self.inst.norm() ** 2, 20 * u.km**2 / u.s**2)
 
     # /def
 
@@ -485,7 +484,7 @@ class Test_CartesianVectorField(
 
         # now, a success
         val = self.inst.dot(self.inst)
-        assert val == 20 * u.km ** 2 / u.s ** 2
+        assert val == 20 * u.km**2 / u.s**2
 
         # and dot with a CartesianRepresentation
         for key, base_e in self.inst.points.unit_vectors().items():

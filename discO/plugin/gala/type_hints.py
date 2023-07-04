@@ -25,7 +25,6 @@ from gala.potential import PotentialBase
 ##############################################################################
 
 PotentialType = T.TypeVar("PotentialBase", bound=PotentialBase)
-""":class:`~gala.potential.PotentialBase`"""
 
 ##############################################################################
 # END

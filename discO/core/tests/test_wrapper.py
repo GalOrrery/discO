@@ -33,6 +33,7 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
     @classmethod
     def setup_class(cls):
         """Setup fixtures for testing."""
+
         # test class
         class TestClass(metaclass=cls.obj):
             _frame = coord.Galactocentric()
@@ -96,7 +97,6 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
         # ------------------------------
 
         for p in (self.points, self.points.frame, self.points.data):
-
             # ---------------
             # frame is CoordinateFrame / SkyCoord
             for frame in (
@@ -131,7 +131,6 @@ class Test_PotentialWrapperMeta(ObjectTest, obj=wrapper.PotentialWrapperMeta):
                 coord.PhysicsSphericalRepresentation,
                 "physicsspherical",
             ):
-
                 points, from_frame = self.subclass._convert_to_frame(
                     p,
                     "galactocentric",
