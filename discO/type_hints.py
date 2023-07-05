@@ -81,43 +81,33 @@ RepresentationOrDifferentialType = T.TypeVar(
     "BaseRepresentationOrDifferential",
     bound=coord.BaseRepresentationOrDifferential,
 )
-"""|RepresentationOrDifferential|"""
 
 RepresentationType = T.TypeVar(
     "BaseRepresentation",
     bound=coord.BaseRepresentation,
 )
-"""|Representation|"""
 
 OptRepresentationType = T.Union[RepresentationType, None, EllipsisType]
 
 RepresentationLikeType = T.Union[RepresentationType, str]
-"""|Representation| or `str`"""
 
 OptRepresentationLikeType = T.Union[RepresentationLikeType, None, EllipsisType]
 
 DifferentialType = T.TypeVar("BaseDifferential", bound=coord.BaseDifferential)
-"""|Differential|"""
 
 FrameType = T.TypeVar("CoordinateFrame", bound=coord.BaseCoordinateFrame)
-"""|CoordinateFrame|"""
 
 OptFrameType = T.Union[FrameType, None, EllipsisType]
 
 SkyCoordType = T.TypeVar("SkyCoord", bound=coord.SkyCoord)
-"""|SkyCoord|"""
 
 CoordinateType = T.Union[FrameType, SkyCoordType]
-"""|CoordinateFrame| or |SkyCoord|"""
 
 PositionType = T.Union[RepresentationType, CoordinateType]
-"""|BaseRepresentation|, |CoordinateFrame|, or |SkyCoord|"""
 
 GenericPositionType = T.Union[RepresentationOrDifferentialType, CoordinateType]
-"""|BaseRepresentationOrDifferential|, |CoordinateFrame|, or |SkyCoord|"""
 
 FrameLikeType = T.Union[CoordinateType, str]
-"""|CoordinateFrame| or |SkyCoord| or `str`"""
 
 OptFrameLikeType = T.Union[FrameLikeType, None, EllipsisType]
 
@@ -125,10 +115,8 @@ OptFrameLikeType = T.Union[FrameLikeType, None, EllipsisType]
 # table
 
 TableType = T.TypeVar("Table", bound=table.Table)
-"""|Table|"""
 
 QTableType = T.TypeVar("QTable", bound=table.QTable)
-"""|QTable|"""
 
 # -----------------
 # units
@@ -137,16 +125,12 @@ UnitType = T.Union[
     T.TypeVar("Unit", bound=u.UnitBase),
     T.TypeVar("FunctionUnit", bound=u.FunctionUnitBase),
 ]
-"""|Unit| or :class:`~astropy.units.FunctionUnitBase`"""
 
 UnitLikeType = T.Union[UnitType, str]
-"""|Unit|, :class:`~astropy.units.FunctionUnitBase`, or `str`"""
 
 QuantityType = T.TypeVar("Quantity", bound=u.Quantity)
-"""|Quantity|"""
 
 QuantityLikeType = T.Union[QuantityType, str]
-"""|Quantity| or `str`"""
 
 ##############################################################################
 # END

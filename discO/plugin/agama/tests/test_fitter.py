@@ -80,7 +80,6 @@ class Test_AGAMAPotentialFitter(
 
         # --------------------------
         if self.obj is fitter.AGAMAPotentialFitter:
-
             # --------------------------
             # for object not in registry
 
@@ -106,7 +105,6 @@ class Test_AGAMAPotentialFitter(
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
-
             potential_cls = tuple(self.obj._registry.keys())[0]
 
             # ---------------

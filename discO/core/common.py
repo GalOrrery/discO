@@ -28,7 +28,7 @@ import discO.type_hints as TH
 ##############################################################################
 # PARAMETERS
 
-WRAPPER_REGISTRY: T.Dict[str, object] = dict()
+WRAPPER_REGISTRY: T.Dict[str, object] = {}
 
 SCorF = T.Union[TH.SkyCoordType, TE.Literal[False]]
 
@@ -172,7 +172,6 @@ class CommonBase(metaclass=ABCMeta):
         obj: T.Any,
         package: T.Union[ModuleType, str, None] = None,
     ) -> ModuleType:
-
         if inspect.ismodule(package):
             pass
         elif isinstance(package, str):
@@ -198,7 +197,6 @@ class CommonBase(metaclass=ABCMeta):
     def _parse_registry_path(
         path: T.Union[str, ModuleType, T.Sequence[T.Union[str, ModuleType]]],
     ) -> str:
-
         if isinstance(path, str):
             parsed = path
         elif isinstance(path, ModuleType):

@@ -25,7 +25,6 @@ from galpy import potential
 ##############################################################################
 
 PotentialType = T.TypeVar("Potential", bound=potential.Potential)
-""":class:`~galpy.potential.Potential`"""
 
 ##############################################################################
 # END

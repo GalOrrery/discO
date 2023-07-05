@@ -344,12 +344,9 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # ----------
         # make sure points are the same
 
-        diff = (
-            self.points.represent_as(
-                coord.CartesianRepresentation,
-            )
-            - other.points.represent_as(coord.CartesianRepresentation)
-        )
+        diff = self.points.represent_as(
+            coord.CartesianRepresentation,
+        ) - other.points.represent_as(coord.CartesianRepresentation)
 
         if not np.allclose(diff.norm().value, 0):
             raise Exception("can't combine mismatching points.")
@@ -357,7 +354,6 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # ----------
 
         if isinstance(self, type(other)):
-
             first, second = (self, other) if not reverse else (other, self)
             return self.__class__(
                 self.points,

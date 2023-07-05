@@ -30,7 +30,7 @@ from discO.utils.coordinates import resolve_representationlike
 ##############################################################################
 # PARAMETERS
 
-GALPY_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
+GALPY_FITTER_REGISTRY: T.Dict[str, object] = {}  # package : samplers
 
 ##############################################################################
 # CODE
@@ -73,7 +73,6 @@ class GalpyPotentialFitter(PotentialFitter, key="galpy"):
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
         if cls is GalpyPotentialFitter:
-
             # potential_cls overrides key
             key = potential_cls if isinstance(potential_cls, str) else key
 

@@ -37,7 +37,7 @@ from discO.utils.pbar import get_progress_bar
 ##############################################################################
 # PARAMETERS
 
-FITTER_REGISTRY: T.Dict[str, CommonBase] = dict()  # package : samplers
+FITTER_REGISTRY: T.Dict[str, CommonBase] = {}  # package : samplers
 
 ##############################################################################
 # CODE
@@ -261,7 +261,6 @@ class PotentialFitter(CommonBase):
 
         # (iterations, N) -> iter on iterations
         with get_progress_bar(progress, iterations) as pbar:
-
             for samp, mass in zip(sample.T, sample.cache["mass"].T):
                 pbar.update(1)
 

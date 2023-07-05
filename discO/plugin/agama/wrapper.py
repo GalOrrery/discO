@@ -100,7 +100,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         r = r.reshape(-1)  # unfortunately can't flatten in-place
 
         agama.setUnits(mass=1, length=1, velocity=1)  # TODO! bad
-        values = potential.density(r.xyz.T) * (u.solMass / u.pc ** 3)
+        values = potential.density(r.xyz.T) * (u.solMass / u.pc**3)
 
         # reshape
         r.shape = shape
@@ -155,7 +155,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         r = r.reshape(-1)  # unfortunately can't flatten in-place
 
         agama.setUnits(mass=1, length=1, velocity=1)  # TODO! bad
-        values = potential.potential(r.xyz.T) * (u.km ** 2 / u.s ** 2)
+        values = potential.potential(r.xyz.T) * (u.km**2 / u.s**2)
 
         # reshape
         r.shape = shape
@@ -210,7 +210,7 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
         Fx, Fy, Fz = (
             potential.force(r.xyz.T).T
             / u.kpc.to(u.km)  # adjustment in AGAMA units
-            * (u.km / u.s ** 2)
+            * (u.km / u.s**2)
         )
 
         # reshape
@@ -271,7 +271,6 @@ class AGAMAPotentialMeta(PotentialWrapperMeta):
             ptype = file.readline()
 
             if b"Multipole" in ptype:
-
                 n_radial = int(file.readline().split(b"\t")[0])
                 l_max = int(file.readline().split(b"\t")[0])
                 unused = int(file.readline().split(b"\t")[0])

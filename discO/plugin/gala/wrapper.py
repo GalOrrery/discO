@@ -28,7 +28,7 @@ from discO.utils import resolve_representationlike, vectorfield
 ##############################################################################
 # PARAMETERS
 
-_KMS2 = u.km / u.s ** 2
+_KMS2 = u.km / u.s**2
 
 ##############################################################################
 # CODE

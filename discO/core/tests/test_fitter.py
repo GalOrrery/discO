@@ -138,6 +138,7 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
     def test___init_subclass__(self):
         """Test subclassing."""
+
         # When package is None, it is not registered
         class SubClass1(self.obj):
             pass
@@ -229,7 +230,6 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
         # --------------------------
         if self.obj is fitter.PotentialFitter:
-
             # ---------------
             # Need the "potential" argument
             with pytest.raises(TypeError, match="argument: 'potential_cls'"):
@@ -267,7 +267,6 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
 
         # --------------------------
         else:  # never hit in Test_PotentialSampler, only in subs
-
             # ---------------
             # AOK
 
@@ -349,7 +348,6 @@ class Test_PotentialFitter(CommonBase_Test, obj=fitter.PotentialFitter):
         super().test___call__()
 
         if self.obj is fitter.PotentialFitter:
-
             with pytest.raises(NotImplementedError, match="Implement in sub"):
                 self.obj.__call__(self.inst, None)
 

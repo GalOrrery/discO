@@ -28,7 +28,6 @@ from discO.utils import random
 
 
 class Test_NumpyRNGContext(ObjectTest, obj=random.NumpyRNGContext):
-
     #######################################################
     # Method tests
 

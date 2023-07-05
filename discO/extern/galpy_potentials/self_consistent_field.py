@@ -110,7 +110,6 @@ def scf_compute_coeffs_nbody(
     for i, nn in enumerate(ns):
         for j, ll in enumerate(ls):
             for k, mm in enumerate(ms[: j + 1]):
-
                 Plm = lpmv(mm, ll, costheta)
 
                 cosmphi = np.cos(phi * mm)

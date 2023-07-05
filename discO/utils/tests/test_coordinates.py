@@ -42,7 +42,6 @@ class Test_resolve_framelike:
 
         # test changes with conf
         with conf.set_temp("default_frame", "galactocentric"):
-
             assert resolve_framelike(frame=Ellipsis) == resolve_framelike(
                 frame=conf.default_frame,
             )

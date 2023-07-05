@@ -42,7 +42,7 @@ from discO.utils.pbar import get_progress_bar
 ##############################################################################
 # PARAMETERS
 
-RESIDUAL_REGISTRY: T.Dict[str, object] = dict()  # key : sampler
+RESIDUAL_REGISTRY: T.Dict[str, object] = {}  # key : sampler
 
 ##############################################################################
 # CODE
@@ -100,7 +100,6 @@ class ResidualMethod(CommonBase):
         # If directly instantiating a ResidualMethod (not subclass) we must
         # instead instantiate the appropriate subclass. Error if can't find.
         if cls is ResidualMethod:
-
             # a cleaner error than KeyError on the actual registry
             if method is None or not cls._in_registry(method):
                 raise ValueError(
@@ -485,7 +484,6 @@ class ResidualMethod(CommonBase):
         iterations = len(fit_potential)
 
         with get_progress_bar(progress, iterations) as pbar:
-
             for fpot in fit_potential:
                 pbar.update(1)
 

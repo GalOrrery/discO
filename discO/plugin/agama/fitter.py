@@ -31,7 +31,7 @@ from discO.utils.coordinates import (
 ##############################################################################
 # PARAMETERS
 
-AGAMA_FITTER_REGISTRY: T.Dict[str, object] = dict()  # package : samplers
+AGAMA_FITTER_REGISTRY: T.Dict[str, object] = {}  # package : samplers
 
 ##############################################################################
 # CODE
@@ -74,7 +74,6 @@ class AGAMAPotentialFitter(PotentialFitter, key="agama"):
         # subclass) we must also instantiate the appropriate subclass. Error
         # if can't find.
         if cls is AGAMAPotentialFitter:
-
             if potential_cls not in cls._registry:
                 raise ValueError(
                     "PotentialFitter has no registered fitter for "

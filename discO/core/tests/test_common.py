@@ -30,12 +30,12 @@ from discO.tests.helper import ObjectTest
 
 
 class Test_CommonBase(ObjectTest, obj=common.CommonBase):
-
     #################################################################
     # Method Tests
 
     def test___init_subclass__(self):
         """Test subclassing."""
+
         # --------------------
         # When key is None
         class SubClasss1(self.obj):
@@ -128,7 +128,6 @@ class Test_CommonBase(ObjectTest, obj=common.CommonBase):
     def test___init__(self):
         """Test method ``__init__``."""
         if self.obj is common.CommonBase:
-
             with pytest.raises(TypeError, match="instantiate abstract class"):
                 self.obj()
 

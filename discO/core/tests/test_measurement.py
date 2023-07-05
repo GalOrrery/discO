@@ -181,7 +181,6 @@ class Test_MeasurementErrorSampler(
         # -------------------------------
         # test a specific item in the registry
         if self.obj is measurement.MeasurementErrorSampler:
-
             assert self.obj["Gaussian"] is measurement.GaussianMeasurementError
             assert (
                 self.obj["rvs", "Gaussian"]
@@ -267,7 +266,6 @@ class Test_MeasurementErrorSampler(
             # str
             ("galactocentric", "cartesian"),
         ):
-
             obj = self.obj(
                 c_err=self.c_err,
                 method="Gaussian",
@@ -401,7 +399,6 @@ class Test_MeasurementErrorSampler(
         # NotImplementedError
 
         with pytest.raises(NotImplementedError):
-
             rep = coord.PhysicsSphericalRepresentation(
                 phi=[1, 2] * u.deg,
                 theta=[3, 4] * u.deg,
@@ -422,7 +419,7 @@ class Test_MeasurementErrorSampler(
 
     @abstractmethod
     def test___call__(self):
-        """Test method ``__call__``. """
+        """Test method ``__call__``."""
         # run tests on super
         super().test___call__()
 
@@ -666,7 +663,6 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # -------------------------------
         # test a specific item in the registry
         if self.obj is measurement.RVS_Continuous:
-
             assert self.obj["Gaussian"] is measurement.GaussianMeasurementError
 
             with pytest.raises(KeyError):
@@ -759,7 +755,6 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
             # str
             ("galactocentric", "cartesian"),
         ):
-
             obj = self.obj(
                 rvs=self.rvs,
                 c_err=self.c_err,
@@ -807,7 +802,7 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
             np.random.RandomState(0) if random == "RandomState(0)" else random
         )
 
-        res = self.inst(self.c, c_err=eval(c_err), random=random)  # TODO!
+        res = self.inst(self.c, c_err=eval(c_err), random=random)
         assert np.allclose(res.ra.deg, expected_ra)
         assert np.allclose(res.dec.deg, expected_dec)
         assert np.allclose(res.distance, expected_dist)
@@ -871,7 +866,6 @@ class Test_RVS_ContinuousMeasurementErrorSampler(
         # "c" and c_err, c_err is none of the above | random
 
         with pytest.raises(NotImplementedError):
-
             self.inst(self.c, c_err=Exception(), random=0)
 
     # /def

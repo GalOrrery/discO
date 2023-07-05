@@ -241,7 +241,6 @@ class Pipeline:
         # optionally skip this step if c_err is False
 
         if self.measurer is not None and c_err is not False:
-
             sample: TH.SkyCoordType = self.measurer(
                 sample,
                 random=random,
@@ -263,7 +262,6 @@ class Pipeline:
         # only if 3)
 
         if self.residualer is not None:
-
             resid: T.Any = self.residualer(
                 fit_pot,
                 original_potential=self.potential,
@@ -277,7 +275,6 @@ class Pipeline:
         # only if 4)
 
         if self.statisticer is not None:
-
             stat: T.Any = self.statisticer(resid, **kwargs)
             result["statistic"][0] = stat
 
@@ -352,7 +349,6 @@ class Pipeline:
         # iterate over number of iterations
         # for _ in tqdm(range(niter), desc="Running Pipeline...", total=niter):
         with get_progress_bar(progress, iterations) as pbar:
-
             for arg in n_or_sample:
                 pbar.update(1)
 

@@ -90,7 +90,7 @@ class Test_GalpyPotentialWrapperMeta(
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # ---------------
         # frame
@@ -101,7 +101,6 @@ class Test_GalpyPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.density(
                 self.potential,
                 self.points,
@@ -110,7 +109,7 @@ class Test_GalpyPotentialWrapperMeta(
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
-            assert values.unit == u.solMass / u.pc ** 3
+            assert values.unit == u.solMass / u.pc**3
 
             # TODO! test the specific values
 
@@ -127,7 +126,7 @@ class Test_GalpyPotentialWrapperMeta(
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -155,7 +154,7 @@ class Test_GalpyPotentialWrapperMeta(
         assert isinstance(points, coord.BaseRepresentation)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -168,7 +167,6 @@ class Test_GalpyPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             points, values = self.subclass.potential(
                 self.potential,
                 self.points,
@@ -177,7 +175,7 @@ class Test_GalpyPotentialWrapperMeta(
             assert isinstance(points, coord.SkyCoord)
             assert isinstance(points.frame, resolve_framelike(frame).__class__)
             assert isinstance(values, u.Quantity)
-            assert values.unit == u.km ** 2 / u.s ** 2
+            assert values.unit == u.km**2 / u.s**2
 
             # TODO! test the specific values
 
@@ -194,7 +192,7 @@ class Test_GalpyPotentialWrapperMeta(
         assert isinstance(points.frame, self.frame)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -230,7 +228,6 @@ class Test_GalpyPotentialWrapperMeta(
             coord.Galactocentric(),
             "galactocentric",
         ):
-
             vf = self.subclass.specific_force(
                 self.potential,
                 self.points,
@@ -350,7 +347,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -364,7 +361,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -390,7 +387,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.solMass / u.pc ** 3
+        assert values.unit == u.solMass / u.pc**3
 
         # TODO! test the specific values
 
@@ -407,7 +404,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -421,7 +418,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -447,7 +444,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -465,7 +462,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # ---------------
         # with a frame
@@ -477,7 +474,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         # and on the values
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -503,7 +500,7 @@ class Test_GalpyPotentialWrapper(
         assert isinstance(points.frame, self.inst.frame.__class__)
         assert isinstance(points.data, coord.CartesianRepresentation)
         assert isinstance(values, u.Quantity)
-        assert values.unit == u.km ** 2 / u.s ** 2
+        assert values.unit == u.km**2 / u.s**2
 
         # TODO! test the specific values
 
@@ -520,7 +517,7 @@ class Test_GalpyPotentialWrapper(
         assert hasattr(vf, "vf_rho")
         assert hasattr(vf, "vf_phi")
         assert hasattr(vf, "vf_z")
-        assert vf.vf_rho.unit == u.km / u.s ** 2
+        assert vf.vf_rho.unit == u.km / u.s**2
         assert isinstance(vf.frame, coord.Galactocentric)
 
         # TODO! test the specific values
@@ -550,7 +547,7 @@ class Test_GalpyPotentialWrapper(
         assert hasattr(vf, "vf_x")
         assert hasattr(vf, "vf_y")
         assert hasattr(vf, "vf_z")
-        assert vf.vf_x.unit == u.km / u.s ** 2
+        assert vf.vf_x.unit == u.km / u.s**2
         assert isinstance(vf.frame, coord.Galactocentric)
 
         # TODO! test the specific values

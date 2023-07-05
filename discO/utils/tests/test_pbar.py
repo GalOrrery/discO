@@ -32,7 +32,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Test__NoOpProgressBar:
-
     #################################################################
     # Method Tests
 
@@ -80,7 +79,6 @@ class Test_get_progress_bar:
         assert isinstance(pb, tqdm.tqdm)
 
         with pytest.warns(FutureWarning):
-
             pb = pbar.get_progress_bar(display="gui", total=2)
             assert isinstance(pb, tqdm.gui.tqdm)
 
