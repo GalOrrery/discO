@@ -42,7 +42,6 @@ from astropy.coordinates.representation import (
 )
 from astropy.coordinates.representation import (
     BaseRepresentationOrDifferential,
-    _array2string,
     _make_getter,
 )
 from erfa import ufunc as erfa_ufunc
@@ -104,9 +103,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
         # If not defined explicitly, create attr_classes.
         if not hasattr(cls, "attr_classes"):
             base_attr_classes = cls.base_representation.attr_classes
-            cls.attr_classes = {
-                "vf_" + c: u.Quantity for c in base_attr_classes
-            }
+            cls.attr_classes = {"vf_" + c: u.Quantity for c in base_attr_classes}
 
         # Now check caches!
         repr_name = cls.get_name()
@@ -357,10 +354,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             first, second = (self, other) if not reverse else (other, self)
             return self.__class__(
                 self.points,
-                *[
-                    op(getattr(first, c), getattr(second, c))
-                    for c in self.components
-                ],
+                *[op(getattr(first, c), getattr(second, c)) for c in self.components],
                 frame=self.frame,
             )
         else:
@@ -440,7 +434,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     def __repr__(self) -> str:
         prefixstr = "    "
         # TODO combine with points
-        arrstr = _array2string(
+        arrstr = np.array2string(
             np.lib.recfunctions.merge_arrays(
                 (self.points._values, self._values),
             ),
@@ -452,9 +446,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
             if self.points._unitstr
             else "[dimensionless]"
         )
-        unitstr = (
-            ("in " + self._unitstr) if self._unitstr else "[dimensionless]"
-        )
+        unitstr = ("in " + self._unitstr) if self._unitstr else "[dimensionless]"
         return "<{} ({}) {:s} | ({}) {:s}\n{}{}>".format(
             self.__class__.__name__,
             ", ".join(self.points.components),
