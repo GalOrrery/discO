@@ -40,11 +40,8 @@ import numpy as np
 from astropy.coordinates.representation import (
     REPRESENTATION_CLASSES as _REP_CLSs,
 )
-from astropy.coordinates.representation import (
-    BaseRepresentationOrDifferential,
-    _array2string,
-    _make_getter,
-)
+from astropy.coordinates.representation import BaseRepresentationOrDifferential
+from astropy.coordinates.representation.base import _make_getter
 from erfa import ufunc as erfa_ufunc
 
 # PROJECT-SPECIFIC
@@ -440,7 +437,7 @@ class BaseVectorField(BaseRepresentationOrDifferential):
     def __repr__(self) -> str:
         prefixstr = "    "
         # TODO combine with points
-        arrstr = _array2string(
+        arrstr = np.array2string(
             np.lib.recfunctions.merge_arrays(
                 (self.points._values, self._values),
             ),
