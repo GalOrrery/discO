@@ -40,10 +40,8 @@ import numpy as np
 from astropy.coordinates.representation import (
     REPRESENTATION_CLASSES as _REP_CLSs,
 )
-from astropy.coordinates.representation import (
-    BaseRepresentationOrDifferential,
-    _make_getter,
-)
+from astropy.coordinates.representation import BaseRepresentationOrDifferential
+from astropy.coordinates.representation.base import _make_getter
 from erfa import ufunc as erfa_ufunc
 
 # PROJECT-SPECIFIC
